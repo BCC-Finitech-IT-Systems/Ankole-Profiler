@@ -177,4 +177,12 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->notify(new CustomVerifyEmail($temporaryPassword));
     }
+
+    /**
+     * Get the user's temporary password.
+     */
+    public function getTemporaryPassword(): ?string
+    {
+        return $this->temporary_password;
+    }
 }

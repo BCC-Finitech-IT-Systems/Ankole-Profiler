@@ -26,7 +26,7 @@
                     @foreach ($emails as $index => $email)
                         <tr>
                             <td>{{ $email->email }}</td>
-                            <td>{{ $user->temporary_password	 ?? 'N/A' }}</td>
+                            <td>{{ $email->user->temporary_password ?? 'N/A' }}</td>
 
                             <td>{{ $phones[$index]->number ?? 'N/A' }}</td>
                             <td>{{ $email->type }}</td>
