@@ -110,7 +110,7 @@
             </div>
 
             @if ($persons->count() > 0)
-                <div class="" wire:key="persons-table">
+                <div class="overflow-x-auto" wire:key="persons-table">
                     <table class="min-w-full divide-y divide-gray-200 text-[11px]">
                         <thead class="bg-gray-50 text-[11px]">
                             <tr>
