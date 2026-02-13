@@ -79,9 +79,9 @@ class ExportPersons extends Component
             $this->isProcessing = true;
 
             $service = new PersonExportService();
-            
+
             $organizationId = $this->isSuperAdmin ? $this->selectedOrganizationId : $this->currentOrganization?->id;
-            
+
             if ($this->exportFormat === 'xlsx') {
                 $filePath = $service->exportToExcel($organizationId, $this->filters, $this->includeFields);
             } else {
@@ -140,9 +140,8 @@ class ExportPersons extends Component
     {
         $user = Auth::user();
 
-        // Check if user is Super Admin
-        $this->isSuperAdmin = false;
-        if ($user && $user->hasRole('Super Admin')) {
+        // Check if the user has the required role
+        if ($user && method_exists($user, 'hasRole') && $user->hasRole('Super Admin')) {
             $this->isSuperAdmin = true;
         }
 
@@ -177,9 +176,9 @@ class ExportPersons extends Component
     private function loadExportOptions()
     {
         $service = new PersonExportService();
-        
+
         $organizationId = $this->isSuperAdmin ? $this->selectedOrganizationId : $this->currentOrganization?->id;
-        
+
         $this->availableFieldOptions = $service->getAvailableFields($organizationId);
         $this->availableFilterOptions = $service->getAvailableFilters($organizationId);
     }
@@ -199,7 +198,7 @@ class ExportPersons extends Component
         try {
             $service = new PersonExportService();
             $organizationId = $this->isSuperAdmin ? $this->selectedOrganizationId : $this->currentOrganization?->id;
-            
+
             $this->exportStats = $service->getExportStats($organizationId, $this->filters);
         } catch (\Exception $e) {
             Log::error('Error loading export stats: ' . $e->getMessage());

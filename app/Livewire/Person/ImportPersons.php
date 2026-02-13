@@ -62,7 +62,6 @@ class ImportPersons extends Component
     public function mount()
     {
         $this->initializeOrganizationContext();
-        $this->setAvailableRolesForOrganization();
     }
 
     private function initializeOrganizationContext()
@@ -115,60 +114,7 @@ class ImportPersons extends Component
     {
         if ($this->selectedOrganizationId) {
             $this->currentOrganization = Organization::find($this->selectedOrganizationId);
-            $this->setAvailableRolesForOrganization();
             $this->resetImportState();
-        }
-    }
-
-    private function setAvailableRolesForOrganization()
-    {
-        if (!$this->currentOrganization) {
-            $this->availableRoles = ['STAFF' => 'Staff Member'];
-            return;
-        }
-
-        // Map organization categories to appropriate role types
-        $this->availableRoles = match($this->currentOrganization->category) {
-            'hospital' => [
-                'STAFF' => 'Staff Member',
-                'PATIENT' => 'Patient',
-                'VOLUNTEER' => 'Volunteer',
-                'CONSULTANT' => 'Consultant',
-                'VENDOR' => 'Vendor',
-            ],
-            'school' => [
-                'STAFF' => 'Staff Member',
-                'STUDENT' => 'Student',
-                'ALUMNI' => 'Alumni',
-                'GUARDIAN' => 'Parent/Guardian',
-                'VOLUNTEER' => 'Volunteer',
-                'CONSULTANT' => 'Consultant',
-            ],
-            'sacco' => [
-                'STAFF' => 'Staff Member',
-                'MEMBER' => 'SACCO Member',
-                'BOARD_MEMBER' => 'Board Member',
-                'CONSULTANT' => 'Consultant',
-                'VENDOR' => 'Vendor',
-            ],
-            'parish' => [
-                'STAFF' => 'Staff Member',
-                'PARISH_MEMBER' => 'Parish Member',
-                'VOLUNTEER' => 'Volunteer',
-                'CONSULTANT' => 'Consultant',
-            ],
-            default => [
-                'STAFF' => 'Staff Member',
-                'MEMBER' => 'Member',
-                'VOLUNTEER' => 'Volunteer',
-                'CONSULTANT' => 'Consultant',
-                'VENDOR' => 'Vendor',
-            ]
-        };
-
-        // Ensure default role type is valid for this organization
-        if (!array_key_exists($this->defaultRoleType, $this->availableRoles)) {
-            $this->defaultRoleType = array_key_first($this->availableRoles);
         }
     }
 

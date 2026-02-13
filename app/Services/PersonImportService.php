@@ -166,7 +166,7 @@ class PersonImportService
     {
         $headers = $this->getRoleSpecificTemplateHeaders($organizationCategory);
 
-        // Create filename with organization category
+        // Initialize filename variable
         $filename = 'person_import_template_' . strtolower($organizationCategory);
         if ($organizationName) {
             $filename .= '_' . str_replace([' ', '/'], '_', strtolower($organizationName));
@@ -226,16 +226,50 @@ class PersonImportService
      */
     public function generateExcelTemplateFile(string $organizationCategory, string $organizationName = null): string
     {
-        $headers = $this->getRoleSpecificTemplateHeaders($organizationCategory);
+        // Define headers based on validated fields from CreatePersonsComponent
+        $headers = [
+            'given_name' => 'First Name (Required)',
+            'family_name' => 'Last Name (Required)',
+            'date_of_birth' => 'Date of Birth (YYYY-MM-DD)',
+            'gender' => 'Gender (Male/Female)',
+            'phone' => 'Primary Phone Number (Unique)',
+            'email' => 'Primary Email Address (Unique)',
+            'address' => 'Full Address',
+            'country' => 'Country',
+            'district' => 'District',
+            'city' => 'City',
+            'role_title' => 'Job Title/Position',
+        ];
 
-        // Create filename with organization category
-        $filename = 'person_import_template_' . strtolower($organizationCategory);
+        // Sanitize organization category and name to remove invalid characters
+        $organizationCategory = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $organizationCategory);
         if ($organizationName) {
-            $filename .= '_' . str_replace([' ', '/'], '_', strtolower($organizationName));
+            $organizationName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $organizationName);
         }
-        $filename .= '_' . date('Y-m-d') . '.xlsx';
 
-        $filePath = storage_path('app/templates/' . $filename);
+        // Further enhance sanitization to remove any remaining invalid characters
+        $organizationCategory = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $organizationCategory);
+        $organizationCategory = preg_replace('/_+/', '_', trim($organizationCategory, '_'));
+
+        if ($organizationName) {
+            $organizationName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $organizationName);
+            $organizationName = preg_replace('/_+/', '_', trim($organizationName, '_'));
+        }
+
+        $filename = 'person-import-template-' . strtolower($organizationCategory);
+        if ($organizationName) {
+            $filename .= '-' . $organizationName;
+        }
+        $filename .= '-' . date('Y-m-d') . '.xlsx';
+
+        $storageRelativePath = 'templates/' . $filename;
+        $filePath = storage_path('app/' . $storageRelativePath);
+
+        // Validate only filename
+        $baseName = basename($filePath);
+        if (preg_match('/[\\:*?"<>|]/', $baseName)) {
+            throw new \Exception("Invalid characters detected in filename: {$baseName}");
+        }
 
         // Ensure directory exists
         if (!is_dir(dirname($filePath))) {
@@ -251,48 +285,18 @@ class PersonImportService
         // Add description row
         $excelData[] = array_values($headers);
 
-        // Add sample data
-        $sampleData = $this->getSampleDataForCategory($organizationCategory);
-        foreach ($sampleData as $row) {
-            $excelRow = [];
-            foreach (array_keys($headers) as $header) {
-                $value = $row[$header] ?? '';
+        // Save file properly
+        \Maatwebsite\Excel\Facades\Excel::store(
+            new \App\Exports\PersonTemplateExport($excelData, $headers),
+            $storageRelativePath,
+            'local'
+        );
 
-                // Format values properly for Excel
-                if (in_array($header, ['phone', 'guardian_phone', 'emergency_contact_phone', 'next_of_kin_phone'])) {
-                    // Keep phone numbers as text to prevent scientific notation
-                    $value = $value ? (string)$value : '';
-                } elseif (in_array($header, ['date_of_birth', 'join_date', 'enrollment_date', 'hire_date', 'baptism_date', 'confirmation_date', 'ordination_date'])) {
-                    // Keep dates as text in YYYY-MM-DD format
-                    $value = $value ? date('Y-m-d', strtotime($value)) : '';
-                } elseif (in_array($header, ['share_capital', 'salary', 'monthly_income'])) {
-                    // Keep monetary values as numbers
-                    $value = $value ? (float)$value : '';
-                }
-
-                $excelRow[] = $value;
-            }
-            $excelData[] = $excelRow;
+        if (!file_exists($filePath)) {
+            throw new \Exception("Failed to create Excel template file at: {$filePath}");
         }
 
-        // Create Excel file using a simple export
-        $fullPath = storage_path("app/templates/{$filename}");
-
-        // Ensure directory exists
-        if (!is_dir(dirname($fullPath))) {
-            mkdir(dirname($fullPath), 0755, true);
-        }
-
-        $export = new \App\Exports\PersonTemplateExport($excelData, $headers);
-
-        // Store the file directly to templates subdirectory
-        Excel::store($export, "templates/{$filename}", 'local');
-
-        if (!file_exists($fullPath)) {
-            throw new \Exception("Failed to create Excel template file at: {$fullPath}");
-        }
-
-        return $fullPath;
+        return $filePath;
     }
 
     /**
@@ -552,14 +556,20 @@ class PersonImportService
      */
     public function import(string $filePath, array $options = []): array
     {
+        // Initialize variables from options
         $organizationId = $options['organization_id'] ?? null;
         $defaultRoleType = $options['default_role_type'] ?? 'STAFF';
         $skipDuplicates = $options['skip_duplicates'] ?? true;
         $updateExisting = $options['update_existing'] ?? false;
         $createdBy = $options['created_by'] ?? null;
 
+        // Use current user's organization if not provided
         if (!$organizationId) {
-            throw new \Exception('Organization ID is required for import');
+            $currentOrganization = user_current_organization();
+            if (!$currentOrganization) {
+                throw new \Exception('You are not associated with any organization.');
+            }
+            $organizationId = $currentOrganization->id;
         }
 
         $organization = Organization::findOrFail($organizationId);
