@@ -18,7 +18,6 @@ class Organization extends Model
     protected $fillable = [
         // Basic Information
         'legal_name',
-        'display_name',
         'code',
         'Organization_type',
         'parent_organization_id',
@@ -155,14 +154,6 @@ class Organization extends Model
     }
 
     /**
-     * Get the display name or fall back to legal name
-     */
-    public function getNameAttribute(): string
-    {
-        return $this->display_name ?: $this->legal_name;
-    }
-
-    /**
      * Check if Organization is verified
      */
     public function getIsVerifiedAttribute(): bool
@@ -263,7 +254,6 @@ class Organization extends Model
     {
         return $query->where(function($q) use ($search) {
             $q->where('legal_name', 'like', "%{$search}%")
-              ->orWhere('display_name', 'like', "%{$search}%")
               ->orWhere('code', 'like', "%{$search}%")
               ->orWhere('registration_number', 'like', "%{$search}%")
               ->orWhere('contact_email', 'like', "%{$search}%")

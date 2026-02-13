@@ -62,7 +62,10 @@ Route::get('/person/self-register', App\Livewire\Person\PersonSelfRegistrationCo
 
 
 Route::get('/', function () {
-    if (\Illuminate\Support\Facades\Auth::check()) {
+    if (auth()->check()) {
+        if (!auth()->user()->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice'); // Redirect to email verification notice
+        }
         return redirect()->route('dashboard');
     }
     return view('auth.login'); // Replace 'welcome' with your desired guest view

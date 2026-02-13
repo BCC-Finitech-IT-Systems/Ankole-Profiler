@@ -40,34 +40,13 @@ class CreatePersonsComponent extends Component
 
     public $availableOrganizations = [];
 
-    public function mount($edit = null)
+    public function mount()
     {
         $this->availableOrganizations = Organization::all()->toArray();
 
         // Set default organization_id if available
         if (!empty($this->availableOrganizations)) {
             $this->form['organization_id'] = $this->availableOrganizations[0]['id'];
-        }
-
-        // Check if editing an existing person
-        if ($edit) {
-            $person = Person::with(['phones', 'emailAddresses', 'affiliations'])->findOrFail($edit);
-            $this->form = [
-                'given_name' => $person->given_name,
-                'middle_name' => $person->middle_name,
-                'family_name' => $person->family_name,
-                'date_of_birth' => $person->date_of_birth,
-                'gender' => $person->gender,
-                'phone' => $person->phones->first()->number ?? '',
-                'email' => $person->emailAddresses->first()->email ?? '',
-                'address' => $person->address,
-                'country' => $person->country,
-                'district' => $person->district,
-                'city' => $person->city,
-                'role_type' => $person->affiliations->first()->role_type ?? 'STAFF',
-                'role_title' => $person->affiliations->first()->role_title ?? '',
-                'organization_id' => $person->affiliations->first()->organization_id ?? '',
-            ];
         }
     }
 
