@@ -40,13 +40,34 @@ class CreatePersonsComponent extends Component
 
     public $availableOrganizations = [];
 
-    public function mount()
+    public function mount($edit = null)
     {
         $this->availableOrganizations = Organization::all()->toArray();
 
         // Set default organization_id if available
         if (!empty($this->availableOrganizations)) {
             $this->form['organization_id'] = $this->availableOrganizations[0]['id'];
+        }
+
+        // Check if editing an existing person
+        if ($edit) {
+            $person = Person::with(['phones', 'emailAddresses', 'affiliations'])->findOrFail($edit);
+            $this->form = [
+                'given_name' => $person->given_name,
+                'middle_name' => $person->middle_name,
+                'family_name' => $person->family_name,
+                'date_of_birth' => $person->date_of_birth,
+                'gender' => $person->gender,
+                'phone' => $person->phones->first()->number ?? '',
+                'email' => $person->emailAddresses->first()->email ?? '',
+                'address' => $person->address,
+                'country' => $person->country,
+                'district' => $person->district,
+                'city' => $person->city,
+                'role_type' => $person->affiliations->first()->role_type ?? 'STAFF',
+                'role_title' => $person->affiliations->first()->role_title ?? '',
+                'organization_id' => $person->affiliations->first()->organization_id ?? '',
+            ];
         }
     }
 
@@ -113,11 +134,28 @@ class CreatePersonsComponent extends Component
 
             Log::info('User created', ['user_id' => $user->id]);
 
+            $currentOrganization = user_current_organization();
+            $isSuperAdmin = method_exists($user, 'hasRole') && $user->hasRole('Super Admin');
+
+            if (!$isSuperAdmin) {
+                if (!$currentOrganization) {
+                    session()->flash('error', 'You are not associated with any organization.');
+                    return;
+                }
+                $this->form['organization_id'] = $currentOrganization->id;
+            } else {
+                // Validate that the organization_id is provided for Super Admins
+                if (empty($this->form['organization_id']) || !\App\Models\Organization::find($this->form['organization_id'])) {
+                    session()->flash('error', 'Please select a valid organization.');
+                    return;
+                }
+            }
+
             // Create Person with user_id
             $person = Person::create([
                 'person_id' => \App\Helpers\IdGenerator::generatePersonId(),
                 'global_identifier' => \App\Helpers\IdGenerator::generateGlobalIdentifier(),
-                'organization_id' => $this->form['organization_id'],
+                'organization_id' => $this->form['organization_id'], // Use form input for Super Admin or current organization for others
                 'given_name' => $this->form['given_name'],
                 'middle_name' => $this->form['middle_name'],
                 'family_name' => $this->form['family_name'],
@@ -138,7 +176,7 @@ class CreatePersonsComponent extends Component
 
             PersonAffiliation::create([
                 'person_id' => $person->id,
-                'organization_id' => $this->form['organization_id'],
+                'organization_id' => $currentOrganization->id, // Use current user's organization
                 'role_type' => $this->form['role_type'] ?? 'STAFF',
                 'role_title' => $this->form['role_title'] ?? 'Organization Admin',
                 'start_date' => now(),

@@ -268,6 +268,36 @@ class PersonsListComponent extends Component
         }
     }
 
+    public function getPersons()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return collect(); // Return an empty collection if the user is not authenticated
+        }
+
+        $currentOrganization = user_current_organization();
+
+        // Check if the user has the required role and permission
+        $isOrganizationAdmin = method_exists($user, 'hasRole') && $user->hasRole('Organization Admin');
+        $canViewOrgPersons = $user->can('view-org-persons');
+
+        // If the user is an Organization Admin and has the permission, return persons from their organization
+        if ($isOrganizationAdmin && $canViewOrgPersons && $currentOrganization) {
+            return Person::whereHas('affiliations', function ($query) use ($currentOrganization) {
+                $query->where('organization_id', $currentOrganization->id);
+            })->paginate(10); // Paginate the results
+        }
+
+        // If the user is a Super Admin, return all persons
+        if (method_exists($user, 'hasRole') && $user->hasRole('Super Admin')) {
+            return Person::paginate(10); // Paginate all persons
+        }
+
+        // Otherwise, return an empty collection
+        return collect();
+    }
+
     public function render()
     {
         $user = Auth::user();

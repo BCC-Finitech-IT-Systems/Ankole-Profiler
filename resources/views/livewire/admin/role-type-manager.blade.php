@@ -2,8 +2,8 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-gray-900">Role Type Management</h2>
-            <p class="text-gray-600">Manage organization role types and their permissions</p>
+            <h2 class="text-2xl font-bold text-gray-900">Occupation Management</h2>
+            <p class="text-gray-600">Manage Occupation & their permissions</p>
         </div>
         <button
             wire:click="openCreateModal"
@@ -12,7 +12,7 @@
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
-            Create Role Type
+            Create Occupation
         </button>
     </div>
 
@@ -59,7 +59,7 @@
                 <table class="table table-zebra w-full">
                     <thead>
                         <tr>
-                            <th>Organization</th>
+                            <th>Project</th>
                             <th>Code</th>
                             <th>Name</th>
                             <th>Description</th>
@@ -161,8 +161,8 @@
                                         <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                         </svg>
-                                        <p>No role types found</p>
-                                        <p class="text-sm">Create your first role type to get started</p>
+                                        <p>No Occupation found</p>
+                                        <p class="text-sm">Create your first Occupation to get started</p>
                                     </div>
                                 </td>
                             </tr>
@@ -182,16 +182,16 @@
     @if($showCreateModal)
         <div class="modal modal-open">
             <div class="modal-box">
-                <h3 class="font-bold text-lg mb-4">Create New Role Type</h3>
+                <h3 class="font-bold text-lg mb-4">Create New Occupation</h3>
 
                 @php $user = auth()->user(); @endphp
                 @if($user && $user->hasRole('Super Admin'))
                 <div class="form-control w-full mb-4">
                     <label class="label">
-                        <span class="label-text">Organization *</span>
+                        <span class="label-text">Project *</span>
                     </label>
                     <select wire:model="organization_id" class="select select-bordered w-full @error('organization_id') select-error @enderror">
-                        <option value="">Select organization</option>
+                        <option value="">Select Project</option>
                         @foreach($organizations as $org)
                             <option value="{{ $org->id }}">{{ $org->name }}</option>
                         @endforeach
@@ -201,14 +201,14 @@
                 @else
                 <div class="form-control w-full mb-4">
                     <label class="label">
-                        <span class="label-text">Organization</span>
+                        <span class="label-text">Project</span>
                     </label>
                     <input type="text" class="input input-bordered w-full bg-gray-100" value="{{ optional($organizations->first())->legal_name ?? 'No Provided' }}" readonly>
                 </div>
                 @endif
                 <div class="form-control w-full mb-4">
                     <label class="label">
-                        <span class="label-text">Role Type Code *</span>
+                        <span class="label-text">Occupation Code *</span>
                     </label>
                     <input
                         wire:model="code"
@@ -222,7 +222,7 @@
 
                 <div class="form-control w-full mb-4">
                     <label class="label">
-                        <span class="label-text">Role Type Name *</span>
+                        <span class="label-text">Occupation Name *</span>
                     </label>
                     <input
                         wire:model="name"
@@ -259,7 +259,7 @@
 
                 <div class="modal-action">
                     <button wire:click="closeModals" class="btn">Cancel</button>
-                    <button wire:click="createRoleType" class="btn btn-primary">Create Role Type</button>
+                    <button wire:click="createRoleType" class="btn btn-primary">Create Occupation</button>
                 </div>
             </div>
         </div>
@@ -269,7 +269,7 @@
     @if($showEditModal)
         <div class="modal modal-open">
             <div class="modal-box">
-                <h3 class="font-bold text-lg mb-4">Edit Role Type</h3>
+                <h3 class="font-bold text-lg mb-4">Edit Occupation</h3>
 
                 @php $user = auth()->user(); @endphp
                 @if($user && $user->hasRole('Super Admin'))

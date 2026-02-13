@@ -51,7 +51,7 @@
                 </div>
                 <h3 class="card-title text-base font-bold mb-1">My Notifications</h3>
                 <p class="text-base-content/70 text-xs mb-3">View your latest messages and alerts.</p>
-                <a href="{{ route('dashboard') }}" class="btn btn-outline btn-warning btn-sm">View Notifications</a>
+                <a href="{{ route('person.notifications') }}" class="btn btn-outline btn-warning btn-sm">View Notifications</a>
             </div>
         </div>
     </div>

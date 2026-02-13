@@ -164,7 +164,7 @@ class SearchFilterService
     /**
      * Get the query builder instance.
      *
-     * @return Builder
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function getQuery()
     {

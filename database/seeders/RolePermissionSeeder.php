@@ -132,6 +132,7 @@ class RolePermissionSeeder extends Seeder
             'manage-access',
             'manage-org-roles',
             'manage-role-types',
+            'manage-permissions',
 
             // Settings permissions
             'manage-settings',
@@ -145,7 +146,8 @@ class RolePermissionSeeder extends Seeder
 
             'manage-sites',
             'import-Organizations',
-            'export-Organizations'
+            'export-Organizations',
+
         ];
 
         foreach ($permissions as $permission) {
@@ -181,6 +183,7 @@ class RolePermissionSeeder extends Seeder
             'view-org-reports',
             'manage-users',
             'create-users',
+            'manage-users',
         ]);
 
         $deptManager = Role::firstOrCreate(['name' => 'Department Manager']);

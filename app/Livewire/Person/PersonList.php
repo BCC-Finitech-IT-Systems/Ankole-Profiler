@@ -261,9 +261,17 @@ class PersonList extends Component
          */
         public function editPerson($id)
         {
-            $person = Person::findOrFail($id);
-            $this->editPersonId = $person->id;
-            $this->editPersonData = $person->toArray();
+            try {
+                $person = Person::findOrFail($id);
+                $this->editPersonId = $person->id;
+                $this->editPersonData = $person->toArray();
+            } catch (\Exception $e) {
+                Log::error('Error loading person for editing: ' . $e->getMessage());
+                $this->dispatch('alert', [
+                    'type' => 'error',
+                    'message' => 'Failed to load person for editing.'
+                ]);
+            }
         }
 
             /**
@@ -291,21 +299,91 @@ class PersonList extends Component
         public function updatePerson()
         {
             if (!$this->editPersonId) {
+                $this->dispatch('alert', [
+                    'type' => 'error',
+                    'message' => 'No person selected for update.'
+                ]);
                 return;
             }
-            $person = Person::findOrFail($this->editPersonId);
-            $person->fill($this->editPersonData);
-            $person->save();
-            // Optionally reset edit state
-            $this->editPersonId = null;
-            $this->editPersonData = [];
-            $this->dispatch('alert', [
-                'type' => 'success',
-                'message' => 'Person updated successfully.'
+
+            $this->validate([
+                'editPersonData.given_name' => 'required|string|max:255',
+                'editPersonData.family_name' => 'required|string|max:255',
+                'editPersonData.date_of_birth' => 'required|date',
+                'editPersonData.gender' => 'required|in:Male,Female',
+                'editPersonData.address' => 'nullable|string|max:255',
+                'editPersonData.city' => 'nullable|string|max:255',
+                'editPersonData.country' => 'nullable|string|max:255',
+                'editPersonData.district' => 'nullable|string|max:255',
+                'editPersonData.email' => 'required|email|unique:users,email,' . $this->editPersonData['user_id'],
+                'editPersonData.phone' => 'required|string|max:20|unique:phones,number,' . $this->editPersonData['id'] . ',person_id',
+                // Add other fields as needed
             ]);
-            // Optionally refresh list or emit event
-            $this->clearPersonListCache();
-            $this->resetPage();
+
+            try {
+                DB::beginTransaction();
+
+                // Update the person record
+                $person = Person::findOrFail($this->editPersonId);
+                $person->fill($this->editPersonData);
+                $person->save();
+
+                // Update the user record
+                $user = $person->user;
+                if ($user) {
+                    $user->email = $this->editPersonData['email'];
+                    $user->name = $this->editPersonData['given_name'] . ' ' . $this->editPersonData['family_name'];
+                    $user->save();
+                }
+
+                // Update the person affiliations
+                $affiliation = $person->affiliations()->first();
+                if ($affiliation) {
+                    $affiliation->update([
+                        'organization_id' => $this->editPersonData['organization_id'] ?? $affiliation->organization_id,
+                        'role_type' => $this->editPersonData['role_type'] ?? $affiliation->role_type,
+                        'role_title' => $this->editPersonData['role_title'] ?? $affiliation->role_title,
+                    ]);
+                }
+
+                // Update the email addresses
+                $emailAddress = $person->emailAddresses()->first();
+                if ($emailAddress) {
+                    $emailAddress->update([
+                        'email' => $this->editPersonData['email']
+                    ]);
+                }
+
+                // Update the phone numbers
+                $phone = $person->phones()->first();
+                if ($phone) {
+                    $phone->update([
+                        'number' => $this->editPersonData['phone']
+                    ]);
+                }
+
+                DB::commit();
+
+                // Optionally reset edit state
+                $this->editPersonId = null;
+                $this->editPersonData = [];
+
+                $this->dispatch('alert', [
+                    'type' => 'success',
+                    'message' => 'Person and related records updated successfully.'
+                ]);
+
+                // Optionally emit an event to refresh the list
+                $this->emit('personUpdated');
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Error updating person: ' . $e->getMessage());
+                $this->dispatch('alert', [
+                    'type' => 'error',
+                    'message' => 'Failed to update person and related records.'
+                ]);
+            }
         }
 
     protected function loadDynamicFilters()
@@ -370,7 +448,10 @@ class PersonList extends Component
             unset($filtersForService['search']);
             $service->applyFilters($filtersForService);
 
-            $persons = $service->paginate(10);
+            // Order by latest creation date
+            $service->getQuery()->orderBy('created_at', 'desc');
+
+            $persons = $service->paginate(6);
             // $persons->withPath(request()->url());
 
         } catch (\Exception $e) {
@@ -386,6 +467,10 @@ class PersonList extends Component
                     $q->where('organization_id', $currentOrganization->id);
                 });
             }
+
+            // Order by latest creation date in fallback query
+            $query->orderBy('created_at', 'desc');
+
             $persons = $query->paginate(10);
             $this->dispatch('alert', [
                 'type' => 'warning',

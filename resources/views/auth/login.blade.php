@@ -1,5 +1,16 @@
 @extends('layouts.auth-card')
 @section('content')
+
+ @if (auth()->check())
+        <div class="mb-4 text-center">
+            <a href="{{ route('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    @endif
+    @if (auth()->check())
+        <script>
+            window.location.href = '{{ route('dashboard') }}';
+        </script>
+    @endif
     <h3 class="card-title text-2xl font-bold text-center justify-center mb-6" style="max-width: 400px; margin: 0 auto;">Sign
         In</h3>
     <!-- Session Status -->
@@ -12,7 +23,8 @@
             <span>{{ session('status') }}</span>
         </div>
     @endif
-    <form method="POST" action="{{ route('login') }}" style="max-width: 400px; margin: 0 auto;">
+
+    <form method="POST" action="{{ route('login') }}" style="max-width: 800px; margin: 0 auto;">
         @csrf
         <fieldset class="fieldset">
             <legend class="fieldset-legend sr-only">Login Credentials</legend>

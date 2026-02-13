@@ -67,32 +67,26 @@
                         @foreach($section['items'] as $item)
                             @can($item['permission'] ?? 'view-dashboard')
                                 @php
-                                    $isActive = request()->routeIs($item['route']);
-                                    $hasSubItems = isset($item['items']) && count($item['items']) > 0;
+                                    $isActive = $item['active'] ?? false;
                                 @endphp
 
                                 <a href="{{ route($item['route']) }}"
-                                   class="group flex items-center justify-between px-3 py-2.5 text-sm rounded-lg transition-all duration-200 {{ $isActive ? 'bg-accent/10 text-accent font-medium border border-accent/20 shadow-sm' : 'text-base-content opacity-80 hover:bg-base-200 hover:opacity-100' }} hover:translate-x-0.5 hover:shadow-sm">
+                                   class="group flex items-center justify-between px-3 py-2.5 text-sm rounded-lg transition-all duration-200 {{ $isActive ? 'bg-[#982B55]/10 text-[#982B55] font-medium border border-[#982B55]/20 shadow-sm' : 'text-base-content opacity-80 hover:bg-base-200 hover:opacity-100' }} hover:translate-x-0.5 hover:shadow-sm">
                                     <span class="flex items-center gap-3">
                                         @if(isset($item['icon']))
                                             <svg class="w-4 h-4 flex-shrink-0 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"></path>
                                             </svg>
-                                        @else
-                                            <div class="w-2 h-2 rounded-full {{ $isActive ? 'bg-accent' : 'bg-base-content opacity-30' }} flex-shrink-0"></div>
                                         @endif
                                         {{ $item['label'] }}
                                     </span>
-
-                                    @if(isset($item['badge']) && $item['badge'] > 0)
-                                        <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-error rounded-full">
-                                            {{ $item['badge'] }}
-                                        </span>
+                                    @if(isset($item['badge']))
+                                        <span class="badge badge-sm bg-primary text-white">{{ $item['badge'] }}</span>
                                     @endif
                                 </a>
 
                                 <!-- Sub-items (if any) -->
-                                @if($hasSubItems)
+                                @if(isset($item['items']) && count($item['items']) > 0)
                                     <div class="ml-4 mt-1 space-y-1">
                                         @foreach($item['items'] as $subItem)
                                             @can($subItem['permission'] ?? 'view-dashboard')
