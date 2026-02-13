@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class DashboardComponent extends Component
 {
@@ -23,6 +24,7 @@ class DashboardComponent extends Component
     public function mount()
     {
         $this->initializeUserContext();
+        Log::info('Current Organization:', ['organization' => $this->currentOrganization]);
         $this->loadDashboardData();
     }
 
@@ -55,7 +57,7 @@ class DashboardComponent extends Component
             $this->recentActivities = $this->getRecentActivities();
             $this->alerts = $this->getSystemAlerts();
         } catch (\Exception $e) {
-            \Log::error('Dashboard data loading error: ' . $e->getMessage());
+            Log::error('Dashboard data loading error: ' . $e->getMessage());
 
             // Set default empty stats on error
             $this->stats = [
@@ -136,7 +138,7 @@ class DashboardComponent extends Component
             $stats['system_health'] = $this->calculateSystemHealth($stats);
 
         } catch (\Exception $e) {
-            \Log::error('Stats calculation error: ' . $e->getMessage());
+            Log::error('Stats calculation error: ' . $e->getMessage());
             throw $e;
         }
 
@@ -163,7 +165,7 @@ class DashboardComponent extends Component
 
             return $query->count();
         } catch (\Exception $e) {
-            \Log::error('Pending verifications calculation error: ' . $e->getMessage());
+            Log::error('Pending verifications calculation error: ' . $e->getMessage());
             return 0;
         }
     }
@@ -190,7 +192,7 @@ class DashboardComponent extends Component
 
             return 0;
         } catch (\Exception $e) {
-            \Log::error('Pending consents calculation error: ' . $e->getMessage());
+            Log::error('Pending consents calculation error: ' . $e->getMessage());
             return 0;
         }
     }
@@ -231,7 +233,7 @@ class DashboardComponent extends Component
 
             return max(0, min(100, $healthScore));
         } catch (\Exception $e) {
-            \Log::error('System health calculation error: ' . $e->getMessage());
+            Log::error('System health calculation error: ' . $e->getMessage());
             return 100;
         }
     }
@@ -325,7 +327,7 @@ class DashboardComponent extends Component
 
             return array_slice($activities, 0, 8);
         } catch (\Exception $e) {
-            \Log::error('Recent activities loading error: ' . $e->getMessage());
+            Log::error('Recent activities loading error: ' . $e->getMessage());
             return [];
         }
     }
@@ -393,7 +395,7 @@ class DashboardComponent extends Component
 
             return $alerts;
         } catch (\Exception $e) {
-            \Log::error('System alerts loading error: ' . $e->getMessage());
+            Log::error('System alerts loading error: ' . $e->getMessage());
             return [];
         }
     }
@@ -414,7 +416,7 @@ class DashboardComponent extends Component
                 'message' => 'Dashboard data refreshed successfully'
             ]);
         } catch (\Exception $e) {
-            \Log::error('Dashboard refresh error: ' . $e->getMessage());
+            Log::error('Dashboard refresh error: ' . $e->getMessage());
 
             $this->dispatch('dashboard-refresh-failed', [
                 'message' => 'Failed to refresh dashboard data'

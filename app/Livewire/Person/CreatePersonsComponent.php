@@ -144,6 +144,7 @@ class CreatePersonsComponent extends Component
                 'start_date' => now(),
                 'status' => 'active',
                 'created_by' => $user->id,
+                'user_id' => $user->id, // Capture user_id in PersonAffiliation
             ]);
             Log::info('Person affiliation created', ['person_id' => $person->id]);
 

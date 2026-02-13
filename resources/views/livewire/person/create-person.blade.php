@@ -150,23 +150,36 @@
                 <div class="mt-6">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Affiliation Details</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="form-control">
-                            <label class="label pb-1">
-                                <span class="label-text text-sm font-medium">Project <span
-                                        class="text-red-500">*</span></span>
-                            </label>
-                            <select wire:model.defer="currentAffiliation.organization_id"
-                                class="select select-bordered w-full">
-                                <option value="">Select Organization</option>
-                                @foreach ($availableOrganizations as $org)
-                                    <option value="{{ $org['id'] }}">
-                                        {{ $org['display_name'] ?? $org['legal_name'] }}</option>
-                                @endforeach
-                            </select>
-                            @error('currentAffiliation.organization_id')
-                                <span class="text-red-600 text-xs">{{ $message }}</span>
-                            @enderror
-                        </div>
+                        @if (auth()->user()->hasRole('Organization Admin'))
+                            <div class="form-control">
+                                <label class="label pb-1">
+                                    <span class="label-text text-sm font-medium">Project <span
+                                            class="text-red-500">*</span></span>
+                                </label>
+                                <input type="text" class="input input-bordered w-full"
+                                    value="{{ auth()->user()->personAffiliation->organization->display_name ?? auth()->user()->personAffiliation->organization->legal_name }}" readonly>
+                                <input type="hidden" wire:model.defer="currentAffiliation.organization_id"
+                                    value="{{ auth()->user()->personAffiliation->organization_id }}">
+                            </div>
+                        @elseif (auth()->user()->hasRole('Super Admin'))
+                            <div class="form-control">
+                                <label class="label pb-1">
+                                    <span class="label-text text-sm font-medium">Project <span
+                                            class="text-red-500">*</span></span>
+                                </label>
+                                <select wire:model.defer="currentAffiliation.organization_id"
+                                    class="select select-bordered w-full">
+                                    <option value="">Select Organization</option>
+                                    @foreach ($availableOrganizations as $org)
+                                        <option value="{{ $org['id'] }}">
+                                            {{ $org['display_name'] ?? $org['legal_name'] }}</option>
+                                    @endforeach
+                                </select>
+                                @error('currentAffiliation.organization_id')
+                                    <span class="text-red-600 text-xs">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        @endif
 
                         <div class="form-control">
                             <label class="label pb-1">

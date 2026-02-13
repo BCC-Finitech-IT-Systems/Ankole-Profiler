@@ -35,7 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'current_team_id',
         'profile_photo_path',
-        'temporary_password', 
+        'temporary_password',
     ];
 
     /**
@@ -176,13 +176,5 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification($temporaryPassword = null)
     {
         $this->notify(new CustomVerifyEmail($temporaryPassword));
-    }
-
-    /**
-     * Get the user's temporary password.
-     */
-    public function getTemporaryPassword(): ?string
-    {
-        return $this->temporary_password;
     }
 }

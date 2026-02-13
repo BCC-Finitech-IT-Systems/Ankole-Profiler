@@ -9,7 +9,6 @@
 {{-- <button class="btn btn-ghost btn-sm">System Status</button> --}}
 
 <!-- Current Organization Display -->
-@if($user && !$user->hasRole('Super Admin'))
     <div class="flex items-center gap-2 px-3 py-2 bg-base-200 rounded-lg">
         <svg class="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -19,7 +18,6 @@
             {{ user_current_organization_name() }}
         </span>
     </div>
-@endif
 
 <div class="dropdown dropdown-end">
     <label tabindex="0" class="btn btn-info btn-sm gap-2">
@@ -28,11 +26,12 @@
                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
         {{ $user ? $user->name : 'Guest' }}
-        <span class="badge badge-xs">{{ $user && $user->roles->first()?->name ? $user->roles->first()->name : 'User' }}</span>
+        <span
+            class="badge badge-xs">{{ $user && $user->roles->first()?->name ? $user->roles->first()->name : 'User' }}</span>
     </label>
     <ul tabindex="0"
         class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-300 mt-2">
-        @if($user)
+        @if ($user)
             <li><a href="{{ route('profile.show') }}">Profile Settings</a></li>
             <li><a href="{{ route('logout') }}"
                     onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>

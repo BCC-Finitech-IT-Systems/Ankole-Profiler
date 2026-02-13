@@ -6,6 +6,7 @@ use App\Models\User;
 // app/Helpers/OrganizationHelper.php
 
 use App\Models\Organization;
+use Illuminate\Support\Facades\Log;
 
 if (!function_exists('current_organization_id')) {
     /**
@@ -65,8 +66,6 @@ if (!function_exists('user_accessible_Organizations')) {
     }
 }
 
-// American spelling variants for compatibility
-// (Removed duplicate function definitions)
 
 if (!function_exists('user_current_organization')) {
     function user_current_organization()
@@ -77,12 +76,39 @@ if (!function_exists('user_current_organization')) {
             return null;
         }
 
-        // For Super Admin, we need a different approach since they manage multiple organizations
+        Log::info('User Details:', ['user' => $user]);
+
         if (method_exists($user, 'hasRole') && $user->hasRole('Super Admin')) {
-            return null; // Super Admin does not have a single current organization
+            Log::info('User is a Super Admin, no organization assigned.');
+            return null;
         }
 
-        return $user->Organization;
+        // Fetch the person affiliation using user_id
+        $affiliation = \App\Models\PersonAffiliation::where('user_id', $user->id)
+            ->with('organization')
+            ->first();
+
+        Log::info('Person Affiliation Debug:', [
+            'user_id' => $user->id,
+            'affiliation' => $affiliation,
+            'organization_id' => $affiliation?->organization_id ?? null,
+            'organization_exists' => $affiliation?->organization ? true : false
+        ]);
+
+        if ($affiliation && $affiliation->organization) {
+            return $affiliation->organization;
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('user_current_organization_name')) {
+    function user_current_organization_name()
+    {
+        $org = user_current_organization();
+        Log::info('Current Organization Name Debug:', ['organization' => $org]);
+        return $org?->legal_name ?? 'No organization';
     }
 }
 
@@ -164,13 +190,7 @@ if (!function_exists('get_user_accessible_organizations')) {
     }
 }
 
-if (!function_exists('user_current_organization_name')) {
-    function user_current_organization_name()
-    {
-        $org = user_current_organization();
-        return $org?->display_name ?? $org?->legal_name ?? 'No organization';
-    }
-}
+
 
 if (!function_exists('get_current_user_organization')) {
     /**

@@ -62,7 +62,10 @@ Route::get('/person/self-register', App\Livewire\Person\PersonSelfRegistrationCo
 
 
 Route::get('/', function () {
-    return view('auth.login');
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return view('auth.login'); // Replace 'welcome' with your desired guest view
 });
 Route::get('/test-at', function () {
     function testApiConnection($AT, $from, $to)

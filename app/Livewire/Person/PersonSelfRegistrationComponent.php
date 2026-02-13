@@ -46,11 +46,11 @@ class PersonSelfRegistrationComponent extends Component
     ];
 
     // Documents step removed
-    public $availableOrganizations = [];
+    public $availableOrganizations = null; // Initialize as null to avoid type mismatch
 
     public function mount()
     {
-        $this->availableOrganizations = Organization::all();
+        $this->availableOrganizations = collect(Organization::all()); // Ensure it is a collection
 
         // Debug log for available organizations
         Log::debug('Available organizations during mount', ['organizations' => $this->availableOrganizations]);
@@ -105,14 +105,10 @@ class PersonSelfRegistrationComponent extends Component
                 'email' => $this->form['email'],
                 'password' => bcrypt($temporaryPassword),
             ]);
-            // Store the temporary password encrypted in cache so it can be included in the welcome email
-            try {
-                if (!empty($temporaryPassword)) {
-                    Cache::put('temp_password_user_' . $user->id, Crypt::encryptString($temporaryPassword), now()->addDays(7));
-                }
-            } catch (\Exception $e) {
-                Log::warning('Failed to cache temporary password for user', ['user_id' => $user->id, 'error' => $e->getMessage()]);
-            }
+            // Store the temporary password in the database
+            $user->temporary_password = $temporaryPassword;
+            $user->save();
+
             Log::info('User created', ['user_id' => $user->id]);
 
             // Create Person with user_id
@@ -145,6 +141,7 @@ class PersonSelfRegistrationComponent extends Component
                 'start_date' => now(),
                 'status' => 'active',
                 'created_by' => $user->id,
+                'user_id' => $user->id, // Capture user_id in PersonAffiliation
             ]);
             Log::info('Person affiliation created', ['person_id' => $person->id]);
 

@@ -42,7 +42,7 @@
                                 Person Profiler</div>
                             <h1 class="text-2xl font-bold text-base-content mb-2">Welcome to Person Registry</h1>
                             <p class="text-base-content/70 text-sm max-w-2xl">
-                                Comprehensive person identity management system with role-based access,</br> 
+                                Comprehensive person identity management system with role-based access,</br>
                                 organizational affiliations, and compliance tracking
                             </p>
                         @endif
