@@ -15,7 +15,7 @@
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M7 7h10M7 11h10M7 15h10" />
         </svg>
         <span class="text-sm font-medium text-base-content/80">
-            {{ user_current_organization_name() }}
+            {{ user_current_organization_name() }} - {{ $user->roles->first()->name ? : 'No Role' }}
         </span>
     </div>
 
@@ -27,7 +27,7 @@
         </svg>
         {{ $user ? $user->name : 'Guest' }}
         <span
-            class="badge badge-xs">{{ $user && $user->roles->first()?->name ? $user->roles->first()->name : 'User' }}</span>
+            class="badge badge-xs">{{ $user && $user->roles->first()?->name ? : 'User' }}</span>
     </label>
     <ul tabindex="0"
         class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-300 mt-2">
