@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('role_types', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id(); // Change UUID to auto-incrementing integer ID
             $table->string('code', 50)->unique();
             $table->string('name');
             $table->text('description')->nullable();

@@ -5,6 +5,7 @@ namespace App\Livewire\Person;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Person;
+use App\Models\PersonAffiliation;
 use App\Models\FilterConfiguration;
 use App\Services\PersonFilterService;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +23,7 @@ class PersonList extends Component
         'search' => '',
         'classification' => '',
         'organization_id' => '',
+        'department_id' => '',
         'age_range' => '',
         'gender' => '',
         'status' => '',
@@ -35,12 +37,13 @@ class PersonList extends Component
     public $showDeleteModal = false;
     public $personToDeleteId = null;
 
-        // Edit person properties
-        public $editPersonId = null;
-        public $editPersonData = [];
-        // View person properties
-        public $viewPersonId = null;
-        public $viewPersonData = null;
+    // Edit person properties
+    public $editPersonId = null;
+    public $editPersonData = [];
+    public $showEditModal = false;
+    // View person properties
+    public $viewPersonId = null;
+    public $viewPersonData = null;
 
     protected $queryString = [
         'filters' => ['except' => []],
@@ -71,6 +74,7 @@ class PersonList extends Component
             'search' => '',
             'classification' => '',
             'organization_id' => '',
+            'department_id' => '',
             'age_range' => '',
             'gender' => '',
             'status' => '',
@@ -136,9 +140,18 @@ class PersonList extends Component
             $currentOrganization = user_current_organization();
             $canViewAllPersons = ($user instanceof \App\Models\User) && $user->hasRole('Super Admin');
 
-            if (!$canViewAllPersons && $currentOrganization) {
-                $hasAffiliation = $person->affiliations()
-                    ->where('organization_id', $currentOrganization->id)
+            if (!$canViewAllPersons) {
+                // Check by department affiliation
+                $orgAdminDeptId = null;
+                if ($user->person) {
+                    $orgAdminDeptId = PersonAffiliation::where('person_id', $user->person->id)
+                        ->where('status', 'active')
+                        ->whereNotNull('department_id')
+                        ->value('department_id');
+                }
+                $hasAffiliation = $orgAdminDeptId && $person->affiliations()
+                    ->where('department_id', $orgAdminDeptId)
+                    ->where('status', 'active')
                     ->exists();
 
                 if (!$hasAffiliation) {
@@ -187,9 +200,17 @@ class PersonList extends Component
             $currentOrganization = user_current_organization();
             $canViewAllPersons = ($user instanceof \App\Models\User) && $user->hasRole('Super Admin');
 
-            if (!$canViewAllPersons && $currentOrganization) {
-                $hasAffiliation = $person->affiliations()
-                    ->where('organization_id', $currentOrganization->id)
+            if (!$canViewAllPersons) {
+                $orgAdminDeptId = null;
+                if ($user->person) {
+                    $orgAdminDeptId = PersonAffiliation::where('person_id', $user->person->id)
+                        ->where('status', 'active')
+                        ->whereNotNull('department_id')
+                        ->value('department_id');
+                }
+                $hasAffiliation = $orgAdminDeptId && $person->affiliations()
+                    ->where('department_id', $orgAdminDeptId)
+                    ->where('status', 'active')
                     ->exists();
 
                 if (!$hasAffiliation) {
@@ -256,23 +277,68 @@ class PersonList extends Component
         $this->personToDeleteId = null;
     }
 
-        /**
-         * Load a person's data for editing
-         */
-        public function editPerson($id)
-        {
-            try {
-                $person = Person::findOrFail($id);
-                $this->editPersonId = $person->id;
-                $this->editPersonData = $person->toArray();
-            } catch (\Exception $e) {
-                Log::error('Error loading person for editing: ' . $e->getMessage());
-                $this->dispatch('alert', [
-                    'type' => 'error',
-                    'message' => 'Failed to load person for editing.'
-                ]);
+    /**
+     * Load a person's data for editing
+     */
+    public function editPerson($id)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                $this->dispatch('alert', ['type' => 'error', 'message' => 'You must be logged in.']);
+                return;
             }
+
+            $person = Person::with(['phones', 'emailAddresses', 'affiliations'])->findOrFail($id);
+
+            // Permission check
+            $canViewAllPersons = ($user instanceof \App\Models\User) && $user->hasRole('Super Admin');
+            if (!$canViewAllPersons) {
+                $orgAdminDeptId = null;
+                if ($user->person) {
+                    $orgAdminDeptId = PersonAffiliation::where('person_id', $user->person->id)
+                        ->where('status', 'active')
+                        ->whereNotNull('department_id')
+                        ->value('department_id');
+                }
+                $hasAffiliation = $orgAdminDeptId && $person->affiliations()
+                    ->where('department_id', $orgAdminDeptId)
+                    ->where('status', 'active')
+                    ->exists();
+
+                if (!$hasAffiliation) {
+                    $this->dispatch('alert', ['type' => 'error', 'message' => 'You do not have permission to edit this person.']);
+                    return;
+                }
+            }
+
+            $this->editPersonId = $person->id;
+            $this->editPersonData = [
+                'given_name' => $person->given_name,
+                'middle_name' => $person->middle_name,
+                'family_name' => $person->family_name,
+                'date_of_birth' => $person->date_of_birth ? \Carbon\Carbon::parse($person->date_of_birth)->format('Y-m-d') : '',
+                'gender' => ucfirst(strtolower($person->gender ?? '')),
+                'address' => $person->address,
+                'country' => $person->country,
+                'city' => $person->city,
+                'district' => $person->district,
+                'phone' => $person->phones->first()?->number ?? '',
+                'email' => $person->emailAddresses->first()?->email ?? '',
+                'role_type' => $person->affiliations->where('status', 'active')->first()?->role_type ?? '',
+                'role_title' => $person->affiliations->where('status', 'active')->first()?->role_title ?? '',
+                'organization_id' => $person->affiliations->where('status', 'active')->first()?->organization_id ?? '',
+                'user_id' => $person->user_id,
+            ];
+            $this->showEditModal = true;
+        } catch (\Exception $e) {
+            Log::error('Error loading person for editing: ' . $e->getMessage());
+            $this->dispatch('alert', [
+                'type' => 'error',
+                'message' => 'Failed to load person for editing.'
+            ]);
         }
+    }
 
             /**
              * Load a person's data for viewing
@@ -293,98 +359,113 @@ class PersonList extends Component
                 }
             }
 
-        /**
-         * Update the person's data
-         */
-        public function updatePerson()
-        {
-            if (!$this->editPersonId) {
-                $this->dispatch('alert', [
-                    'type' => 'error',
-                    'message' => 'No person selected for update.'
-                ]);
-                return;
-            }
+    /**
+     * Cancel editing
+     */
+    public function cancelEdit()
+    {
+        $this->showEditModal = false;
+        $this->editPersonId = null;
+        $this->editPersonData = [];
+        $this->resetValidation();
+    }
 
-            $this->validate([
-                'editPersonData.given_name' => 'required|string|max:255',
-                'editPersonData.family_name' => 'required|string|max:255',
-                'editPersonData.date_of_birth' => 'required|date',
-                'editPersonData.gender' => 'required|in:Male,Female',
-                'editPersonData.address' => 'nullable|string|max:255',
-                'editPersonData.city' => 'nullable|string|max:255',
-                'editPersonData.country' => 'nullable|string|max:255',
-                'editPersonData.district' => 'nullable|string|max:255',
-                'editPersonData.email' => 'required|email|unique:users,email,' . $this->editPersonData['user_id'],
-                'editPersonData.phone' => 'required|string|max:20|unique:phones,number,' . $this->editPersonData['id'] . ',person_id',
-                // Add other fields as needed
+    /**
+     * Update the person's data
+     */
+    public function updatePerson()
+    {
+        if (!$this->editPersonId) {
+            $this->dispatch('alert', [
+                'type' => 'error',
+                'message' => 'No person selected for update.'
+            ]);
+            return;
+        }
+
+        $person = Person::findOrFail($this->editPersonId);
+        $primaryPhone = $person->phones()->first();
+
+        $this->validate([
+            'editPersonData.given_name' => 'required|string|max:255',
+            'editPersonData.family_name' => 'required|string|max:255',
+            'editPersonData.date_of_birth' => 'required|date',
+            'editPersonData.gender' => 'required|in:Male,Female',
+            'editPersonData.address' => 'nullable|string|max:255',
+            'editPersonData.city' => 'nullable|string|max:255',
+            'editPersonData.country' => 'nullable|string|max:255',
+            'editPersonData.district' => 'nullable|string|max:255',
+            'editPersonData.email' => 'required|email|unique:users,email,' . ($this->editPersonData['user_id'] ?? 'NULL'),
+            'editPersonData.phone' => 'required|string|max:20|unique:phones,number,' . ($primaryPhone?->id ?? 'NULL'),
+            'editPersonData.role_type' => 'nullable|string|max:255',
+            'editPersonData.role_title' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Update the person record
+            $person->update([
+                'given_name' => $this->editPersonData['given_name'],
+                'middle_name' => $this->editPersonData['middle_name'] ?? null,
+                'family_name' => $this->editPersonData['family_name'],
+                'date_of_birth' => $this->editPersonData['date_of_birth'],
+                'gender' => $this->editPersonData['gender'],
+                'address' => $this->editPersonData['address'] ?? null,
+                'country' => $this->editPersonData['country'] ?? null,
+                'city' => $this->editPersonData['city'] ?? null,
+                'district' => $this->editPersonData['district'] ?? null,
+                'updated_by' => Auth::id(),
             ]);
 
-            try {
-                DB::beginTransaction();
+            // Update the user record
+            $user = $person->user;
+            if ($user) {
+                $user->email = $this->editPersonData['email'];
+                $user->name = $this->editPersonData['given_name'] . ' ' . $this->editPersonData['family_name'];
+                $user->save();
+            }
 
-                // Update the person record
-                $person = Person::findOrFail($this->editPersonId);
-                $person->fill($this->editPersonData);
-                $person->save();
-
-                // Update the user record
-                $user = $person->user;
-                if ($user) {
-                    $user->email = $this->editPersonData['email'];
-                    $user->name = $this->editPersonData['given_name'] . ' ' . $this->editPersonData['family_name'];
-                    $user->save();
-                }
-
-                // Update the person affiliations
-                $affiliation = $person->affiliations()->first();
-                if ($affiliation) {
-                    $affiliation->update([
-                        'organization_id' => $this->editPersonData['organization_id'] ?? $affiliation->organization_id,
-                        'role_type' => $this->editPersonData['role_type'] ?? $affiliation->role_type,
-                        'role_title' => $this->editPersonData['role_title'] ?? $affiliation->role_title,
-                    ]);
-                }
-
-                // Update the email addresses
-                $emailAddress = $person->emailAddresses()->first();
-                if ($emailAddress) {
-                    $emailAddress->update([
-                        'email' => $this->editPersonData['email']
-                    ]);
-                }
-
-                // Update the phone numbers
-                $phone = $person->phones()->first();
-                if ($phone) {
-                    $phone->update([
-                        'number' => $this->editPersonData['phone']
-                    ]);
-                }
-
-                DB::commit();
-
-                // Optionally reset edit state
-                $this->editPersonId = null;
-                $this->editPersonData = [];
-
-                $this->dispatch('alert', [
-                    'type' => 'success',
-                    'message' => 'Person and related records updated successfully.'
-                ]);
-
-                // Optionally emit an event to refresh the list
-                $this->emit('personUpdated');
-
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error('Error updating person: ' . $e->getMessage());
-                $this->dispatch('alert', [
-                    'type' => 'error',
-                    'message' => 'Failed to update person and related records.'
+            // Update the active affiliation
+            $affiliation = $person->affiliations()->where('status', 'active')->first();
+            if ($affiliation) {
+                $affiliation->update([
+                    'role_type' => $this->editPersonData['role_type'] ?? $affiliation->role_type,
+                    'role_title' => $this->editPersonData['role_title'] ?? $affiliation->role_title,
                 ]);
             }
+
+            // Update the primary email address
+            $emailAddress = $person->emailAddresses()->first();
+            if ($emailAddress) {
+                $emailAddress->update(['email' => $this->editPersonData['email']]);
+            }
+
+            // Update the primary phone number
+            if ($primaryPhone) {
+                $primaryPhone->update(['number' => $this->editPersonData['phone']]);
+            }
+
+            DB::commit();
+
+            $this->cancelEdit();
+
+            $this->dispatch('alert', [
+                'type' => 'success',
+                'message' => 'Person updated successfully.'
+            ]);
+
+            $this->clearPersonListCache();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating person: ' . $e->getMessage());
+            $this->dispatch('alert', [
+                'type' => 'error',
+                'message' => 'Failed to update person: ' . $e->getMessage()
+            ]);
         }
+    }
 
     protected function loadDynamicFilters()
     {
@@ -414,10 +495,19 @@ class PersonList extends Component
             return $this->renderEmptyState();
         }
 
+        // Get the Org Admin's department_id from their affiliation
+        $orgAdminDepartmentId = null;
+        if ($canViewOrgPersons && !$canViewAllPersons && $user->person) {
+            $orgAdminDepartmentId = PersonAffiliation::where('person_id', $user->person->id)
+                ->where('status', 'active')
+                ->whereNotNull('department_id')
+                ->value('department_id');
+        }
+
         try {
-            // For Organization Admins, always filter by their organization
-            if ($canViewOrgPersons && !$canViewAllPersons && $currentOrganization) {
-                $this->filters['organization_id'] = $currentOrganization->id;
+            // For Organization Admins, filter by their department
+            if ($canViewOrgPersons && !$canViewAllPersons && $orgAdminDepartmentId) {
+                $this->filters['department_id'] = $orgAdminDepartmentId;
             }
 
             // Allow Super Admins to clear organization filter
@@ -462,9 +552,10 @@ class PersonList extends Component
 
             // Fallback query
             $query = Person::query();
-            if ($canViewOrgPersons && !$canViewAllPersons && $currentOrganization) {
-                $query->whereHas('affiliations', function ($q) use ($currentOrganization) {
-                    $q->where('organization_id', $currentOrganization->id);
+            if ($canViewOrgPersons && !$canViewAllPersons && $orgAdminDepartmentId) {
+                $query->whereHas('affiliations', function ($q) use ($orgAdminDepartmentId) {
+                    $q->where('department_id', $orgAdminDepartmentId)
+                      ->where('status', 'active');
                 });
             }
 

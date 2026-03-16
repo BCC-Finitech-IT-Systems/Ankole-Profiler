@@ -16,14 +16,31 @@ class OrganizationHelperNew
         $OrganizationId = session('current_organization_id');
 
         if (!$OrganizationId && Auth::check()) {
-            // Fall back to user's default organization
-            $OrganizationId = Auth::user()->organization_id;
+            // Check PersonAffiliation table for organization details
+            $person = Auth::user()->person;
+            if ($person) {
+                $affiliation = $person->affiliations()->first();
+                if ($affiliation) {
+                    $OrganizationId = $affiliation->organization_id;
+                }
+            }
+
+            if (!$OrganizationId) {
+                logger()->warning('No organization found in PersonAffiliation for user: ' . Auth::id());
+            }
         }
 
         if ($OrganizationId) {
-            return Organization::find($OrganizationId);
+            $organization = Organization::find($OrganizationId);
+
+            if (!$organization) {
+                logger()->error('Organization not found for ID: ' . $OrganizationId);
+            }
+
+            return $organization;
         }
 
+        logger()->error('Unable to determine current organization for user: ' . (Auth::id() ?? 'guest'));
         return null;
     }
 

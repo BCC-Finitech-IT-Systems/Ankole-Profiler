@@ -127,8 +127,24 @@ class MessageHistory extends Component
 
     public function getChannelStats()
     {
+        $organizationId = Auth::user()->organization_id;
+
+        if (!$organizationId) {
+            $person = Auth::user()->person;
+            if ($person) {
+                $affiliation = $person->affiliations()->first();
+                if ($affiliation) {
+                    $organizationId = $affiliation->organization_id;
+                }
+            }
+        }
+
+        if (!$organizationId) {
+            throw new \Exception('No organization associated with the user.');
+        }
+
         $communicationManager = app(CommunicationManager::class);
-        return $communicationManager->getOrganizationStats(Auth::user()->organization_id, 'month');
+        return $communicationManager->getOrganizationStats($organizationId, 'month');
     }
 
     public function render()

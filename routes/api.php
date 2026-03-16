@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\CommunicationWebhookController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
-})->middleware('auth:sanctum');
+})->middleware(['auth:sanctum', 'verified']);
 
 // Communication webhook routes (no authentication required)
 Route::prefix('webhooks/communication')->group(function () {

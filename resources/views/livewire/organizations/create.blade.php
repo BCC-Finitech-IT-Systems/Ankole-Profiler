@@ -4,12 +4,12 @@
             class="flex items-center justify-between {{ $category ? 'bg-gradient-to-r from-primary/5 to-transparent p-4 rounded-lg border border-primary/10' : '' }}">
             <div>
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    {{ __('Register New Organization') }}
+                    {{ __('Register New Project') }}
                 </h2>
                 <p class="text-gray-600 text-sm mt-1">Step {{ $currentStep }} of {{ $totalSteps }}:
                     @switch($currentStep)
                         @case(1)
-                            Organization Category
+                            Projects Category
                             @if ($category)
                                 <span
                                     class="inline-flex items-center px-2 py-1 ml-2 text-xs font-medium text-primary bg-primary/10 border border-primary/20 rounded-full">
@@ -52,7 +52,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    Back to Organizations
+                    Back to Projects
                 </a>
                 <a href="{{ route('organizations.template') }}" class="btn btn-outline btn-primary" target="_blank">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,11 +66,11 @@
 
     <div class="py-4">
         {{-- Import Organizations --}}
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 mb-6">
+        <div class="max-w-6xl sm:px-6 lg:px-8 mb-6">
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-1">Import Organizations</h3>
-                    <p class="text-gray-600 text-sm">Upload an Excel or CSV file to import organizations in bulk. <a href="{{ route('organizations.template') }}" class="link link-primary underline ml-1" target="_blank">Download template</a></p>
+                    <h3 class="text-lg font-medium text-gray-900 mb-1">Import Projects</h3>
+                    <p class="text-gray-600 text-sm">Upload an Excel or CSV file to import Projects in bulk. <a href="{{ route('organizations.template') }}" class="link link-primary underline ml-1" target="_blank">Download template</a></p>
                 </div>
                 <form wire:submit.prevent="importOrganizations" class="flex flex-col md:flex-row md:items-center gap-2">
                     <input type="file" wire:model="importFile" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="file-input file-input-bordered file-input-sm" />
@@ -90,7 +90,7 @@
                 </form>
             </div>
         </div>
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-6xl sm:px-6 lg:px-8">
             {{-- Tab Navigation --}}
             <div class="mb-6">
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -161,8 +161,8 @@
                         @if ($currentStep === 1)
                             <div class="space-y-3">
                                 <div>
-                                    <h3 class="text-lg font-medium text-gray-900 mb-3">Select Organization Category</h3>
-                                    <p class="text-gray-600 mb-4">Choose the type of organization you're registering.
+                                    <h3 class="text-lg font-medium text-gray-900 mb-3">Select Project Category</h3>
+                                    <p class="text-gray-600 mb-4">Choose the type of project you're registering.
                                         This will determine the specific fields required for your organization.</p>
                                 </div>
 
@@ -293,7 +293,7 @@
 
                                     <div class="form-control">
                                         <label class="label py-1">
-                                            <span class="label-text font-medium text-sm">Organization Code <span
+                                            <span class="label-text font-medium text-sm">Project Code <span
                                                     class="text-red-500">*</span></span>
                                         </label>
                                         <input type="text" wire:model="code" class="input input-bordered input-sm"
@@ -305,7 +305,7 @@
 
                                     <div class="form-control">
                                         <label class="label py-1">
-                                            <span class="label-text font-medium text-sm">Organization Type</span>
+                                            <span class="label-text font-medium text-sm">Project Type</span>
                                         </label>
                                         <select wire:model="organization_type" class="select select-bordered select-sm">
                                             <option value="STANDALONE">Standalone Organization</option>

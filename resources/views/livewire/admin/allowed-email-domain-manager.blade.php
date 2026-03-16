@@ -25,7 +25,7 @@
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                     <option value="">Select an organization</option>
                     @foreach ($organizations as $organization)
-                        <option value="{{ $organization->id }}">{{ $organization->name }}</option>
+                        <option value="{{ $organization->id }}">{{ $organization->legal_name }}</option>
                     @endforeach
                 </select>
                 @error('organization_id')

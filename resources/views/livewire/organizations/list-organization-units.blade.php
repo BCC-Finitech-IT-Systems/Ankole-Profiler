@@ -1,6 +1,16 @@
-<div class="max-w-4xl mx-auto mt-10 bg-white p-8 rounded shadow">
+<div class="max-w-4xl mt-2 bg-white p-8 rounded shadow">
 
-    <h2 class="text-2xl font-bold mb-6">Organization Units</h2>
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">Project Units</h2>
+        @can('create-units')
+            <a href="{{ route('organization-units.create') }}" class="btn btn-primary gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Create Unit
+            </a>
+        @endcan
+    </div>
 
     <div class="flex flex-col md:flex-row gap-4 mb-4">
         <div class="flex-1 flex gap-2">

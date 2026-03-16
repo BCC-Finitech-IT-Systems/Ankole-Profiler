@@ -18,11 +18,13 @@ class Organization extends Model
     protected $fillable = [
         // Basic Information
         'legal_name',
+        'display_name',
         'code',
-        'Organization_type',
+        'organization_type',
         'parent_organization_id',
         'registration_number',
         'tax_identification_number',
+        'country_of_registration',
         'country',
         'date_established',
         'logo_path',
@@ -35,6 +37,8 @@ class Organization extends Model
 
         // Address
         'address',
+        'address_line_1',
+        'address_line_2',
         'city',
         'district',
         'postal_code',
@@ -42,9 +46,25 @@ class Organization extends Model
         'latitude',
         'longitude',
 
+        'regulatory_body',
+        'license_number',
+        'license_issue_date',
+        'license_expiry_date',
+        'accreditation_status',
         'primary_contact_name',
+        'primary_contact_title',
         'primary_contact_email',
         'primary_contact_phone',
+        'secondary_contact_name',
+        'secondary_contact_email',
+        'secondary_contact_phone',
+
+        'bank_name',
+        'bank_account_number',
+        'bank_branch',
+        'default_currency',
+        'timezone',
+        'default_language',
 
         'is_super',
     ];
@@ -109,6 +129,22 @@ class Organization extends Model
     public function personAffiliations(): HasMany
     {
         return $this->hasMany(\App\Models\PersonAffiliation::class, 'organization_id');
+    }
+
+    /**
+     * Department relationship
+     */
+    public function departments(): HasMany
+    {
+        return $this->hasMany(Department::class, 'organization_id');
+    }
+
+    /**
+     * Projects through departments
+     */
+    public function projects()
+    {
+        return $this->hasManyThrough(Project::class, Department::class, 'organization_id', 'department_id');
     }
 
     /**

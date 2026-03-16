@@ -57,6 +57,10 @@ class SearchFilterService
                     $this->applyOrganizationFilter($value);
                     break;
 
+                case 'department_id':
+                    $this->applyDepartmentFilter($value);
+                    break;
+
                 case 'status':
                     // affiliation status
                     $this->applyAffiliationStatusFilter($value);
@@ -134,6 +138,14 @@ class SearchFilterService
         // Persons are affiliated via 'affiliations' relationship
         $this->query->whereHas('affiliations', function($q) use ($organizationId) {
             $q->where('organization_id', $organizationId)
+              ->where('status', 'active');
+        });
+    }
+
+    protected function applyDepartmentFilter($departmentId)
+    {
+        $this->query->whereHas('affiliations', function($q) use ($departmentId) {
+            $q->where('department_id', $departmentId)
               ->where('status', 'active');
         });
     }

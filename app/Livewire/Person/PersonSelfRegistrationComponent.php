@@ -6,6 +6,7 @@ use App\Models\EmailAddress;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Person;
+use App\Models\Department;
 use App\Models\Organization;
 use App\Models\PersonAffiliation;
 use App\Models\PersonIdentifier;
@@ -42,21 +43,20 @@ class PersonSelfRegistrationComponent extends Component
         'city' => '',
         'role_type' => 'STAFF',
         'role_title' => '',
-        'organization_id' => '',
+        'department_id' => '',
     ];
 
     // Documents step removed
-    public $availableOrganizations = null; // Initialize as null to avoid type mismatch
+    public $availableDepartments = null;
 
     public function mount()
     {
-        $this->availableOrganizations = collect(Organization::all()); // Ensure it is a collection
+        $this->availableDepartments = collect(Department::where('is_active', true)->get());
 
-        // Debug log for available organizations
-        Log::debug('Available organizations during mount', ['organizations' => $this->availableOrganizations]);
+        Log::debug('Available departments during mount', ['departments' => $this->availableDepartments]);
 
-        if ($this->availableOrganizations->isEmpty()) {
-            session()->flash('error', 'No organizations are available for registration.');
+        if ($this->availableDepartments->isEmpty()) {
+            session()->flash('error', 'No departments are available for registration.');
         }
     }
 
@@ -75,11 +75,11 @@ class PersonSelfRegistrationComponent extends Component
                 'form.district' => 'required|string',
                 'form.city' => 'required|string',
                 'form.role_title' => 'required|string',
-                'form.organization_id' => 'required|exists:organizations,id',
+                'form.department_id' => 'required|exists:departments,id',
             ]);
 
         // Debug log for organization_id
-        Log::debug('Organization ID during registration', ['organization_id' => $this->form['organization_id']]);
+        Log::debug('Department ID during registration', ['department_id' => $this->form['department_id']]);
 
         // Check if email exists and is not verified
         $existingUser = User::where('email', $this->form['email'])->first();
@@ -95,7 +95,8 @@ class PersonSelfRegistrationComponent extends Component
         }
 
         $temporaryPassword = Str::random(10);
-        $Organization = Organization::find($this->form['organization_id']);
+        $department = Department::findOrFail($this->form['department_id']);
+        $superOrganization = Organization::where('is_super', true)->firstOrFail();
         $user = null;
         DB::beginTransaction();
         try {
@@ -135,9 +136,10 @@ class PersonSelfRegistrationComponent extends Component
 
             PersonAffiliation::create([
                 'person_id' => $person->id,
-                'organization_id' => $this->form['organization_id'],
+                'organization_id' => $superOrganization->id,
+                'department_id' => $this->form['department_id'],
                 'role_type' => $this->form['role_type'] ?? 'STAFF',
-                'role_title' => $this->form['role_title'] ?? 'Organization Admin',
+                'role_title' => $this->form['role_title'] ?? 'Department Admin',
                 'start_date' => now(),
                 'status' => 'active',
                 'created_by' => $user->id,
@@ -158,8 +160,7 @@ class PersonSelfRegistrationComponent extends Component
 
             // Only send welcome email after user verifies their email (handled elsewhere, not here)
 
-            session()->flash('success', 'Registration successful! Please check your email to verify your account.');
-            return redirect()->route('login');
+            return redirect()->route('login')->with('self_register_success', true);
         } catch (\Exception $e) {
             if ($user) {
                 $user->delete();
@@ -211,14 +212,6 @@ class PersonSelfRegistrationComponent extends Component
                 ]);
             }
 
-            // $blocked = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'];
-
-            // if (in_array($domain, $blocked)) {
-            //     throw ValidationException::withMessages([
-            //         'email' => 'Email addresses from this domain are not allowed.',
-            //     ]);
-            // }
-
             EmailAddress::create([
                 'person_id' => $person->id,
                 'email_id' => \App\Helpers\IdGenerator::generateEmailId(),
@@ -230,7 +223,7 @@ class PersonSelfRegistrationComponent extends Component
             ]);
         }
 
-        // ...existing code...
+        // ...existing code...re
     }
     public function render()
     {

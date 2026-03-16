@@ -47,6 +47,9 @@ class PersonFilterService
             case 'organization_id':
                 $this->applyOrganizationFilter($value);
                 break;
+            case 'department_id':
+                $this->applyDepartmentFilter($value);
+                break;
             case 'age_range':
                 $this->applyAgeRangeFilter($value);
                 break;
@@ -97,6 +100,14 @@ class PersonFilterService
     {
         $this->query->whereHas('affiliations', function($q) use ($OrganizationId) {
             $q->where('organization_id', $OrganizationId)
+              ->where('status', 'active');
+        });
+    }
+
+    protected function applyDepartmentFilter($departmentId): void
+    {
+        $this->query->whereHas('affiliations', function($q) use ($departmentId) {
+            $q->where('department_id', $departmentId)
               ->where('status', 'active');
         });
     }

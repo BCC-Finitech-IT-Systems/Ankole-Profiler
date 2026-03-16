@@ -146,17 +146,33 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Organization Information -->
                     <div class="form-control">
-                        @if (auth()->user()->hasRole('Organization Admin'))
+                        @if (auth()->user()->hasRole('Organization Admin') && !auth()->user()->hasRole('Super Admin'))
                             <div class="form-control">
                                 <label class="label pb-1">
-                                    <span class="label-text text-sm font-medium">Project <span
+                                    <span class="label-text text-sm font-medium">Project (Organization) <span
                                             class="text-red-500">*</span></span>
                                 </label>
-                                <input type="text" class="input input-bordered w-full"
-                                    value="{{ auth()->user()->personAffiliation->organization->display_name ?? auth()->user()->personAffiliation->organization->legal_name }}"
-                                    readonly>
-                                <input type="hidden" wire:model.defer="currentAffiliation.organization_id"
-                                    value="{{ auth()->user()->personAffiliation->organization_id }}">
+                                @if(!empty($availableOrganizations))
+                                    <select wire:model.defer="form.organization_id"
+                                        class="select select-bordered w-full">
+                                        <option value="">Select Project</option>
+                                        @foreach ($availableOrganizations as $org)
+                                            <option value="{{ $org['id'] }}">
+                                                {{ $org['display_name'] ?? $org['legal_name'] ?? 'No Project Provided' }}
+                                                ({{ ucfirst(strtolower(trim($org['category'] ?? ''))) }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @if($userDepartmentName)
+                                        <p class="text-xs text-base-content/60 mt-1">Showing organizations under {{ $userDepartmentName }} department</p>
+                                    @endif
+                                @else
+                                    <input type="text" class="input input-bordered w-full"
+                                        value="No organizations found for your department" readonly>
+                                @endif
+                                @error('form.organization_id')
+                                    <span class="text-red-600 text-xs">{{ $message }}</span>
+                                @enderror
                             </div>
                         @elseif (auth()->user()->hasRole('Super Admin'))
                             <div class="form-control">
@@ -164,7 +180,7 @@
                                     <span class="label-text text-sm font-medium">Project <span
                                             class="text-red-500">*</span></span>
                                 </label>
-                                <select wire:model.defer="currentAffiliation.organization_id"
+                                <select wire:model.defer="form.organization_id"
                                     class="select select-bordered w-full">
                                     <option value="">Select Project</option>
                                     @foreach ($availableOrganizations as $org)
@@ -172,7 +188,7 @@
                                             {{ $org['legal_name'] ?? 'No Project Provided' }}</option>
                                     @endforeach
                                 </select>
-                                @error('currentAffiliation.organization_id')
+                                @error('form.organization_id')
                                     <span class="text-red-600 text-xs">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -181,7 +197,7 @@
 
                     <div class="form-control">
                         <label class="label pb-1">
-                            <span class="label-text text-sm font-medium">Role Type</span>
+                            <span class="label-text text-sm font-medium">Association Type:</span>
                         </label>
                         <input type="text" wire:model.defer="form.role_type" class="input input-bordered w-full"
                             placeholder="Enter role type">
@@ -192,7 +208,7 @@
 
                     <div class="form-control">
                         <label class="label pb-1">
-                            <span class="label-text text-sm font-medium">Role Title</span>
+                            <span class="label-text text-sm font-medium">Occupation:</span>
                         </label>
                         <input type="text" wire:model.defer="form.role_title" class="input input-bordered w-full"
                             placeholder="Enter role title">

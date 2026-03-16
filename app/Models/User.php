@@ -177,4 +177,14 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->notify(new CustomVerifyEmail($temporaryPassword));
     }
+
+    public function headedDepartments()
+    {
+        return $this->hasMany(Department::class, 'admin_user_id');
+    }
+
+    public function headedProjects()
+    {
+        return $this->hasMany(Project::class, 'admin_user_id');
+    }
 }

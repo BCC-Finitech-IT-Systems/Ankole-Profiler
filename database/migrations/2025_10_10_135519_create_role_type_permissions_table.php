@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('role_type_permissions', function (Blueprint $table) {
             $table->id();
-            $table->uuid('role_type_id');
+            $table->unsignedBigInteger('role_type_id');
             $table->unsignedBigInteger('permission_id');
             $table->timestamps();
 

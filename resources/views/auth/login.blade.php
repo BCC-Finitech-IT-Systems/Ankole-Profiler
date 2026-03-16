@@ -24,6 +24,18 @@
         </div>
     @endif
 
+    @if (session('self_register_success'))
+        <div class="alert alert-info mb-4">
+            <svg class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
+            </svg>
+            <span>
+                Registration successful! Please check your email for verification instructions. After verifying your email, you can log in. If you do not receive an email, contact support.
+            </span>
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('login') }}" style="max-width: 800px; margin: 0 auto;">
         @csrf
         <fieldset class="fieldset">

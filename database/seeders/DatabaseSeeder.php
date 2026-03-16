@@ -39,6 +39,10 @@ class DatabaseSeeder extends Seeder
             $this->call([
                 RolePermissionSeeder::class,
                 UserSeeder::class,
+                AllowedEmailDomainSeeder::class,
+                CommunicationPermissionSeeder::class,
+                DepartmentSeeder::class,
+                DepartmentSubCategorySeeder::class,
             ]);
         } finally {
             // Re-enable foreign key checks after seeding

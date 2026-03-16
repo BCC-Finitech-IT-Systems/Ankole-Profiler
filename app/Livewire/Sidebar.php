@@ -133,6 +133,14 @@ class Sidebar extends Component
 
     private function getSuperAdminMenu()
     {
+        $activeRoute = request()->route()->getName();
+
+        $dashboardItems = [
+            ['label' => 'Dashboard', 'route' => 'dashboard', 'permission' => 'view-dashboard', 'active' => $activeRoute === 'dashboard' && !request()->has('department_id')],
+            ['label' => 'My Organization', 'route' => 'dashboard', 'permission' => 'view-org-analytics', 'active' => $activeRoute === 'dashboard' && !request()->has('department_id')],
+            ['label' => 'Departments Dashboard', 'route' => 'departments.dashboard', 'permission' => 'view-departments-dashboard', 'icon' => 'M3 13h8V3H3v10zm10 8h8V3h-8v18zM3 21h8v-6H3v6z']
+        ];
+
         return [
             // 'dashboard' => [
             //     'title' => '🏠 Dashboard',
@@ -149,23 +157,24 @@ class Sidebar extends Component
                 'title' => 'Dashboard',
                 'icon' => 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z',
                 'route' => 'dashboard',
-                'active' => request()->route()->getName() === 'dashboard',
-                'items' => [
-                    ['label' => 'Dashboard', 'route' => 'dashboard', 'permission' => 'view-dashboard', 'active' => request()->route()->getName() === 'dashboard'],
-                    ['label' => 'My Organization Analytics', 'route' => 'dashboard', 'permission' => 'view-org-analytics', 'active' => request()->route()->getName() === 'dashboard']
-                ]
+                'active' => $activeRoute === 'dashboard',
+                'items' => $dashboardItems,
             ],
             'organization' => [
                 'title' => 'Projects Mgt',
                 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-                'active' => in_array(request()->route()->getName(), ['dashboard']),
+                'active' => in_array(request()->route()->getName(), ['dashboard', 'departments.index']),
                 'items' => [
                     ['label' => 'All Projects', 'route' => 'organizations.index', 'permission' => 'view-Organizations', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5'],
                     ['label' => 'Add New Project', 'route' => 'organizations.create', 'permission' => 'create-Organizations', 'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6'],
                     ['label' => 'Import Projects', 'route' => 'organizations.import', 'permission' => 'import-Organizations', 'icon' => 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10'],
                     // ['label' => 'Hierarchy', 'route' => 'dashboard', 'permission' => 'view-Organizations-hierarchy', 'icon' => 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z'],
                     // ['label' => 'Sites & Locations', 'route' => 'dashboard', 'permission' => 'view-sites', 'icon' => 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z'],
-                    ['label' => 'Project Units', 'route' => 'organization-units.index', 'permission' => 'view-units', 'icon' => 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z']
+                    ['label' => 'Project Units', 'route' => 'organization-units.index', 'permission' => 'view-units', 'icon' => 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z'],
+                    ['label' => 'Create Unit', 'route' => 'organization-units.create', 'permission' => 'create-units', 'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6'],
+                    ['label' => 'Unit Applications', 'route' => 'organization-units.applications', 'permission' => 'review-organization-units', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
+                    ['label' => 'Departments', 'route' => 'departments.index', 'permission' => 'view-departments', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'active' => request()->route()->getName() === 'departments.index'],
+
                 ]
             ],
             'person_registry' => [
@@ -208,7 +217,7 @@ class Sidebar extends Component
                     ['label' => 'Roles', 'route' => 'admin.roles.index', 'permission' => 'manage-roles', 'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'],
                     ['label' => 'Occupations', 'route' => 'admin.role-types.index', 'permission' => 'manage-role-types', 'icon' => 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'],
                     ['label' => 'Users', 'route' => 'admin.users.index', 'permission' => 'manage-users', 'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'],
-                    // ['label' => 'Allowed Domains', 'route' => 'allowEmailDomains.index', 'permission' => 'manage-users', 'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z']
+                    ['label' => 'Allowed Domains', 'route' => 'admin.allowEmailDomains', 'permission' => 'manage-users', 'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z']
                 ]
             ],
 
@@ -318,24 +327,30 @@ class Sidebar extends Component
     {
         $activeRoute = request()->route()->getName();
 
+        $dashboardItems = [
+            ['label' => 'Dashboard Overview', 'route' => 'dashboard', 'permission' => 'view-dashboard', 'active' => $activeRoute === 'dashboard' && !request()->has('department_id')],
+            // ['label' => 'My Organization Analytics', 'route' => 'dashboard', 'permission' => 'view-org-analytics', 'active' => $activeRoute === 'dashboard' && !request()->has('department_id')],
+        ];
+
         return [
             'dashboard' => [
                 'title' => 'Dashboard',
                 'icon' => 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z',
                 'route' => 'dashboard',
                 'active' => $activeRoute === 'dashboard',
-                'items' => [
-                    ['label' => 'Dashboard Overview', 'route' => 'dashboard', 'permission' => 'view-dashboard', 'active' => $activeRoute === 'dashboard'],
-                    ['label' => 'My Organization Analytics', 'route' => 'dashboard', 'permission' => 'view-org-analytics', 'active' => $activeRoute === 'dashboard']
-                ]
+                'items' => $dashboardItems,
             ],
             'organization' => [
                 'title' => 'My Projects',
                 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-                'active' => in_array($activeRoute, ['dashboard']),
+                'active' => in_array($activeRoute, ['organizations.current-project', 'organization-units.index', 'organization-units.create', 'organization-units.applications', 'departments.index', 'departments.dashboard']),
                 'items' => [
-                    ['label' => 'Projects Profile', 'route' => 'dashboard', 'permission' => 'view-own-Organization', 'active' => $activeRoute === 'dashboard'],
-                    ['label' => 'Project Units', 'route' => 'dashboard', 'permission' => 'view-own-units', 'active' => $activeRoute === 'dashboard']
+                    ['label' => 'Projects Profile', 'route' => 'organizations.current-project', 'permission' => 'view-own-Organization', 'active' => $activeRoute === 'organizations.current-project'],
+                    // ['label' => 'Project Units', 'route' => 'organization-units.index', 'permission' => 'view-own-units', 'active' => $activeRoute === 'organization-units.index'],
+                    // // ['label' => 'Create Unit', 'route' => 'organization-units.create', 'permission' => 'create-units', 'active' => $activeRoute === 'organization-units.create'],
+                    // ['label' => 'Unit Applications', 'route' => 'organization-units.applications', 'permission' => 'review-organization-units', 'active' => $activeRoute === 'organization-units.applications'],
+                    ['label' => 'Departments', 'route' => 'departments.index', 'permission' => 'view-departments', 'active' => $activeRoute === 'departments.index'],
+                    ['label' => 'Departments Dashboard', 'route' => 'departments.dashboard', 'permission' => 'view-departments-dashboard', 'active' => $activeRoute === 'departments.dashboard']
                 ]
             ],
             'person_registry' => [
@@ -357,8 +372,9 @@ class Sidebar extends Component
                 'items' => [
                     ['label' => 'Send Message', 'route' => 'communication.send', 'permission' => 'send-communications', 'icon' => 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8', 'active' => $activeRoute === 'communication.send'],
                     ['label' => 'Message History', 'route' => 'communication.history', 'permission' => 'view-communications', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', 'active' => $activeRoute === 'communication.history'],
-                    ['label' => 'Bulk Messaging', 'route' => 'communication.send', 'permission' => 'send-bulk-communications', 'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', 'active' => $activeRoute === 'communication.send'],
-                    ['label' => 'Analytics', 'route' => 'communication.index', 'permission' => 'view-communication-analytics', 'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', 'active' => $activeRoute === 'communication.index']
+                    // ['label' => 'Bulk Messaging', 'route' => 'communication.send', 'permission' => 'send-bulk-communications', 'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', 'active' => $activeRoute === 'communication.send'],
+                    // ['label' => 'Analytics', 'route' => 'communication.index', 'permission' => 'view-communication-analytics', 'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', 'active' => $activeRoute === 'communication.index'],
+                    // ['label' => 'Occupation', 'route' => 'admin.role-types.index', 'permission' => 'manage-role-types', 'icon' => 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', 'active' => $activeRoute === 'admin.role-types.index'],
                 ]
             ],
             // 'admin' => [
@@ -379,15 +395,17 @@ class Sidebar extends Component
     {
         $activeRoute = request()->route()->getName();
 
+        $dashboardItems = [
+            ['label' => 'My Department Dashboard', 'route' => 'dashboard', 'permission' => 'view-dashboard', 'active' => $activeRoute === 'dashboard' && !request()->has('department_id')],
+        ];
+
         return [
             'dashboard' => [
                 'title' => 'Dashboard',
                 'icon' => 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z',
                 'route' => 'dashboard',
                 'active' => $activeRoute === 'dashboard',
-                'items' => [
-                    ['label' => 'My Department Dashboard', 'route' => 'dashboard', 'permission' => 'view-dashboard', 'active' => $activeRoute === 'dashboard']
-                ]
+                'items' => $dashboardItems,
             ],
             'team' => [
                 'title' => 'My Team',
@@ -401,8 +419,10 @@ class Sidebar extends Component
             'records' => [
                 'title' => 'Department Records',
                 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-                'active' => in_array($activeRoute, ['dashboard']),
+                'active' => in_array($activeRoute, ['dashboard', 'departments.index']),
                 'items' => [
+                    ['label' => 'Department List', 'route' => 'departments.index', 'permission' => 'view-departments', 'active' => $activeRoute === 'departments.index'],
+                    ['label' => 'Departments Dashboard', 'route' => 'departments.dashboard', 'permission' => 'view-departments-dashboard', 'active' => $activeRoute === 'departments.dashboard'],
                     ['label' => 'Staff in My Department', 'route' => 'dashboard', 'permission' => 'view-dept-staff'],
                     ['label' => 'Students in My Class', 'route' => 'dashboard', 'permission' => 'view-dept-students'],
                     ['label' => 'Patients in My Ward', 'route' => 'dashboard', 'permission' => 'view-dept-patients']

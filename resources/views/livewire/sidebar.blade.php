@@ -68,9 +68,10 @@
                             @can($item['permission'] ?? 'view-dashboard')
                                 @php
                                     $isActive = $item['active'] ?? false;
+                                    $itemHref = $item['url'] ?? route($item['route']);
                                 @endphp
 
-                                <a href="{{ route($item['route']) }}"
+                                <a href="{{ $itemHref }}"
                                    class="group flex items-center justify-between px-3 py-2.5 text-sm rounded-lg transition-all duration-200 {{ $isActive ? 'bg-[#982B55]/10 text-[#982B55] font-medium border border-[#982B55]/20 shadow-sm' : 'text-base-content opacity-80 hover:bg-base-200 hover:opacity-100' }} hover:translate-x-0.5 hover:shadow-sm">
                                     <span class="flex items-center gap-3">
                                         @if(isset($item['icon']))

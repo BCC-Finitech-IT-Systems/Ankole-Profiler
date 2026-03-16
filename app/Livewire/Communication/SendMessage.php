@@ -257,18 +257,26 @@ class SendMessage extends Component
     protected function searchPersons()
     {
         try {
-            $user = Auth::user();
+            logger()->info('Searching persons with search term: ' . $this->person_search);
+
             $organization = OrganizationHelper::getCurrentOrganization();
+
+            if (!$organization) {
+                logger()->warning('No organization associated with the user during person search.');
+                session()->flash('error', 'You are not associated with any organization.');
+                $this->search_results = [];
+                return;
+            }
+
+            logger()->info('Organization found for search: ' . $organization->id . ' - ' . $organization->name);
 
             // Build the base query
             $query = Person::query();
 
             // Super Admin can search across all organizations
             if ($this->isSuperAdmin()) {
-                // For Super Admin, search all persons but still include organization info
                 $query->whereHas('affiliations');
             } else {
-                // For other users, limit to current organization
                 $query->whereHas('affiliations', function ($q) use ($organization) {
                     $q->where('organization_id', $organization->id);
                 });

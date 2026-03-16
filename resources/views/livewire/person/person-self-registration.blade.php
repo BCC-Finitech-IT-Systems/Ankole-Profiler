@@ -25,6 +25,7 @@
             @endif
             <!-- FORM -->
             <form wire:submit.prevent="submit" class="grid grid-cols-1 md:grid-cols-2 gap-4" id="selfRegForm" novalidate>
+                @csrf
                 {{-- Error Summary Section --}}
                 <div>
                     <label class="block text-gray-600 font-medium mb-1 text-sm">First Name*</label>
@@ -125,21 +126,21 @@
                     @enderror
                 </div>
                 <div>
-                    <label class="block text-gray-600 font-medium mb-1 text-sm">Organization*</label>
-                    <select wire:model="form.organization_id" class="select select-bordered select-sm w-full" required
-                        oninvalid="this.setCustomValidity('Organization is required')"
+                    <label class="block text-gray-600 font-medium mb-1 text-sm">Department*</label>
+                    <select wire:model="form.department_id" class="select select-bordered select-sm w-full" required
+                        oninvalid="this.setCustomValidity('Department is required')"
                         oninput="this.setCustomValidity('')">
-                        @if ($availableOrganizations->isEmpty())
-                            <option value="">No organizations available</option>
+                        @if ($availableDepartments->isEmpty())
+                            <option value="">No departments available</option>
                         @else
-                            <option value="">Select Organization</option>
-                            @foreach ($availableOrganizations as $org)
-                                <option value="{{ $org->id }}" @if (old('form.organization_id') == $org->id) selected @endif>
-                                    {{ $org->display_name ?? $org->legal_name }}</option>
+                            <option value="">Select Department</option>
+                            @foreach ($availableDepartments as $dept)
+                                <option value="{{ $dept->id }}" @if (old('form.department_id') == $dept->id) selected @endif>
+                                    {{ $dept->name }}</option>
                             @endforeach
                         @endif
                     </select>
-                    @error('form.organization_id')
+                    @error('form.department_id')
                         <span class="text-error text-xs">{{ $message }}</span>
                     @enderror
                 </div>

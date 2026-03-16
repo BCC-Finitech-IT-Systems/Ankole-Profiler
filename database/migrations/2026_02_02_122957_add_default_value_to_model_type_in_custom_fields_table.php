@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('custom_fields', function (Blueprint $table) {
-            $table->string('model_type')->default('Organization')->change();
-        });
+        // Schema::table('custom_fields', function (Blueprint $table) {
+        //     $table->string('model_type')->default('Organization')->change();
+        // });
     }
 
     /**

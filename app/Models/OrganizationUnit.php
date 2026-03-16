@@ -28,11 +28,21 @@ class OrganizationUnit extends Model
         return $this->belongsTo(self::class, 'parent_unit_id');
     }
 
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class, 'organization_id');
+    }
+
     /**
      * Children units relationship
      */
     public function children()
     {
         return $this->hasMany(self::class, 'parent_unit_id');
+    }
+
+    public function department()
+    {
+        return $this->hasOne(Department::class, 'legacy_organization_unit_id');
     }
 }

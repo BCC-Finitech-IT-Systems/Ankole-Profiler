@@ -1,0 +1,102 @@
+This is how it all works:
+
+**Department Admins
+We have a form where we register heads of department register form,
+Url: /person/self-register
+
+Basic details of registering a person ->captured on the persons table.
+Capture the departments -> system already captures the projects under this department.
+
+Assigned the role of an organization admin,
+The department_admin role->
+		-can add, edit / remove new project admins
+-can add edit / remove new projects
+–can add edit / remove persons to given projects
+-can view all projects and persons under they departments
+-can view relationships between project associates.
+-view full counts of associates for each project.
+-can communication to all project admins and associates
+
+The project_admin role → this assigned to all persons registered by the department_admin,
+where project admin is true.
+
+-The Organization --Ankole Diocese has departments
+-The organization has Projects under departments
+-projects also have departments
+
+so we have this chain
+-->>Organization
+    ->Departments ->Education
+        ->projects ->St James SS --Sub-Category-->Secondary
+            ->project-departments ->Sports Department, HR Department
+
+to get a persons count for the current Organization admin role user:
+the system should check the person affiliation table that for the persons
+affiliated organization and the department that
+
+person
+    ->person affiliation
+        -->organization id
+            -->department id
+                -->
+the system should check the persons table for the person,
+the person being
+
+Validation:
+The department admins can add multiple project admin,
+so meaning the departments should have projects under them,
+so that we can return projects that belong to a given department under the diocese.
+Department admins can do all CRUD on projects and persons that belong to their projects .
+
+Role Definitions:
+super_admin — Diocese-level, sees everything
+org_admin (Head of Department) — manages their department + appoints project admins
+project_admin — manages one or more projects (people, staff, records)
+staff — day-to-day users within a project
+
+UI-projections:
+The project admin can then get dashboards where they manage the person under
+their given projects  both staff and associates, like staff under that particular
+church and the persons that attend in that particular church.
+
+----------------
+after that we can introduce filtering the person by relationships,
+say eg. a parent of a student in a given school, a father of a child that attends
+a given check, we can have death statistics and so on,
+
+Organization → Department Relationship:
+Organization → Department Relationship:
+An organization has many departments
+A department belongs to an organization
+An organization staff belong to departments
+An organization is headed by an organization admin
+A department has staff and projects
+
+Department → Project Relationship:
+A department has many projects
+A project belongs to a project
+A department is headed by an department admin
+A project is headed by a project admin
+
+Projects → Staff and Person relationship:
+Project has many staff and persons
+Staff under a project are people that have occupation roles , teachers at a school, priests at a church.
+A person are people that get associated with the projects services like people who attend church, students at a school, members of a sacco
+Staff, Persons Relationship:
+A staff can belong to many projects and department,
+A person can belong to many projects and this not limited by department,
+Staff, Person relation table:
+They can be related to each other by a shared department, project, family terms,
+Staff have occupation to the department and project affiliation to the project connection.
+A person has a project affiliation connection to the project.
+They have a skill entry that is predetermined by the super, department admins.
+
+Structure:
+Final structure:
+     *   Organization (Diocese)
+     *     └── Department  (e.g. Education, Parish Affairs, Media, SACCO)
+     *           └── Project  (e.g. Mbarara High School, St Peter's Church)
+     *                 └── ProjectAffiliation (staff, parishioners, students …)
+
+----------------------
+

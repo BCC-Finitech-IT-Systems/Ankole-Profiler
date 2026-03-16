@@ -1,5 +1,5 @@
-<div class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded shadow">
-    <h2 class="text-2xl font-bold mb-6">Register Organization Unit</h2>
+<div class="max-w-6xl mt-2 bg-white p-8 rounded shadow">
+    <h2 class="text-2xl font-bold mb-6">Register Project Unit</h2>
     @if(session()->has('success'))
         <div class="bg-green-100 text-green-800 p-2 mb-4 rounded">
             {{ session('success') }}
@@ -9,7 +9,7 @@
     {{-- Stepper Navigation --}}
     <div class="mb-8">
         <div class="flex items-center justify-between mb-4">
-            <div class="flex gap-2">
+            <div class="flex gap-6">
                 @for ($i = 1; $i <= $totalSteps; $i++)
                     <button type="button" wire:click="goToStep({{ $i }})"
                         class="w-8 h-8 rounded-full flex items-center justify-center {{ $currentStep === $i ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600' }} border border-primary/30 text-sm font-bold">

@@ -7,6 +7,7 @@ use Livewire\Component;
 use App\Models\Person;
 use App\Models\Organization;
 use App\Models\PersonAffiliation;
+use App\Models\DepartmentSubCategory;
 use App\Models\Phone;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -39,14 +40,56 @@ class CreatePersonsComponent extends Component
     ];
 
     public $availableOrganizations = [];
+    public $userDepartmentId = null;
+    public $userDepartmentName = null;
+    public $isOrgAdmin = false;
 
     public function mount()
     {
-        $this->availableOrganizations = Organization::all()->toArray();
+        /** @var User|null $authUser */
+        $authUser = Auth::user();
+        $this->isOrgAdmin = $authUser && method_exists($authUser, 'hasRole')
+            && $authUser->hasRole('Organization Admin') && !$authUser->hasRole('Super Admin');
 
-        // Set default organization_id if available
-        if (!empty($this->availableOrganizations)) {
-            $this->form['organization_id'] = $this->availableOrganizations[0]['id'];
+        if ($this->isOrgAdmin && $authUser->person) {
+            // Get the Org Admin's department from their affiliation
+            $affiliation = PersonAffiliation::where('person_id', $authUser->person->id)
+                ->where('status', 'active')
+                ->whereNotNull('department_id')
+                ->first();
+
+            if ($affiliation && $affiliation->department_id) {
+                $this->userDepartmentId = $affiliation->department_id;
+                $department = \App\Models\Department::with('subCategories')->find($affiliation->department_id);
+                $this->userDepartmentName = $department?->name;
+
+                // Get sub-category names for this department
+                $subCategoryNames = $department
+                    ? $department->subCategories->pluck('name')->map(fn($n) => strtolower(trim($n)))->filter()->values()
+                    : collect();
+
+                if ($subCategoryNames->isNotEmpty()) {
+                    // Load organizations whose category matches the department's sub-categories
+                    $this->availableOrganizations = Organization::query()
+                        ->where('is_super', false)
+                        ->whereRaw('LOWER(TRIM(category)) IN (' . $subCategoryNames->map(fn() => '?')->join(',') . ')', $subCategoryNames->all())
+                        ->orderBy('legal_name')
+                        ->get()
+                        ->toArray();
+                }
+            }
+
+            // Set default organization_id if available
+            if (!empty($this->availableOrganizations)) {
+                $this->form['organization_id'] = $this->availableOrganizations[0]['id'];
+            }
+        } else {
+            // Super Admin: load all organizations
+            $this->availableOrganizations = Organization::all()->toArray();
+
+            if (!empty($this->availableOrganizations)) {
+                $this->form['organization_id'] = $this->availableOrganizations[0]['id'];
+            }
         }
     }
 
@@ -114,9 +157,18 @@ class CreatePersonsComponent extends Component
             Log::info('User created', ['user_id' => $user->id]);
 
             $currentOrganization = user_current_organization();
-            $isSuperAdmin = method_exists($user, 'hasRole') && $user->hasRole('Super Admin');
+            // Check the LOGGED-IN user's role, not the newly created user
+            $authUser = Auth::user();
+            $isSuperAdmin = $authUser && method_exists($authUser, 'hasRole') && $authUser->hasRole('Super Admin');
 
-            if (!$isSuperAdmin) {
+            if ($this->isOrgAdmin) {
+                // Org Admin: validate the selected organization is in their department scope
+                if (empty($this->form['organization_id']) || !\App\Models\Organization::find($this->form['organization_id'])) {
+                    session()->flash('error', 'Please select a valid project (organization).');
+                    return;
+                }
+                // Keep the user-selected organization_id from the dropdown
+            } elseif (!$isSuperAdmin) {
                 if (!$currentOrganization) {
                     session()->flash('error', 'You are not associated with any organization.');
                     return;
@@ -130,11 +182,21 @@ class CreatePersonsComponent extends Component
                 }
             }
 
+            // Use the selected organization from the dropdown for both Person and PersonAffiliation
+            $selectedOrgId = $this->form['organization_id'];
+
+            Log::info('Organization selection', [
+                'selected_org_id' => $selectedOrgId,
+                'is_org_admin' => $this->isOrgAdmin,
+                'is_super_admin' => $isSuperAdmin,
+                'form_organization_id' => $this->form['organization_id'],
+            ]);
+
             // Create Person with user_id
             $person = Person::create([
                 'person_id' => \App\Helpers\IdGenerator::generatePersonId(),
                 'global_identifier' => \App\Helpers\IdGenerator::generateGlobalIdentifier(),
-                'organization_id' => $this->form['organization_id'], // Use form input for Super Admin or current organization for others
+                'organization_id' => $selectedOrgId, // The selected project/organization
                 'given_name' => $this->form['given_name'],
                 'middle_name' => $this->form['middle_name'],
                 'family_name' => $this->form['family_name'],
@@ -153,15 +215,34 @@ class CreatePersonsComponent extends Component
             $this->createContactInformation($person);
             Log::info('Contact information created', ['person_id' => $person->id]);
 
+            // Determine department_id: already set for Org Admin, derive from org's category for others
+            $departmentId = $this->userDepartmentId;
+            if (!$departmentId) {
+                $selectedOrg = Organization::find($selectedOrgId);
+                if ($selectedOrg && $selectedOrg->category) {
+                    $subCategory = DepartmentSubCategory::whereRaw(
+                        'LOWER(TRIM(name)) = ?',
+                        [strtolower(trim($selectedOrg->category))]
+                    )->first();
+                    $departmentId = $subCategory?->department_id;
+                }
+                Log::info('Derived department_id from organization category', [
+                    'organization_id' => $selectedOrgId,
+                    'category' => $selectedOrg->category ?? null,
+                    'department_id' => $departmentId,
+                ]);
+            }
+
             PersonAffiliation::create([
                 'person_id' => $person->id,
-                'organization_id' => $currentOrganization->id, // Use current user's organization
+                'organization_id' => $selectedOrgId, // Always use the selected organization
+                'department_id' => $departmentId, // Derived from org's category or Org Admin's affiliation
                 'role_type' => $this->form['role_type'] ?? 'STAFF',
                 'role_title' => $this->form['role_title'] ?? 'Organization Admin',
                 'start_date' => now(),
                 'status' => 'active',
                 'created_by' => $user->id,
-                'user_id' => $user->id, // Capture user_id in PersonAffiliation
+                'user_id' => $user->id,
             ]);
             Log::info('Person affiliation created', ['person_id' => $person->id]);
 

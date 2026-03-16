@@ -148,6 +148,23 @@ class RolePermissionSeeder extends Seeder
             'import-Organizations',
             'export-Organizations',
 
+            // Department and project permissions
+            'view-departments',
+            'view-departments-dashboard',
+            'create-departments',
+            'edit-departments',
+            'delete-departments',
+            'assign-department-admins',
+            'view-projects',
+            'create-projects',
+            'edit-projects',
+            'delete-projects',
+            'assign-project-admins',
+            'manage-project-persons',
+            'view-project-relationships',
+            'view-project-stats',
+            'send-project-communications',
+
         ];
 
         foreach ($permissions as $permission) {
@@ -166,10 +183,12 @@ class RolePermissionSeeder extends Seeder
             'view-Organizations-hierarchy',
             'view-own-sites',
             'view-own-units',
+            'create-units',
             'view-org-persons',
             'create-org-persons',
             'import-org-persons',
             'export-org-persons',
+            'delete-persons',
             'view-org-affiliations',
             'create-org-affiliations',
             'manage-org-roles',
@@ -184,11 +203,27 @@ class RolePermissionSeeder extends Seeder
             'manage-users',
             'create-users',
             'manage-users',
+            'view-departments',
+            'view-departments-dashboard',
+            'create-departments',
+            'edit-departments',
+            'delete-departments',
+            'assign-department-admins',
+            'view-projects',
+            'create-projects',
+            'edit-projects',
+            'delete-projects',
+            'assign-project-admins',
+            'manage-project-persons',
+            'view-project-relationships',
+            'view-project-stats',
+            'send-project-communications',
         ]);
 
         $deptManager = Role::firstOrCreate(['name' => 'Department Manager']);
         $deptManager->syncPermissions([
             'view-dashboard',
+            'view-departments-dashboard',
             'view-dept-team',
             'manage-dept-team',
             'view-dept-staff',
@@ -198,6 +233,46 @@ class RolePermissionSeeder extends Seeder
             'view-emails',
             'view-addresses',
             'view-reports',
+            'view-projects',
+            'create-projects',
+            'edit-projects',
+            'delete-projects',
+            'assign-project-admins',
+            'manage-project-persons',
+            'view-project-relationships',
+            'view-project-stats',
+            'send-project-communications',
+        ]);
+
+        $projectAdmin = Role::firstOrCreate(['name' => 'Project Admin']);
+        $projectAdmin->syncPermissions([
+            'view-dashboard',
+            'view-projects',
+            'manage-project-persons',
+            'view-project-relationships',
+            'view-project-stats',
+            'send-project-communications',
+            'view-persons',
+            'create-persons',
+            'edit-persons',
+            'view-affiliations',
+            'create-affiliations',
+            'edit-affiliations',
+            'view-phones',
+            'view-emails',
+            'view-addresses',
+        ]);
+
+        $staff = Role::firstOrCreate(['name' => 'Staff']);
+        $staff->syncPermissions([
+            'view-dashboard',
+            'view-projects',
+            'view-persons',
+            'view-affiliations',
+            'view-project-relationships',
+            'view-phones',
+            'view-emails',
+            'view-addresses',
         ]);
 
         $dataEntryClerk = Role::firstOrCreate(['name' => 'Data Entry Clerk']);

@@ -8,7 +8,7 @@
                 <p class="text-gray-600 text-sm mt-1">Manage Project hierarchy and structures oop</p>
             </div>
 
-            @can('create-organizations')
+            @can('create-units')
                 <div class="flex items-center gap-2">
                     <button wire:click="toggleFilters" class="btn btn-ghost btn-sm gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

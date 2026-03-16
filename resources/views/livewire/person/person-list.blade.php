@@ -352,8 +352,9 @@
                                                         </svg>
                                                         View Profile
                                                     </a>
-                                                    <a href="{{ route('persons.create', ['edit' => $person->id]) }}"
-                                                        class="flex px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center">
+                                                    <button wire:click="editPerson({{ $person->id }})"
+                                                        @click="open = false" type="button"
+                                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
                                                         <svg class="w-4 h-4 mr-2 text-yellow-600" fill="none"
                                                             stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -361,7 +362,7 @@
                                                                 d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 10-4-4l-8 8v3z" />
                                                         </svg>
                                                         Edit
-                                                    </a>
+                                                    </button>
                                                     <button type="button" @click="open = false"
                                                         class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
                                                         <svg class="w-4 h-4 mr-2" fill="none"
@@ -540,11 +541,170 @@
         </div>
     @endif
 
+    {{-- Edit Person Modal --}}
+    @if ($showEditModal && $editPersonId)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="edit-modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="cancelEdit"></div>
+
+                <!-- Center the modal -->
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <!-- Modal panel -->
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                    <form wire:submit.prevent="updatePerson">
+                        <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="edit-modal-title">
+                                    Edit Person
+                                </h3>
+                                <button type="button" wire:click="cancelEdit" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Given Name -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Given Name <span class="text-red-500">*</span></label>
+                                    <input type="text" wire:model="editPersonData.given_name"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                    @error('editPersonData.given_name') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Middle Name -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Middle Name</label>
+                                    <input type="text" wire:model="editPersonData.middle_name"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+
+                                <!-- Family Name -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Family Name <span class="text-red-500">*</span></label>
+                                    <input type="text" wire:model="editPersonData.family_name"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                    @error('editPersonData.family_name') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Date of Birth -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Date of Birth <span class="text-red-500">*</span></label>
+                                    <input type="date" wire:model="editPersonData.date_of_birth"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                    @error('editPersonData.date_of_birth') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Gender -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Gender <span class="text-red-500">*</span></label>
+                                    <select wire:model="editPersonData.gender"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                    @error('editPersonData.gender') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Phone -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Phone <span class="text-red-500">*</span></label>
+                                    <input type="tel" wire:model="editPersonData.phone"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="+256 700 123 456">
+                                    @error('editPersonData.phone') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Email -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
+                                    <input type="email" wire:model="editPersonData.email"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="jane.doe@email.com">
+                                    @error('editPersonData.email') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Address -->
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700">Address</label>
+                                    <textarea wire:model="editPersonData.address" rows="2"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="Street address"></textarea>
+                                    @error('editPersonData.address') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- City -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">City</label>
+                                    <input type="text" wire:model="editPersonData.city"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                    @error('editPersonData.city') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- District -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">District</label>
+                                    <input type="text" wire:model="editPersonData.district"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                    @error('editPersonData.district') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Country -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Country</label>
+                                    <input type="text" wire:model="editPersonData.country"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                    @error('editPersonData.country') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Role Type -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Role Type</label>
+                                    <input type="text" wire:model="editPersonData.role_type"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                    @error('editPersonData.role_type') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Role Title -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Role Title</label>
+                                    <input type="text" wire:model="editPersonData.role_title"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                    @error('editPersonData.role_title') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+                            <button type="submit" wire:loading.attr="disabled"
+                                class="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm disabled:opacity-50">
+                                <span wire:loading.remove wire:target="updatePerson">Save Changes</span>
+                                <span wire:loading wire:target="updatePerson" class="flex items-center">
+                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Saving...
+                                </span>
+                            </button>
+                            <button type="button" wire:click="cancelEdit" wire:loading.attr="disabled" wire:target="updatePerson"
+                                class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm disabled:opacity-50">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <script>
         // Listen for filters-reset event
         window.addEventListener('filters-reset', () => {
-            // Show success toast
             console.log('Filters reset successfully');
         });
 
@@ -553,30 +713,18 @@
             const resetBtn = document.getElementById('resetFiltersBtn');
             const loader = document.getElementById('resetFiltersLoader');
 
+            if (!resetBtn) return;
+
             // Disable the button and show loader
             resetBtn.disabled = true;
-            loader.classList.remove('hidden');
+            if (loader) loader.classList.remove('hidden');
 
             // Call the Livewire method to reset filters
             @this.resetFilters().then(() => {
-                // Re-enable the button and hide loader after reset
                 resetBtn.disabled = false;
-                loader.classList.add('hidden');
+                if (loader) loader.classList.add('hidden');
             });
         }
-
-        // Clear all form inputs instantly for better UX
-        document.querySelectorAll('input[type="text"], input[type="date"], select').forEach(input => {
-            if (input.hasAttribute('wire:model.live.debounce.500ms') || input.hasAttribute('wire:model')) {
-                input.value = '';
-            }
-        });
-
-        // Let Livewire handle the actual reset
-        @this.resetFilters().then(() => {
-            button.disabled = false;
-            button.innerHTML = originalContent;
-        });
     </script>
 
     <script>

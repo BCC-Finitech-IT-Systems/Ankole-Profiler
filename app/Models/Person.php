@@ -618,4 +618,16 @@ class Person extends Model
     {
         return $this->hasMany(PersonAffiliation::class);
     }
+
+    public function projectAffiliations(): HasMany
+    {
+        return $this->hasMany(ProjectAffiliation::class);
+    }
+
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_affiliations')
+            ->withPivot(['affiliation_type', 'role_title', 'occupation', 'start_date', 'end_date', 'status'])
+            ->withTimestamps();
+    }
 }

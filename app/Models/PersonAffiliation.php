@@ -13,6 +13,7 @@ class PersonAffiliation extends Model
         'affiliation_id',
         'person_id',
         'organization_id',
+        'department_id',
         'user_id',
 
         'site',
@@ -166,7 +167,6 @@ class PersonAffiliation extends Model
     {
         return $query->where('organization_id', $OrganizationId);
     }
-
 
     public function roleType()
     {

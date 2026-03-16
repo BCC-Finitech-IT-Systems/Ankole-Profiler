@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Person;
+use App\Models\PersonAffiliation;
 use App\Models\FilterConfiguration;
 use App\Services\PersonFilterService;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,7 @@ class PersonsListComponent extends Component
         'search' => '',
         'classification' => '',
         'organization_id' => '',
+        'department_id' => '',
         'age_range' => '',
         'gender' => '',
         'status' => '',
@@ -67,6 +69,7 @@ class PersonsListComponent extends Component
             'search' => '',
             'classification' => '',
             'organization_id' => '',
+            'department_id' => '',
             'age_range' => '',
             'gender' => '',
             'status' => '',
@@ -282,11 +285,22 @@ class PersonsListComponent extends Component
         $isOrganizationAdmin = method_exists($user, 'hasRole') && $user->hasRole('Organization Admin');
         $canViewOrgPersons = $user->can('view-org-persons');
 
-        // If the user is an Organization Admin and has the permission, return persons from their organization
-        if ($isOrganizationAdmin && $canViewOrgPersons && $currentOrganization) {
-            return Person::whereHas('affiliations', function ($query) use ($currentOrganization) {
-                $query->where('organization_id', $currentOrganization->id);
-            })->paginate(10); // Paginate the results
+        // If the user is an Organization Admin and has the permission, return persons from their department
+        if ($isOrganizationAdmin && $canViewOrgPersons) {
+            $orgAdminDeptId = null;
+            if ($user->person) {
+                $orgAdminDeptId = PersonAffiliation::where('person_id', $user->person->id)
+                    ->where('status', 'active')
+                    ->whereNotNull('department_id')
+                    ->value('department_id');
+            }
+            if ($orgAdminDeptId) {
+                return Person::whereHas('affiliations', function ($query) use ($orgAdminDeptId) {
+                    $query->where('department_id', $orgAdminDeptId)
+                          ->where('status', 'active');
+                })->paginate(10);
+            }
+            return collect();
         }
 
         // If the user is a Super Admin, return all persons
@@ -312,14 +326,21 @@ class PersonsListComponent extends Component
         }
 
         try {
+            // Get the Org Admin's department_id from their affiliation
+            $orgAdminDepartmentId = null;
+            if ($canViewOrgPersons && !$canViewAllPersons && $user->person) {
+                $orgAdminDepartmentId = PersonAffiliation::where('person_id', $user->person->id)
+                    ->where('status', 'active')
+                    ->whereNotNull('department_id')
+                    ->value('department_id');
+            }
+
             // Initialize filter service
             $filterService = new PersonFilterService($canViewAllPersons ? null : $currentOrganization);
 
-            // Handle organization filtering for non-super admins
-            if ($canViewOrgPersons && !$canViewAllPersons && $currentOrganization) {
-                if (empty($this->filters['organization_id']) || $this->filters['organization_id'] != $currentOrganization->id) {
-                    $this->filters['organization_id'] = $currentOrganization->id;
-                }
+            // Handle department filtering for non-super admins
+            if ($canViewOrgPersons && !$canViewAllPersons && $orgAdminDepartmentId) {
+                $this->filters['department_id'] = $orgAdminDepartmentId;
             }
 
             // Allow Super Admins to clear organization filter
@@ -351,10 +372,20 @@ class PersonsListComponent extends Component
 
             // Fallback query
             $query = Person::query();
-            if ($canViewOrgPersons && !$canViewAllPersons && $currentOrganization) {
-                $query->whereHas('affiliations', function ($q) use ($currentOrganization) {
-                    $q->where('organization_id', $currentOrganization->id);
-                });
+            if ($canViewOrgPersons && !$canViewAllPersons) {
+                $orgAdminDeptId = null;
+                if ($user->person) {
+                    $orgAdminDeptId = PersonAffiliation::where('person_id', $user->person->id)
+                        ->where('status', 'active')
+                        ->whereNotNull('department_id')
+                        ->value('department_id');
+                }
+                if ($orgAdminDeptId) {
+                    $query->whereHas('affiliations', function ($q) use ($orgAdminDeptId) {
+                        $q->where('department_id', $orgAdminDeptId)
+                          ->where('status', 'active');
+                    });
+                }
             }
             $persons = $query->paginate(10);
             session()->flash('warning', 'Some filters could not be applied. Showing basic results.');
