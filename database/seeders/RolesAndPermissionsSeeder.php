@@ -69,7 +69,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view-persons-document',
             'edit-persons-document',
             'delete-persons-document',
-            'support-persons',
 
             // Affiliation permissions
             'view-affiliations',
@@ -325,7 +324,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete-persons-document',
             'view-org-persons',
             'edit-persons',
-            'support-persons',
             'view-affiliations',
             'view-organization-units',
             // Do NOT include: 'edit-units', 'delete-units', 'move-units'
