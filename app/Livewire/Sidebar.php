@@ -249,6 +249,7 @@ class Sidebar extends Component
                 'active' => in_array($activeRoute, ['communication.send', 'communication.history', 'communication.index']),
                 'items' => [
                     ['label' => 'Send Message', 'route' => 'communication.send', 'permission' => 'send-communications', 'active' => $activeRoute === 'communication.send'],
+                    ['label' => 'Filter Profiles', 'route' => 'communication.filter-profiles', 'permission' => 'view-communications', 'active' => $activeRoute === 'communication.filter-profiles'],
                     ['label' => 'Message History', 'route' => 'communication.history', 'permission' => 'view-communications', 'active' => $activeRoute === 'communication.history']
                 ]
             ],
@@ -313,6 +314,7 @@ class Sidebar extends Component
                 'active' => in_array($activeRoute, ['communication.send', 'communication.history', 'communication.index']),
                 'items' => [
                     ['label' => 'Send Message', 'route' => 'communication.send', 'permission' => 'send-communications', 'active' => $activeRoute === 'communication.send'],
+                    ['label' => 'Filter Profiles', 'route' => 'communication.filter-profiles', 'permission' => 'view-communications', 'active' => $activeRoute === 'communication.filter-profiles']
                     ['label' => 'Message History', 'route' => 'communication.history', 'permission' => 'view-communications', 'active' => $activeRoute === 'communication.history']
                 ]
             ]
