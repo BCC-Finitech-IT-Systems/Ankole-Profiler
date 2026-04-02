@@ -12,6 +12,7 @@ use App\Http\Controllers\RelationshipController;
 use App\Http\Controllers\SMSWebhookController;
 use App\Http\Requests\CustomVerifyEmailRequest;
 use App\Livewire\Dashboard\DashboardComponent;
+use App\Livewire\Dashboard\OrgAdminDashboardComponent;
 use App\Livewire\Departments\DepartmentComponent;
 use App\Livewire\Departments\DepartmentsDashboard;
 use App\Livewire\Organizations\ImportOrganizations;
@@ -106,6 +107,8 @@ Route::get('/test-at', function () {
 Route::middleware($authVerifiedMiddleware)->group(function () {
     Route::get('/dashboard', DashboardComponent::class)->name('dashboard');
 
+    Route::get('/admin/dash', OrgAdminDashboardComponent::class)->name('admin.dashboard');
+
     Route::prefix('organizations')->name('organizations.')->group(function () {
         Route::get('/', App\Livewire\Organizations\Index::class)->name('index');
         Route::get('/current-project', App\Livewire\Organizations\CurrentProject::class)->name('current-project');
@@ -117,15 +120,15 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
         Route::get('/all', [AllPersonsListController::class, 'index'])->name('persons.all');
         Route::get('/create/{edit?}', App\Livewire\Person\CreatePersonsComponent::class)->name('persons.create');
         Route::get('/import', App\Livewire\Person\ImportPersons::class)->name('persons.import');
-        Route::get('/{id}', [PersonController::class, 'show'])->name('persons.show');
         Route::get('/export', App\Livewire\Person\ExportPersons::class)->name('persons.export');
         Route::get('/products', App\Livewire\PersonProducts::class)->name('person-products');
         Route::get('/profile-current', App\Livewire\Person\ProfileView::class)->name('persons.profile-current');
 
-        Route::get('/search', [PersonSearchController::class, 'index2'])->name('person-search');
+        Route::get('/search', [PersonSearchController::class, 'index2'])->name('persons.search');
         Route::get('/search/api', [PersonSearchController::class, 'search'])->name('persons.search.api');
         Route::get('/search/suggestions', [PersonSearchController::class, 'suggestions'])->name('persons.search.suggestions');
         Route::post('/search/export', [PersonSearchController::class, 'export'])->name('persons.search.export');
+        Route::get('/{id}', [PersonController::class, 'show'])->name('persons.show');
     });
 
     Route::get('/my-Organization-units', App\Livewire\Person\OrganizationUnitsList::class)
@@ -141,11 +144,11 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
     });
 
     Route::prefix('projects')->name('projects.')->group(function () {
-                Route::get('/{project}/persons', function ($projectId) {
-                    $project = \App\Models\Project::with('persons')->findOrFail($projectId);
-                    $persons = $project->persons;
-                    return view('projects.persons', compact('project', 'persons'));
-                })->name('persons')->middleware('can:view-projects');
+        Route::get('/{project}/persons', function ($projectId) {
+            $project = \App\Models\Project::with('persons')->findOrFail($projectId);
+            $persons = $project->persons;
+            return view('projects.persons', compact('project', 'persons'));
+        })->name('persons')->middleware('can:view-projects');
         Route::get('/', [ProjectController::class, 'index'])
             ->name('index')
             ->middleware('can:view-projects');
@@ -172,9 +175,6 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
     });
 
     Route::prefix('departments')->name('departments.')->group(function () {
-        Route::get('/', DepartmentComponent::class)
-            ->name('index');
-
         Route::get('/dashboard', DepartmentsDashboard::class)
             ->name('dashboard');
 
@@ -189,13 +189,15 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
 
         Route::delete('/{department}', [DepartmentController::class, 'destroy'])
             ->name('destroy');
+        Route::get('/', DepartmentComponent::class)
+            ->name('index');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/users', App\Livewire\Admin\UserManager::class)->name('users.index');
         Route::get('/permissions', App\Livewire\Admin\PermissionManager::class)->name('permissions.index');
         Route::get('/roles', App\Livewire\Admin\RoleManager::class)->name('roles.index');
         Route::get('/role-types', App\Livewire\Admin\RoleTypeManager::class)->name('role-types.index');
-        Route::get('/users', App\Livewire\Admin\UserManager::class)->name('users.index');
         Route::get('/allow-email-domains', App\Livewire\Admin\AllowedEmailDomainManager::class)->name('allowEmailDomains');
     });
 

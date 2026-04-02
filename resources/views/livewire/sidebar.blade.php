@@ -36,11 +36,13 @@
                 $isExpanded = isset($this->expandedSections[$sectionKey]);
                 $hasVisibleItems = false;
 
-                // Check if any items are visible based on permissions
-                foreach($section['items'] as $item) {
-                    if (auth()->user() && auth()->user()->can($item['permission'] ?? 'view-dashboard')) {
-                        $hasVisibleItems = true;
-                        break;
+                // Ensure 'items' exists and is an array before iterating
+                if (isset($section['items']) && is_array($section['items'])) {
+                    foreach($section['items'] as $item) {
+                        if (auth()->user() && auth()->user()->can($item['permission'] ?? 'view-dashboard')) {
+                            $hasVisibleItems = true;
+                            break;
+                        }
                     }
                 }
             @endphp

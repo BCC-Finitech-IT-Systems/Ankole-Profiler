@@ -21,7 +21,6 @@ use Illuminate\Support\Str;
 
 class CreatePersonsComponent extends Component
 {
-
     public $form = [
         'given_name' => '',
         'middle_name' => '',
@@ -37,19 +36,35 @@ class CreatePersonsComponent extends Component
         'role_type' => 'STAFF',
         'role_title' => '',
         'organization_id' => '',
+        'assign_as_project_head' => false, // New field for Project Head assignment
     ];
 
     public $availableOrganizations = [];
     public $userDepartmentId = null;
     public $userDepartmentName = null;
     public $isOrgAdmin = false;
+    public $isSuperAdmin = false;
+    public $canAssignProjectHead = false;
+
+    // Available role options for the dropdown
+    public $roleOptions = [
+        'person' => 'Staff/Person',
+        'project_head' => 'Project Head',
+    ];
 
     public function mount()
     {
         /** @var User|null $authUser */
         $authUser = Auth::user();
+
+        $this->isSuperAdmin = $authUser && method_exists($authUser, 'hasRole')
+            && $authUser->hasRole('Super Admin');
+
         $this->isOrgAdmin = $authUser && method_exists($authUser, 'hasRole')
             && $authUser->hasRole('Organization Admin') && !$authUser->hasRole('Super Admin');
+
+        // Both Super Admin and Organization Admin can assign Project Heads
+        $this->canAssignProjectHead = $this->isSuperAdmin || $this->isOrgAdmin;
 
         if ($this->isOrgAdmin && $authUser->person) {
             // Get the Org Admin's department from their affiliation
@@ -85,7 +100,10 @@ class CreatePersonsComponent extends Component
             }
         } else {
             // Super Admin: load all organizations
-            $this->availableOrganizations = Organization::all()->toArray();
+            $this->availableOrganizations = Organization::where('is_super', false)
+                ->orderBy('legal_name')
+                ->get()
+                ->toArray();
 
             if (!empty($this->availableOrganizations)) {
                 $this->form['organization_id'] = $this->availableOrganizations[0]['id'];
@@ -93,23 +111,55 @@ class CreatePersonsComponent extends Component
         }
     }
 
+    /**
+     * Get existing Project Heads for a specific organization
+     */
+    public function getProjectHeadsForOrganization($organizationId)
+    {
+        return Person::whereHas('user', function ($query) {
+            $query->whereHas('roles', function ($q) {
+                $q->where('name', 'Project Head');
+            });
+        })
+        ->whereHas('affiliations', function ($query) use ($organizationId) {
+            $query->where('organization_id', $organizationId)
+                ->where('status', 'active');
+        })
+        ->with(['user', 'affiliations' => function ($query) use ($organizationId) {
+            $query->where('organization_id', $organizationId)->where('status', 'active');
+        }])
+        ->get();
+    }
 
-     public function submit()
+    public function submit()
     {
         $this->validate([
-                'form.given_name' => 'required|string|max:255',
-                'form.family_name' => 'required|string|max:255',
-                'form.date_of_birth' => 'required|date',
-                'form.gender' => ['required', Rule::in(['Male', 'Female'])],
-                'form.phone' => 'required|string|max:20|unique:phones,number',
-                'form.email' => 'required|email|unique:users,email',
-                'form.address' => 'required|string',
-                'form.country' => 'required|string',
-                'form.district' => 'required|string',
-                'form.city' => 'required|string',
-                'form.role_title' => 'required|string',
-                'form.organization_id' => 'required|exists:organizations,id',
+            'form.given_name' => 'required|string|max:255',
+            'form.family_name' => 'required|string|max:255',
+            'form.date_of_birth' => 'required|date',
+            'form.gender' => ['required', Rule::in(['Male', 'Female'])],
+            'form.phone' => 'required|string|max:20|unique:phones,number',
+            'form.email' => 'required|email|unique:users,email',
+            'form.address' => 'required|string',
+            'form.country' => 'required|string',
+            'form.district' => 'required|string',
+            'form.city' => 'required|string',
+            'form.role_title' => 'required|string',
+            'form.organization_id' => 'required|exists:organizations,id',
+            'form.assign_as_project_head' => 'boolean',
+        ]);
+
+        // Validate that the current user can assign Project Head role
+        if ($this->form['assign_as_project_head'] && !$this->canAssignProjectHead) {
+            $this->dispatch('swal', [
+                'position' => 'top-end',
+                'icon' => 'error',
+                'title' => 'You do not have permission to assign Project Head role.',
+                'showConfirmButton' => false,
+                'timer' => 2500
             ]);
+            return;
+        }
 
         // Check if email exists and is not verified
         $existingUser = User::where('email', $this->form['email'])->first();
@@ -138,7 +188,7 @@ class CreatePersonsComponent extends Component
             $user = User::create([
                 'name' => $this->form['given_name'] . ' ' . $this->form['family_name'],
                 'email' => $this->form['email'],
-                'password' => bcrypt($temporaryPassword), // Save the temporary password
+                'password' => bcrypt($temporaryPassword),
             ]);
 
             // Store the temporary password in the database
@@ -157,20 +207,19 @@ class CreatePersonsComponent extends Component
             Log::info('User created', ['user_id' => $user->id]);
 
             $currentOrganization = user_current_organization();
-            // Check the LOGGED-IN user's role, not the newly created user
             $authUser = Auth::user();
-            $isSuperAdmin = $authUser && method_exists($authUser, 'hasRole') && $authUser->hasRole('Super Admin');
 
             if ($this->isOrgAdmin) {
                 // Org Admin: validate the selected organization is in their department scope
                 if (empty($this->form['organization_id']) || !\App\Models\Organization::find($this->form['organization_id'])) {
                     session()->flash('error', 'Please select a valid project (organization).');
+                    DB::rollBack();
                     return;
                 }
-                // Keep the user-selected organization_id from the dropdown
-            } elseif (!$isSuperAdmin) {
+            } elseif (!$this->isSuperAdmin) {
                 if (!$currentOrganization) {
                     session()->flash('error', 'You are not associated with any organization.');
+                    DB::rollBack();
                     return;
                 }
                 $this->form['organization_id'] = $currentOrganization->id;
@@ -178,25 +227,30 @@ class CreatePersonsComponent extends Component
                 // Validate that the organization_id is provided for Super Admins
                 if (empty($this->form['organization_id']) || !\App\Models\Organization::find($this->form['organization_id'])) {
                     session()->flash('error', 'Please select a valid organization.');
+                    DB::rollBack();
                     return;
                 }
             }
 
-            // Use the selected organization from the dropdown for both Person and PersonAffiliation
             $selectedOrgId = $this->form['organization_id'];
 
             Log::info('Organization selection', [
                 'selected_org_id' => $selectedOrgId,
                 'is_org_admin' => $this->isOrgAdmin,
-                'is_super_admin' => $isSuperAdmin,
-                'form_organization_id' => $this->form['organization_id'],
+                'is_super_admin' => $this->isSuperAdmin,
+                'assign_as_project_head' => $this->form['assign_as_project_head'],
             ]);
+
+            // Determine classification based on role assignment
+            $classification = $this->form['assign_as_project_head']
+                ? ['STAFF', 'PROJECT_HEAD']
+                : ['STAFF'];
 
             // Create Person with user_id
             $person = Person::create([
                 'person_id' => \App\Helpers\IdGenerator::generatePersonId(),
                 'global_identifier' => \App\Helpers\IdGenerator::generateGlobalIdentifier(),
-                'organization_id' => $selectedOrgId, // The selected project/organization
+                'organization_id' => $selectedOrgId,
                 'given_name' => $this->form['given_name'],
                 'middle_name' => $this->form['middle_name'],
                 'family_name' => $this->form['family_name'],
@@ -207,15 +261,15 @@ class CreatePersonsComponent extends Component
                 'address' => $this->form['address'],
                 'city' => $this->form['city'],
                 'user_id' => $user->id,
-                'classification' => json_encode(['STAFF']),
-                'created_by' => $user->id,
+                'classification' => json_encode($classification),
+                'created_by' => Auth::id(),
             ]);
             Log::info('Person created', ['person_id' => $person->id]);
 
             $this->createContactInformation($person);
             Log::info('Contact information created', ['person_id' => $person->id]);
 
-            // Determine department_id: already set for Org Admin, derive from org's category for others
+            // Determine department_id
             $departmentId = $this->userDepartmentId;
             if (!$departmentId) {
                 $selectedOrg = Organization::find($selectedOrgId);
@@ -233,34 +287,53 @@ class CreatePersonsComponent extends Component
                 ]);
             }
 
+            // Determine role_title based on Project Head assignment
+            $roleTitle = $this->form['assign_as_project_head']
+                ? ($this->form['role_title'] ?: 'Project Head')
+                : ($this->form['role_title'] ?: 'Staff');
+
             PersonAffiliation::create([
                 'person_id' => $person->id,
-                'organization_id' => $selectedOrgId, // Always use the selected organization
-                'department_id' => $departmentId, // Derived from org's category or Org Admin's affiliation
+                'organization_id' => $selectedOrgId,
+                'department_id' => $departmentId,
                 'role_type' => $this->form['role_type'] ?? 'STAFF',
-                'role_title' => $this->form['role_title'] ?? 'Organization Admin',
+                'role_title' => $roleTitle,
                 'start_date' => now(),
                 'status' => 'active',
-                'created_by' => $user->id,
+                'created_by' => Auth::id(),
                 'user_id' => $user->id,
             ]);
             Log::info('Person affiliation created', ['person_id' => $person->id]);
 
-            // Assign Organization Admin role
-            $user->assignRole('Person');
-            Log::info('Role assigned', ['user_id' => $user->id]);
+            // Assign appropriate Spatie role based on selection
+            if ($this->form['assign_as_project_head']) {
+                $user->assignRole('Project Head');
+                Log::info('Project Head role assigned', ['user_id' => $user->id, 'organization_id' => $selectedOrgId]);
+
+                // Also assign Person role as base role
+                if (!$user->hasRole('Person')) {
+                    $user->assignRole('Person');
+                }
+            } else {
+                $user->assignRole('Person');
+                Log::info('Person role assigned', ['user_id' => $user->id]);
+            }
 
             DB::commit();
             Log::info('DB commit successful', ['user_id' => $user->id, 'person_id' => $person->id]);
 
-            session()->flash('info', 'Registered.');
-            // $this->dispatch('swal', [
-            //     'position' => 'top-end',
-            //     'icon' => 'success',
-            //     'title' => 'Registration successful! Please check your email to verify your account.',
-            //     'showConfirmButton' => false,
-            //     'timer' => 1500
-            // ]);
+            $successMessage = $this->form['assign_as_project_head']
+                ? 'Project Head registered successfully!'
+                : 'Person registered successfully!';
+
+            $this->dispatch('swal', [
+                'position' => 'top-end',
+                'icon' => 'success',
+                'title' => $successMessage,
+                'showConfirmButton' => false,
+                'timer' => 2000
+            ]);
+
             return redirect()->route('persons.all');
         } catch (\Exception $e) {
             if ($user) {
@@ -306,8 +379,6 @@ class CreatePersonsComponent extends Component
                 'created_by' => $person->user_id,
             ]);
         }
-
-        // ...existing code...
     }
 
     public function resetForm()
@@ -324,21 +395,22 @@ class CreatePersonsComponent extends Component
             'address' => '',
             'city' => '',
             'district' => '',
-            'country' => 'UGA',
-            'role_type' => '',
+            'country' => 'Uganda',
+            'role_type' => 'STAFF',
             'role_title' => '',
             'site' => '',
             'start_date' => '',
             'organization_id' => '',
             'organization' => '',
+            'assign_as_project_head' => false,
         ];
-
     }
 
     public function render()
     {
         return view('livewire.person.person-create-component', [
             'availableOrganizations' => $this->availableOrganizations,
+            'canAssignProjectHead' => $this->canAssignProjectHead,
         ]);
     }
 }

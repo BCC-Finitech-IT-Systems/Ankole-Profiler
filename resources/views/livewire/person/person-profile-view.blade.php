@@ -3,7 +3,7 @@
 
 
     <!-- Profile Summary -->
-    <div class="max-w-6xl mx-auto mt-6">
+    <div class="max-w-6xl mt-6">
         <div class="flex flex-col md:flex-row gap-6">
 
             <div class="flex-1">
@@ -34,7 +34,7 @@
                             </div>
 
                             <!-- Profile Summary -->
-                            <div class="max-w-7xl mx-auto mt-8">
+                            <div class="max-w-7xl mt-8">
                                 <div class="flex flex-col md:flex-row gap-8">
                                     <div
                                         class="flex flex-col items-center md:items-start bg-white rounded-xl shadow p-8 w-full md:w-1/4">
@@ -138,7 +138,7 @@
                                                 <a href="{{ route('organization-units.index') }}" class="inline-block px-3 py-1 bg-green-500 text-white rounded-full text-xs font-semibold align-middle hover:bg-green-600 transition">View Organization Units</a>
                                         </div>
                                     </div>
-                                    <div class="flex-1">
+                                    <div class="">
                                         <div class="flex flex-wrap gap-6 mb-6">
 
                                             <div class="bg-white rounded-xl shadow p-6 flex-1 min-w-[220px]">
@@ -258,3 +258,9 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

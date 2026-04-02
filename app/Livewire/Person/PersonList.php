@@ -487,38 +487,37 @@ class PersonList extends Component
         $user = Auth::user();
         $currentOrganization = user_current_organization();
 
-            $canViewAllPersons = ($user instanceof \App\Models\User) && $user->hasRole('Super Admin');
-            $canViewOrgPersons = ($user instanceof \App\Models\User) && $user->hasRole('Organization Admin');
+        $canViewAllPersons = ($user instanceof \App\Models\User) && $user->hasRole('Super Admin');
+        $canViewOrgPersons = ($user instanceof \App\Models\User) && $user->hasRole('Organization Admin');
+        $canViewProjectHeadPersons = ($user instanceof \App\Models\User) && $user->hasRole('Project Head') && $user->can('view-org-persons');
 
-        // Only allow Super Admins and Organization Admins to view persons
-        if (!($user && method_exists($user, 'hasRole')) || (!$canViewAllPersons && !$canViewOrgPersons)) {
+        if (!($user && method_exists($user, 'hasRole')) || (!$canViewAllPersons && !$canViewOrgPersons && !$canViewProjectHeadPersons)) {
             return $this->renderEmptyState();
         }
 
-        // Get the Org Admin's department_id from their affiliation
-        $orgAdminDepartmentId = null;
+        $orgAdminDepartmentIds = null;
         if ($canViewOrgPersons && !$canViewAllPersons && $user->person) {
-            $orgAdminDepartmentId = PersonAffiliation::where('person_id', $user->person->id)
+            $orgAdminDepartmentIds = PersonAffiliation::where('person_id', $user->person->id)
                 ->where('status', 'active')
-                ->whereNotNull('department_id')
-                ->value('department_id');
+                ->pluck('department_id');
         }
 
         try {
-            // For Organization Admins, filter by their department
-            if ($canViewOrgPersons && !$canViewAllPersons && $orgAdminDepartmentId) {
-                $this->filters['department_id'] = $orgAdminDepartmentId;
+            if ($canViewProjectHeadPersons && !$canViewAllPersons) {
+                $this->filters['organization_id'] = $currentOrganization->id ?? null;
             }
 
-            // Allow Super Admins to clear organization filter
+            if ($canViewOrgPersons && !$canViewAllPersons && $orgAdminDepartmentIds) {
+                $this->filters['department_id'] = $orgAdminDepartmentIds;
+            }
+
             if ($canViewAllPersons && isset($this->filters['organization_id']) && $this->filters['organization_id'] === '') {
                 unset($this->filters['organization_id']);
             }
 
-            // Merge filters, but always include search (even if empty)
             $allFilters = array_merge(['search' => $this->filters['search']], $this->filters, $this->dynamicFilters);
             $allFilters = array_filter($allFilters, function ($value, $key) {
-                if ($key === 'search') return true; // Always include search
+                if ($key === 'search') return true;
                 if (is_array($value)) {
                     if (isset($value['start']) && isset($value['end'])) {
                         return !empty($value['start']) || !empty($value['end']);
@@ -528,38 +527,35 @@ class PersonList extends Component
                 return $value !== '' && $value !== null;
             }, ARRAY_FILTER_USE_BOTH);
 
-            // Use SearchFilterService instead of PersonFilterService
             $searchable = ['given_name', 'family_name', 'middle_name', 'person_id'];
             $service = new SearchFilterService(Person::class, $searchable);
             $service->applySearch($allFilters['search'] ?? '');
 
-            // Remove 'search' from filters before applying the rest
             $filtersForService = $allFilters;
             unset($filtersForService['search']);
             $service->applyFilters($filtersForService);
 
-            // Order by latest creation date
             $service->getQuery()->orderBy('created_at', 'desc');
 
             $persons = $service->paginate(6);
-            // $persons->withPath(request()->url());
-
         } catch (\Exception $e) {
             Log::error('Error applying filters: ' . $e->getMessage(), [
                 'filters' => $allFilters ?? [],
                 'user_id' => $user->id ?? null
             ]);
 
-            // Fallback query
             $query = Person::query();
-            if ($canViewOrgPersons && !$canViewAllPersons && $orgAdminDepartmentId) {
-                $query->whereHas('affiliations', function ($q) use ($orgAdminDepartmentId) {
-                    $q->where('department_id', $orgAdminDepartmentId)
+            if ($canViewOrgPersons && !$canViewAllPersons && $orgAdminDepartmentIds) {
+                $query->whereHas('affiliations', function ($q) use ($orgAdminDepartmentIds) {
+                    $q->whereIn('department_id', $orgAdminDepartmentIds)
                       ->where('status', 'active');
                 });
             }
 
-            // Order by latest creation date in fallback query
+            if ($canViewProjectHeadPersons && !$canViewAllPersons) {
+                $query->where('organization_id', $currentOrganization->id ?? null);
+            }
+
             $query->orderBy('created_at', 'desc');
 
             $persons = $query->paginate(10);
@@ -569,7 +565,6 @@ class PersonList extends Component
             ]);
         }
 
-        // Get additional data
         $additionalData = $this->getAdditionalData($currentOrganization, $canViewAllPersons);
 
         return view('livewire.person.person-list', array_merge([

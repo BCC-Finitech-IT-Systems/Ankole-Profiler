@@ -69,7 +69,7 @@
                 @endcan
 
                 {{-- Add New Person Button --}}
-                <a href="{{ route('person-search') }}" style="background-color:#01fea1"
+                <a href="{{ route('persons.search') }}" style="background-color:#01fea1"
                     class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white hover:bg-[#01bafe]">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"

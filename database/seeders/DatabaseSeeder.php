@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
         try {
             // Run only the UserSeeder
             $this->call([
-                RolePermissionSeeder::class,
+                RolesAndPermissionsSeeder::class,
                 UserSeeder::class,
                 AllowedEmailDomainSeeder::class,
                 CommunicationPermissionSeeder::class,

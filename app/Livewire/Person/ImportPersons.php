@@ -61,6 +61,10 @@ class ImportPersons extends Component
 
     public function mount()
     {
+        if (!Auth::user()->can('import-persons')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $this->initializeOrganizationContext();
     }
 

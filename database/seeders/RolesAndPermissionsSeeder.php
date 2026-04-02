@@ -6,7 +6,7 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
-class RolePermissionSeeder extends Seeder
+class RolesAndPermissionsSeeder extends Seeder
 {
     public function run()
     {
@@ -14,42 +14,43 @@ class RolePermissionSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create permissions
-    $permissions = [
+        $permissions = [
             // Unit management permissions
             'edit-units',
             'delete-units',
             'move-units',
             'approve-unit-membership',
             'bulk-approve-unit-membership',
+
             // Dashboard permissions
             'view-dashboard',
             'view-analytics',
             'view-org-analytics',
             'view-risk-overview',
 
+            // Organization unit permissions
             'assign-organization-unit',
             'review-organization-units',
 
-            // communication
+            // Communication permissions
             'send-communications',
             'view-communications',
             'manage-communications',
 
             // Organization permissions
-            'view-Organizations',
-            'view-Organizations-hierarchy',
-            'create-Organizations',
-            'edit-Organizations',
-            'delete-Organizations',
-            'view-own-Organization',
+            'view-organizations',
+            'view-organizations-hierarchy',
+            'create-organizations',
+            'edit-organizations',
+            'delete-organizations',
+            'view-own-organization',
             'view-sites',
             'create-sites',
             'view-own-sites',
             'view-units',
             'view-own-units',
             'create-units',
-            'view-Organization-units',
-
+            'view-organization-units',
 
             // Person permissions
             'view-persons',
@@ -68,7 +69,7 @@ class RolePermissionSeeder extends Seeder
             'view-persons-document',
             'edit-persons-document',
             'delete-persons-document',
-            'Support-persons',
+            'support-persons',
 
             // Affiliation permissions
             'view-affiliations',
@@ -144,9 +145,10 @@ class RolePermissionSeeder extends Seeder
             'view-own-entries',
             'view-quality-issues',
 
+            // Site management permissions
             'manage-sites',
-            'import-Organizations',
-            'export-Organizations',
+            'import-organizations',
+            'export-organizations',
 
             // Department and project permissions
             'view-departments',
@@ -164,7 +166,6 @@ class RolePermissionSeeder extends Seeder
             'view-project-relationships',
             'view-project-stats',
             'send-project-communications',
-
         ];
 
         foreach ($permissions as $permission) {
@@ -320,12 +321,12 @@ class RolePermissionSeeder extends Seeder
             'view-persons-document',
             'edit-persons-document',
             'delete-persons-document',
-            'Support-persons',
+            'support-persons',
             'view-org-persons',
             'edit-persons',
-            'Support-persons',
+            'support-persons',
             'view-affiliations',
-            'view-Organization-units',
+            'view-organization-units',
             // Do NOT include: 'edit-units', 'delete-units', 'move-units'
         ]);
     }

@@ -129,24 +129,24 @@ class PersonSearch extends Component
             return;
         }
 
-        $query = CommunicationFilterProfile::where(function($q) {
+        $query = CommunicationFilterProfile::where(function ($q) {
             $q->where('user_id', Auth::id())
-              ->orWhere('is_shared', true);
+                ->orWhere('is_shared', true);
         })
-        ->where('organization_id', $organization->id)
-        ->where('is_active', true);
+            ->where('organization_id', $organization->id)
+            ->where('is_active', true);
 
         if ($this->profileSearch) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->profileSearch . '%')
-                  ->orWhere('description', 'like', '%' . $this->profileSearch . '%');
+                    ->orWhere('description', 'like', '%' . $this->profileSearch . '%');
             });
         }
 
         $this->availableProfiles = $query->orderByDesc('last_used_at')
             ->orderByDesc('created_at')
             ->get()
-            ->map(function($profile) {
+            ->map(function ($profile) {
                 return [
                     'id' => $profile->id,
                     'name' => $profile->name,
@@ -169,15 +169,15 @@ class PersonSearch extends Component
     public function getHasActiveFiltersProperty()
     {
         return !empty($this->search) ||
-               !empty($this->classification) ||
-               !empty($this->gender) ||
-               !empty($this->OrganizationId) ||
-               $this->status !== 'active' ||
-               !empty($this->city) ||
-               !empty($this->district) ||
-               !empty($this->country) ||
-               !empty($this->ageFrom) ||
-               !empty($this->ageTo);
+            !empty($this->classification) ||
+            !empty($this->gender) ||
+            !empty($this->OrganizationId) ||
+            $this->status !== 'active' ||
+            !empty($this->city) ||
+            !empty($this->district) ||
+            !empty($this->country) ||
+            !empty($this->ageFrom) ||
+            !empty($this->ageTo);
     }
 
     public function getCurrentFiltersArray()
@@ -433,7 +433,6 @@ class PersonSearch extends Component
                 'success' => 'Filter profile saved successfully! You can now use it to send communications.',
                 'preselect_filter_profile' => $profile->id
             ]);
-
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to save filter profile. Please try again.');
         }
@@ -545,11 +544,11 @@ class PersonSearch extends Component
         if (!empty($this->search)) {
             switch ($this->searchBy) {
                 case 'name':
-                                        $query->where(function($q) {
-                                                $q->where('given_name', 'like', "%{$this->search}%")
-                                                    ->orWhere('family_name', 'like', "%{$this->search}%")
-                                                    ->orWhere('middle_name', 'like', "%{$this->search}%");
-                                        });
+                    $query->where(function ($q) {
+                        $q->where('given_name', 'like', "%{$this->search}%")
+                            ->orWhere('family_name', 'like', "%{$this->search}%")
+                            ->orWhere('middle_name', 'like', "%{$this->search}%");
+                    });
                     break;
 
                 case 'person_id':
@@ -578,21 +577,21 @@ class PersonSearch extends Component
                 default:
                     $query->where(function ($q) {
                         $q->where('given_name', 'like', "%{$this->search}%")
-                          ->orWhere('family_name', 'like', "%{$this->search}%")
-                          ->orWhere('middle_name', 'like', "%{$this->search}%")
-                          ->orWhere('person_id', 'like', "%{$this->search}%")
-                          ->orWhereHas('phones', function ($phoneQuery) {
-                              $phoneQuery->where('number', 'like', "%{$this->search}%");
-                          })
-                          ->orWhereHas('emailAddresses', function ($emailQuery) {
-                              $emailQuery->where('email', 'like', "%{$this->search}%");
-                          })
-                          ->orWhereHas('identifiers', function ($identifierQuery) {
-                              $identifierQuery->where('identifier', 'like', "%{$this->search}%");
-                          })
-                          ->orWhere('address', 'like', "%{$this->search}%")
-                          ->orWhere('city', 'like', "%{$this->search}%")
-                          ->orWhere('district', 'like', "%{$this->search}%");
+                            ->orWhere('family_name', 'like', "%{$this->search}%")
+                            ->orWhere('middle_name', 'like', "%{$this->search}%")
+                            ->orWhere('person_id', 'like', "%{$this->search}%")
+                            ->orWhereHas('phones', function ($phoneQuery) {
+                                $phoneQuery->where('number', 'like', "%{$this->search}%");
+                            })
+                            ->orWhereHas('emailAddresses', function ($emailQuery) {
+                                $emailQuery->where('email', 'like', "%{$this->search}%");
+                            })
+                            ->orWhereHas('identifiers', function ($identifierQuery) {
+                                $identifierQuery->where('identifier', 'like', "%{$this->search}%");
+                            })
+                            ->orWhere('address', 'like', "%{$this->search}%")
+                            ->orWhere('city', 'like', "%{$this->search}%")
+                            ->orWhere('district', 'like', "%{$this->search}%");
                     });
                     break;
             }
@@ -627,7 +626,7 @@ class PersonSearch extends Component
         if (!empty($this->OrganizationId)) {
             $query->whereHas('affiliations', function ($q) {
                 $q->where('organization_id', $this->OrganizationId)
-                  ->where('status', 'active');
+                    ->where('status', 'active');
 
                 if (!empty($this->roleType)) {
                     $q->where('role_type', $this->roleType);
@@ -706,7 +705,6 @@ class PersonSearch extends Component
 
             $this->selectedPersons = [];
             $this->selectAll = false;
-
         } catch (\Exception $e) {
             session()->flash('error', 'Export failed: ' . $e->getMessage());
         }
@@ -746,32 +744,32 @@ class PersonSearch extends Component
 
     public $showRelationships = false;
 
-public function toggleRelationships()
-{
-    $this->showRelationships = !$this->showRelationships;
+    public function toggleRelationships()
+    {
+        $this->showRelationships = !$this->showRelationships;
 
-    if ($this->showRelationships) {
-        $personIds = $this->getPersonsQuery()->pluck('id')->toArray();
-        $this->dispatch('loadRelationships', personIds: $personIds);
-    }
-}
-
-
-
-// Also add this computed property:
-public function getRelationshipCountProperty()
-{
-    if (empty($this->persons) || $this->persons->isEmpty()) {
-        return 0;
+        if ($this->showRelationships) {
+            $personIds = $this->getPersonsQuery()->pluck('id')->toArray();
+            $this->dispatch('loadRelationships', personIds: $personIds);
+        }
     }
 
-    $personIds = $this->persons->pluck('id')->toArray();
 
-    return DB::table('person_relations')
-        ->whereIn('person_id', $personIds)
-        ->distinct('related_person_id')
-        ->count('related_person_id');
-}
+
+    // Also add this computed property:
+    public function getRelationshipCountProperty()
+    {
+        if (empty($this->persons) || $this->persons->isEmpty()) {
+            return 0;
+        }
+
+        $personIds = $this->persons->pluck('id')->toArray();
+
+        return DB::table('person_relations')
+            ->whereIn('person_id', $personIds)
+            ->distinct('related_person_id')
+            ->count('related_person_id');
+    }
 
     public function render()
     {
