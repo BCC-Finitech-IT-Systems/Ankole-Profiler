@@ -323,7 +323,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view-persons-document',
             'edit-persons-document',
             'delete-persons-document',
-            'support-persons',
             'view-org-persons',
             'edit-persons',
             'support-persons',
