@@ -24,7 +24,7 @@ class UserSeeder extends Seeder
         $user = User::updateOrCreate(
             ['email' => 'ategeka.lordrick@bcc.co.ug'], // unique constraint
             [
-                'name' => 'Lordrick Ategeka -BBC -ADMIN',
+                'name' => 'Lordrick Ategeka -BCC -ADMIN',
                 'email_verified_at' => now(),
                 'password' => Hash::make('qwertyui'), // use a strong password in production
             ]

@@ -28,13 +28,6 @@
                 </div>
             </div>
 
-            {{-- <div class="card bg-base-100 border border-base-300 shadow-sm">
-                <div class="card-body p-4">
-                    <p class="text-sm text-base-content/70">Total Projects</p>
-                    <p class="text-2xl font-bold">{{ number_format($summary['total_projects']) }}</p>
-                </div>
-            </div> --}}
-
             <div class="card bg-base-100 border border-primary/30 shadow-sm">
                 <div class="card-body p-4">
                     <p class="text-sm text-base-content/70">Active Projects</p>
@@ -44,7 +37,7 @@
 
             <div class="card bg-base-100 border border-base-300 shadow-sm">
                 <div class="card-body p-4">
-                    <p class="text-sm text-base-content/70">Organizations in Scope</p>
+                    <p class="text-sm text-base-content/70">Projects in Scope</p>
                     <p class="text-2xl font-bold">{{ $departmentOrganizations->count() }}</p>
                 </div>
             </div>
@@ -191,7 +184,7 @@
                         </div>
                     </div>
 
-                    @if($hasSubCategories)
+                    {{-- @if($hasSubCategories)
                         <div class="mt-4 rounded-box border border-base-300 p-3">
                             <p class="text-sm font-medium mb-2">Organizations in {{ $selectedDepartment->name }} scope ({{ $selectedDepartment->subCategories->pluck('name')->join('/') }})</p>
                             <div class="flex flex-wrap gap-2">
@@ -204,7 +197,7 @@
                                 @endforelse
                             </div>
                         </div>
-                    @endif
+                    @endif --}}
                 @endif
             </div>
         </div>
@@ -310,28 +303,95 @@
             <div class="card-body">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <h2 class="text-lg font-semibold">Persons Registered Per Project</h2>
-                    <div class="btn-group">
-                        <button wire:click="setChartPeriod('weekly')"
-                            class="btn btn-sm {{ $chartPeriod === 'weekly' ? 'btn-primary' : 'btn-outline' }}">
-                            Weekly
-                        </button>
-                        <button wire:click="setChartPeriod('monthly')"
-                            class="btn btn-sm {{ $chartPeriod === 'monthly' ? 'btn-primary' : 'btn-outline' }}">
-                            Monthly
-                        </button>
-                        <button wire:click="setChartPeriod('yearly')"
-                            class="btn btn-sm {{ $chartPeriod === 'yearly' ? 'btn-primary' : 'btn-outline' }}">
-                            Yearly
-                        </button>
+                    <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+                        {{-- Chart View Mode Selector --}}
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-base-content/70">View:</span>
+                            <select wire:model.live="chartViewMode" class="select select-bordered select-sm">
+                                <option value="all">All Projects Combined</option>
+                                <option value="single">Single Project</option>
+                            </select>
+                        </div>
+
+                        {{-- Project Selector (visible only when single mode) --}}
+                        @if($chartViewMode === 'single')
+                            <select wire:model.live="selectedChartProjectId" class="select select-bordered select-sm min-w-48">
+                                <option value="">Select a project...</option>
+                                @foreach($chartableProjects as $project)
+                                    <option value="{{ $project->id }}">
+                                        {{ $project->name }}
+                                        @if($project->department?->organization)
+                                            ({{ $project->department->organization->display_name ?: $project->department->organization->legal_name }})
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                        @endif
+
+                        {{-- Period Selector --}}
+                        <div class="btn-group">
+                            <button wire:click="setChartPeriod('weekly')"
+                                class="btn btn-sm {{ $chartPeriod === 'weekly' ? 'btn-primary' : 'btn-outline' }}">
+                                Weekly
+                            </button>
+                            <button wire:click="setChartPeriod('monthly')"
+                                class="btn btn-sm {{ $chartPeriod === 'monthly' ? 'btn-primary' : 'btn-outline' }}">
+                                Monthly
+                            </button>
+                            <button wire:click="setChartPeriod('yearly')"
+                                class="btn btn-sm {{ $chartPeriod === 'yearly' ? 'btn-primary' : 'btn-outline' }}">
+                                Yearly
+                            </button>
+                        </div>
                     </div>
                 </div>
 
+                {{-- Selected Project Info Badge --}}
+                @if($chartViewMode === 'single' && $selectedChartProject)
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="badge badge-primary badge-lg gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            {{ $selectedChartProject->name }}
+                        </span>
+                        @if($selectedChartProject->department?->organization)
+                            <span class="badge badge-outline">
+                                {{ $selectedChartProject->department->organization->display_name ?: $selectedChartProject->department->organization->legal_name }}
+                            </span>
+                        @endif
+                        <span class="text-sm text-base-content/70">
+                            Total: {{ number_format($selectedChartProject->persons_count ?? 0) }} persons
+                        </span>
+                    </div>
+                @endif
+
                 <div class="mt-4" style="position: relative; height: 350px;"
-                     wire:key="chart-{{ $chartPeriod }}-{{ $activeDepartmentId }}"
+                     wire:key="chart-{{ $chartPeriod }}-{{ $activeDepartmentId }}-{{ $chartViewMode }}-{{ $selectedChartProjectId }}"
                      x-data="registrationChart()"
-                     x-init="render(@js($registrationChartData), '{{ ucfirst($chartPeriod) }}')">
+                     x-init="render(@js($registrationChartData), '{{ ucfirst($chartPeriod) }}', '{{ $chartViewMode }}')">
                     <canvas x-ref="canvas"></canvas>
                 </div>
+
+                {{-- Quick Project Switcher (clickable chips for single mode) --}}
+                @if($chartViewMode === 'single' && $chartableProjects->count() > 1)
+                    <div class="mt-4 pt-4 border-t border-base-300">
+                        <p class="text-xs text-base-content/70 mb-2">Quick switch:</p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($chartableProjects->take(10) as $project)
+                                <button
+                                    wire:click="$set('selectedChartProjectId', {{ $project->id }})"
+                                    class="badge cursor-pointer transition-all hover:scale-105 {{ $selectedChartProjectId == $project->id ? 'badge-primary' : 'badge-outline hover:badge-primary/50' }}"
+                                >
+                                    {{ Str::limit($project->name, 20) }}
+                                </button>
+                            @endforeach
+                            @if($chartableProjects->count() > 10)
+                                <span class="badge badge-ghost">+{{ $chartableProjects->count() - 10 }} more</span>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     @endif
@@ -357,6 +417,7 @@
                                 <th>Status</th>
                                 <th>Start Date</th>
                                 <th>End Date</th>
+                                <th>Chart</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -396,10 +457,21 @@
                                     </td>
                                     <td>{{ $project->starts_on ? $project->starts_on->format('Y-m-d') : '—' }}</td>
                                     <td>{{ $project->ends_on ? $project->ends_on->format('Y-m-d') : '—' }}</td>
+                                    <td>
+                                        <button
+                                            wire:click="viewProjectChart({{ $project->id }})"
+                                            class="btn btn-xs btn-ghost btn-circle tooltip"
+                                            data-tip="View chart"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                            </svg>
+                                        </button>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="12" class="text-center py-8 text-base-content/70">No projects found for this department.</td>
+                                    <td colspan="13" class="text-center py-8 text-base-content/70">No projects found for this department.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -460,7 +532,7 @@
     function registrationChart() {
         return {
             chart: null,
-            render(chartData, periodLabel) {
+            render(chartData, periodLabel, viewMode) {
                 this.$nextTick(() => {
                     const canvas = this.$refs.canvas;
                     if (!canvas) return;
@@ -469,11 +541,26 @@
                         this.chart.destroy();
                     }
 
+                    // Determine chart type based on view mode
+                    const chartType = viewMode === 'single' ? 'bar' : 'line';
+                    const isSingleMode = viewMode === 'single';
+
                     this.chart = new Chart(canvas, {
-                        type: 'line',
+                        type: chartType,
                         data: {
                             labels: chartData.labels,
-                            datasets: chartData.datasets
+                            datasets: chartData.datasets.map((dataset, index) => ({
+                                ...dataset,
+                                // For single project view, use bar styling
+                                ...(isSingleMode ? {
+                                    backgroundColor: dataset.borderColor || 'rgba(99, 102, 241, 0.7)',
+                                    borderColor: dataset.borderColor || 'rgba(99, 102, 241, 1)',
+                                    borderWidth: 2,
+                                    borderRadius: 4,
+                                    barPercentage: 0.7,
+                                    categoryPercentage: 0.8
+                                } : {})
+                            }))
                         },
                         options: {
                             responsive: true,
@@ -485,7 +572,8 @@
                             plugins: {
                                 legend: {
                                     position: 'bottom',
-                                    labels: { usePointStyle: true, padding: 16 }
+                                    labels: { usePointStyle: true, padding: 16 },
+                                    display: !isSingleMode || chartData.datasets.length > 1
                                 },
                                 tooltip: {
                                     callbacks: {

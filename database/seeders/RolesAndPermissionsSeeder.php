@@ -219,6 +219,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view-project-relationships',
             'view-project-stats',
             'send-project-communications',
+            'send-communications',
+            'view-communications',
         ]);
 
         $deptManager = Role::firstOrCreate(['name' => 'Department Manager']);

@@ -11,12 +11,22 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
+use Illuminate\Support\Collection;
+use App\Models\Project;
+use Livewire\Attributes\Computed;
+
 class DepartmentsDashboard extends Component
 {
     public $activeDepartmentId = null;
     public $asOfDate = null;
     public $chartPeriod = 'monthly';
     public $selectedOrganizationPersons = [];
+
+// Chart view mode: 'all' for combined view, 'single' for individual project
+public string $chartViewMode = 'all';
+
+// Selected project ID when in single chart view mode
+public ?int $selectedChartProjectId = null;
 
     public function mount(): void
     {
@@ -47,13 +57,6 @@ class DepartmentsDashboard extends Component
     public function selectDepartment(int $departmentId): void
     {
         $this->activeDepartmentId = $departmentId;
-    }
-
-    public function setChartPeriod(string $period): void
-    {
-        if (in_array($period, ['weekly', 'monthly', 'yearly'])) {
-            $this->chartPeriod = $period;
-        }
     }
 
     private function buildRegistrationChartData($departmentOrganizations, Carbon $asOfDate): array
@@ -369,6 +372,29 @@ class DepartmentsDashboard extends Component
         // Build registration trend chart data per project (organization)
         $registrationChartData = $this->buildRegistrationChartData($departmentOrganizations, $asOfDate);
 
+        // Chartable projects (projects with persons)
+$chartableProjects = $selectedDepartmentProjects
+    ->filter(fn($project) => ($project->persons_count ?? 0) > 0)
+    ->sortByDesc('persons_count')
+    ->values();
+
+// Selected chart project
+$selectedChartProject = ($this->chartViewMode === 'single' && $this->selectedChartProjectId)
+    ? $selectedDepartmentProjects->firstWhere('id', $this->selectedChartProjectId)
+    : null;
+
+// Override chart data if in single mode
+if ($this->chartViewMode === 'single' && $this->selectedChartProjectId) {
+    $singleOrg = $departmentOrganizations->first(function ($org) use ($selectedDepartmentProjects) {
+        $project = $selectedDepartmentProjects->firstWhere('id', $this->selectedChartProjectId);
+        return $project && $org->id === $project->department?->organization_id;
+    });
+    
+    if ($singleOrg) {
+        $registrationChartData = $this->buildRegistrationChartData(collect([$singleOrg]), $asOfDate);
+    }
+}
+
         return view('livewire.departments.departments-dashboard', [
             'departments' => $departments,
             'summary' => $summary,
@@ -382,6 +408,8 @@ class DepartmentsDashboard extends Component
             'ankoleDepartments' => $ankoleDepartments,
             'nonAnkoleDepartments' => $nonAnkoleDepartments,
             'registrationChartData' => $registrationChartData,
+            'chartableProjects' => $chartableProjects,           // ADD
+    'selectedChartProject' => $selectedChartProject,     // ADD
         ]);
     }
 
@@ -398,4 +426,35 @@ class DepartmentsDashboard extends Component
         }
         $this->selectedOrganizationPersons = collect($persons)->unique('id')->values()->all();
     }
+
+ 
+ 
+/**
+ * Handle clicking the chart icon in the projects table
+ */
+public function viewProjectChart(int $projectId): void
+{
+    $this->chartViewMode = 'single';
+    $this->selectedChartProjectId = $projectId;
+}
+
+/**
+ * Reset chart view to all projects
+ */
+public function resetChartView(): void
+{
+    $this->chartViewMode = 'all';
+    $this->selectedChartProjectId = null;
+}
+
+public function setChartPeriod(string $period): void
+{
+    $this->chartPeriod = $period;
+}
+
+public function updatedActiveDepartmentId(): void
+{
+    $this->selectedChartProjectId = null;
+    $this->chartViewMode = 'all';
+}
 }
