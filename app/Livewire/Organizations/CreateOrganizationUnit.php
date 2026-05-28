@@ -81,6 +81,11 @@ class CreateOrganizationUnit extends Component
     public array $orgOptions = [];
     public array $departmentOptions = [];
 
+    // Per-member search state
+    public array $memberSearchQueries = [];
+    public array $memberSearchResults = [];
+    public array $memberSelectedNames  = [];
+
     public function mount(): void
     {
         /** @var User|null $user */
@@ -112,18 +117,61 @@ class CreateOrganizationUnit extends Component
 
     public function addInitialMember(): void
     {
-        $this->initialMembers[] = [
-            'person_id'   => null,
-            'role'        => 'member',
-            'can_view'    => true,
-            'can_edit'    => false,
-            'can_approve' => false,
-        ];
+        $i = count($this->initialMembers);
+        $this->initialMembers[]      = ['person_id' => null, 'role' => 'member', 'can_view' => true, 'can_edit' => false, 'can_approve' => false];
+        $this->memberSearchQueries[$i] = '';
+        $this->memberSearchResults[$i] = [];
+        $this->memberSelectedNames[$i]  = '';
     }
 
     public function removeInitialMember(int $index): void
     {
         array_splice($this->initialMembers, $index, 1);
+        array_splice($this->memberSearchQueries, $index, 1);
+        array_splice($this->memberSearchResults, $index, 1);
+        array_splice($this->memberSelectedNames, $index, 1);
+        // Re-index
+        $this->initialMembers      = array_values($this->initialMembers);
+        $this->memberSearchQueries = array_values($this->memberSearchQueries);
+        $this->memberSearchResults = array_values($this->memberSearchResults);
+        $this->memberSelectedNames  = array_values($this->memberSelectedNames);
+    }
+
+    public function searchMemberPerson(int $index, string $query): void
+    {
+        $this->memberSearchQueries[$index] = $query;
+
+        if (strlen(trim($query)) < 2) {
+            $this->memberSearchResults[$index] = [];
+            return;
+        }
+
+        $this->memberSearchResults[$index] = \App\Models\Person::query()
+            ->where(function ($q) use ($query) {
+                $q->whereRaw("CONCAT(given_name, ' ', family_name) LIKE ?", ["%{$query}%"])
+                  ->orWhere('given_name', 'like', "%{$query}%")
+                  ->orWhere('family_name', 'like', "%{$query}%");
+            })
+            ->limit(8)
+            ->get(['id', 'given_name', 'family_name'])
+            ->map(fn($p) => ['id' => $p->id, 'name' => trim("{$p->given_name} {$p->family_name}")])
+            ->toArray();
+    }
+
+    public function selectMemberPerson(int $index, int $personId, string $name): void
+    {
+        $this->initialMembers[$index]['person_id'] = $personId;
+        $this->memberSelectedNames[$index]          = $name;
+        $this->memberSearchQueries[$index]          = '';
+        $this->memberSearchResults[$index]          = [];
+    }
+
+    public function clearMemberPerson(int $index): void
+    {
+        $this->initialMembers[$index]['person_id'] = null;
+        $this->memberSelectedNames[$index]          = '';
+        $this->memberSearchQueries[$index]          = '';
+        $this->memberSearchResults[$index]          = [];
     }
 
     public function goToStep(int $step): void
@@ -205,11 +253,14 @@ class CreateOrganizationUnit extends Component
         abort_unless($user?->can('create-units'), 403);
 
         $this->validate([
-            'name'            => 'required|string|max:255',
-            'code'            => 'required|string|max:50|unique:organization_units,code',
-            'organization_id' => 'required|exists:organizations,id',
-            'department_id'   => 'nullable|exists:departments,id',
-            'official_email'  => 'nullable|email|max:255',
+            'name'                       => 'required|string|max:255',
+            'code'                       => 'required|string|max:50|unique:organization_units,code',
+            'organization_id'            => 'required|exists:organizations,id',
+            'department_id'              => 'nullable|exists:departments,id',
+            'official_email'             => 'nullable|email|max:255',
+            'initialMembers.*.person_id' => 'nullable|exists:persons,id',
+        ], [
+            'initialMembers.*.person_id.exists' => 'One or more selected persons could not be found. Please use the search to select a valid person.',
         ]);
 
         DB::transaction(function () use ($user) {

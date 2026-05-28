@@ -383,9 +383,59 @@
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Person ID</label>
-                                <input type="number" wire:model="initialMembers.{{ $i }}.person_id"
-                                       class="input input-bordered input-sm w-full" placeholder="Enter person ID" />
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Person</label>
+
+                                @if(!empty($memberSelectedNames[$i]))
+                                    {{-- Selected state --}}
+                                    <div class="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg text-sm">
+                                        <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        <span class="flex-1 truncate text-green-800 font-medium">{{ $memberSelectedNames[$i] }}</span>
+                                        <button type="button" wire:click="clearMemberPerson({{ $i }})"
+                                            class="text-green-500 hover:text-red-500 transition-colors flex-shrink-0" title="Remove">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                @else
+                                    {{-- Search input --}}
+                                    <div class="relative">
+                                        <input type="text"
+                                            wire:model.live.debounce.300ms="memberSearchQueries.{{ $i }}"
+                                            wire:input="searchMemberPerson({{ $i }}, $event.target.value)"
+                                            class="input input-bordered input-sm w-full pr-8"
+                                            placeholder="Search by name..." />
+                                        <svg class="absolute right-2.5 top-2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 111 11a6 6 0 0116 0z"/>
+                                        </svg>
+
+                                        @if(!empty($memberSearchResults[$i]))
+                                            <div class="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                @foreach($memberSearchResults[$i] as $result)
+                                                    <button type="button"
+                                                        wire:click="selectMemberPerson({{ $i }}, {{ $result['id'] }}, '{{ addslashes($result['name']) }}')"
+                                                        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 border-b border-gray-100 last:border-0">
+                                                        <span class="w-6 h-6 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                                                            {{ strtoupper(substr($result['name'], 0, 1)) }}
+                                                        </span>
+                                                        <span>{{ $result['name'] }}</span>
+                                                        <span class="ml-auto text-xs text-gray-400">#{{ $result['id'] }}</span>
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        @elseif(isset($memberSearchQueries[$i]) && strlen($memberSearchQueries[$i]) >= 2)
+                                            <div class="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-sm text-gray-400">
+                                                No persons found.
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                @error('initialMembers.' . $i . '.person_id')
+                                    <span class="text-red-600 text-xs mt-1 block">{{ $message }}</span>
+                                @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Role</label>
