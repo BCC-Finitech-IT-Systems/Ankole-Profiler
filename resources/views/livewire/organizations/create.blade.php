@@ -898,7 +898,7 @@
                                 </div>
 
                                 @if ($category)
-                                    @include('livewire.organizations.partials.category-' . $category)
+                                    @include('livewire.organizations.partials.category-' . strtolower($category))
                                 @else
                                     <div class="text-center py-8">
                                         <p class="text-gray-500">Please select an organization category first.</p>
