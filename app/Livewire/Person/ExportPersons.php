@@ -29,7 +29,7 @@ class ExportPersons extends Component
     public $availableFieldOptions = [];
 
     protected $rules = [
-        'selectedOrganizationId' => 'required_if:isSuperAdmin,true|exists:Organizations,id',
+        'selectedOrganizationId' => 'required_if:isSuperAdmin,true|exists:organizations,id',
         'exportFormat' => 'required|in:xlsx,csv',
         'includeFields' => 'required|array|min:1',
         'filters.role_type' => 'nullable|string',

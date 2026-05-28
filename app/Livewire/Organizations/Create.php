@@ -142,11 +142,11 @@ class Create extends Component
         'category' => 'required|exists:department_sub_categories,name',
 
         // Step 2
-        'legal_name' => 'required|string|max:255|unique:Organizations,legal_name',
-        'code' => 'required|string|max:20|unique:Organizations,code',
+        'legal_name' => 'required|string|max:255|unique:organizations,legal_name',
+        'code' => 'required|string|max:20|unique:organizations,code',
         'organization_type' => 'required|in:HOLDING,SUBSIDIARY,STANDALONE',
-        'registration_number' => 'required|string|unique:Organizations,registration_number',
-        'contact_email' => 'required|email|unique:Organizations,contact_email',
+        'registration_number' => 'required|string|unique:organizations,registration_number',
+        'contact_email' => 'required|email|unique:organizations,contact_email',
         'contact_phone' => 'required|string',
         'date_established' => 'required|date|before_or_equal:today',
 

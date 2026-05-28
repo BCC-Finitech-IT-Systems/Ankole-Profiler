@@ -297,7 +297,7 @@ class PersonSearchRequest extends FormRequest
             'searchBy' => 'nullable|string|in:name,person_id,phone,email,identifier,global',
             'classification' => 'nullable|string|max:100',
             'gender' => 'nullable|string|in:male,female,other',
-            'OrganizationId' => 'nullable|exists:Organizations,id',
+            'OrganizationId' => 'nullable|exists:organizations,id',
             'roleType' => 'nullable|string|max:100',
             'status' => 'nullable|string|in:active,inactive,suspended',
             'city' => 'nullable|string|max:100',

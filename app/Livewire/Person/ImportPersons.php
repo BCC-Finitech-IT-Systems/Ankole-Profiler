@@ -46,7 +46,7 @@ class ImportPersons extends Component
 
     protected $rules = [
         'importFile' => 'required|file|mimes:csv,xlsx,xls|max:10240', // 10MB max
-        'selectedOrganizationId' => 'required_if:isSuperAdmin,true|exists:Organizations,id',
+        'selectedOrganizationId' => 'required_if:isSuperAdmin,true|exists:organizations,id',
         'defaultRoleType' => 'required|string',
         'skipDuplicates' => 'boolean',
         'updateExisting' => 'boolean',
