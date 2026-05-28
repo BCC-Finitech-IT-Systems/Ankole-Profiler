@@ -898,7 +898,11 @@
                                 </div>
 
                                 @if ($category)
-                                    @include('livewire.organizations.partials.category-' . strtolower($category))
+                                    @php
+                                        $partialView = 'livewire.organizations.partials.category-' . Illuminate\Support\Str::slug($category);
+                                        $partialView = \Illuminate\Support\Facades\View::exists($partialView) ? $partialView : 'livewire.organizations.partials.category-other';
+                                    @endphp
+                                    @include($partialView)
                                 @else
                                     <div class="text-center py-8">
                                         <p class="text-gray-500">Please select an organization category first.</p>
