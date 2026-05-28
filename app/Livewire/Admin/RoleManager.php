@@ -54,6 +54,13 @@ class RoleManager extends Component
         $this->resetPage();
     }
 
+    public function fillSampleData(): void
+    {
+        $this->name        = 'Content Manager';
+        $this->guardName   = 'web';
+        $this->description = 'Can create, edit and publish content across the portal.';
+    }
+
     public function openCreateModal()
     {
         $this->resetForm();

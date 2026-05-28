@@ -24,6 +24,9 @@
                 </div>
             @endif
             <!-- FORM -->
+            <div class="flex justify-end mb-2">
+                <x-fill-sample-data-btn />
+            </div>
             <form wire:submit.prevent="submit" class="grid grid-cols-1 md:grid-cols-2 gap-4" id="selfRegForm" novalidate>
                 @csrf
                 {{-- Error Summary Section --}}

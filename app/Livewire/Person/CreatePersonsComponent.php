@@ -131,6 +131,28 @@ class CreatePersonsComponent extends Component
         ->get();
     }
 
+    public function fillSampleData(): void
+    {
+        $org = \App\Models\Organization::where('is_super', false)->first();
+        $this->form = [
+            'given_name'           => 'James',
+            'middle_name'          => 'Okello',
+            'family_name'          => 'Mubiru',
+            'date_of_birth'        => '1990-06-15',
+            'gender'               => 'Male',
+            'phone'                => '+256701234567',
+            'email'                => 'james.mubiru@example.com',
+            'address'              => '12 Bishops Road, Mbarara',
+            'country'              => 'Uganda',
+            'district'             => 'Mbarara',
+            'city'                 => 'Mbarara',
+            'role_type'            => 'STAFF',
+            'role_title'           => 'Parish Administrator',
+            'organization_id'      => $org?->id ?? '',
+            'assign_as_project_head' => false,
+        ];
+    }
+
     public function submit()
     {
         $this->validate([

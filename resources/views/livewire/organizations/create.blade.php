@@ -79,7 +79,8 @@
         </div>
         <div>
             {{-- Tab Navigation --}}
-            <div class="mb-4">
+            <div class="mb-4 flex items-center justify-between gap-4">
+                <div class="flex-1">
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="flex overflow-x-auto">
                         @for ($i = 1; $i <= $totalSteps; $i++)
@@ -139,6 +140,10 @@
                             </button>
                         @endfor
                     </div>
+                </div>
+                </div>
+                <div class="flex-shrink-0">
+                    <x-fill-sample-data-btn />
                 </div>
             </div>
 

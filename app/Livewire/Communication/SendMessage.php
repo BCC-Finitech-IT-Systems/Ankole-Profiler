@@ -425,6 +425,14 @@ class SendMessage extends Component
 
 
 
+    public function fillSampleData(): void
+    {
+        $this->subject         = 'Upcoming Diocese Youth Conference – Save the Date';
+        $this->message_content = "Dear {name},\n\nWe are pleased to invite you to the Annual Ankole Diocese Youth Conference scheduled for Saturday, 14th June 2025 at St. Peter's Cathedral Hall, Mbarara.\n\nThe theme this year is: \"Rooted in Faith, Rising in Purpose\".\n\nActivities will include worship, panel discussions, sports, and networking. Registration opens on 1st June.\n\nFor enquiries, contact the Youth Desk at youth@ankole.org or call +256 700 123 456.\n\nGod bless you,\nThe Diocese of Ankole";
+        $this->selected_channels = ['email'];
+        $this->currentStep = 3;
+    }
+
     public function sendMessage()
     {
         try {

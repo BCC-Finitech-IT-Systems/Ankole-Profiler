@@ -12,8 +12,9 @@
     <div class="w-full">
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
 
-            <div class="p-6 border-b border-gray-100">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
                 <h2 class="text-base font-semibold text-gray-800">Personal Information</h2>
+                <x-fill-sample-data-btn />
             </div>
 
             <form wire:submit.prevent="submit" class="p-6 space-y-6">

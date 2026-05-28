@@ -505,6 +505,54 @@ class Create extends Component
         }
     }
 
+    public function fillSampleData(): void
+    {
+        // Step 1
+        $this->category = 'Church';
+        // Step 2
+        $this->legal_name               = 'St. Peter\'s Anglican Church';
+        $this->display_name             = 'St. Peter\'s Church';
+        $this->code                     = 'SPC-' . rand(100, 999);
+        $this->organization_type        = 'STANDALONE';
+        $this->registration_number      = 'NGO/REG/2019/1042';
+        $this->tax_identification_number = '1002345678';
+        $this->date_established         = '2005-03-15';
+        $this->contact_email            = 'stpeters@ankole.org';
+        $this->contact_phone            = '+256701234567';
+        $this->website_url              = 'https://stpeters.ankole.org';
+        $this->description              = 'A vibrant Anglican congregation serving the Mbarara community with worship, discipleship, and outreach programmes.';
+        // Step 3
+        $this->address_line_1 = 'Plot 5, Church Road';
+        $this->address_line_2 = '';
+        $this->city           = 'Mbarara';
+        $this->district       = 'Mbarara';
+        $this->postal_code    = '1202';
+        $this->country        = 'UGA';
+        $this->latitude       = '-0.6135';
+        $this->longitude      = '30.6545';
+        // Step 4
+        $this->primary_contact_name  = 'Rev. Samuel Byarugaba';
+        $this->primary_contact_title = 'Parish Priest';
+        $this->primary_contact_email = 'samuel.byarugaba@ankole.org';
+        $this->primary_contact_phone = '+256771234567';
+        $this->secondary_contact_name  = 'Deacon John Atuhaire';
+        $this->secondary_contact_email = 'john.atuhaire@ankole.org';
+        $this->secondary_contact_phone = '+256752345678';
+        $this->admin_assignment_type    = 'primary';
+        $this->regulatory_body          = 'Church of Uganda';
+        $this->license_number           = 'COU/2005/0432';
+        $this->license_issue_date       = '2005-03-15';
+        $this->license_expiry_date      = '2030-03-15';
+        $this->accreditation_status     = 'ACCREDITED';
+        // Step 6
+        $this->bank_name           = 'Centenary Bank';
+        $this->bank_account_number = '2100123456';
+        $this->bank_branch         = 'Mbarara Branch';
+        $this->default_currency    = 'UGX';
+        $this->timezone            = 'Africa/Kampala';
+        $this->default_language    = 'en';
+    }
+
     public function submit()
     {
         $this->validate();

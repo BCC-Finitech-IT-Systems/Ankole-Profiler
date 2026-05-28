@@ -12,8 +12,11 @@
 
         {{-- Form --}}
         <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-100">
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-gray-800">{{ $editing ? 'Edit Domain' : 'Add New Domain' }}</h3>
+                @if(!$editing)
+                    <x-fill-sample-data-btn />
+                @endif
             </div>
             <div class="p-5">
                 <form wire:submit.prevent="{{ $editing ? 'update' : 'create' }}" class="space-y-4">

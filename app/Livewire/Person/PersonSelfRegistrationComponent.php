@@ -6,20 +6,16 @@ use App\Models\EmailAddress;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Person;
-use App\Models\Department;
 use App\Models\Organization;
 use App\Models\PersonAffiliation;
-use App\Models\PersonIdentifier;
 use App\Models\Phone;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use App\Models\AllowedEmailDomain;
+use App\Models\Department;
 use Illuminate\Validation\ValidationException;
 
 #[\Livewire\Attributes\Layout('layouts.auth-card')]
@@ -48,6 +44,27 @@ class PersonSelfRegistrationComponent extends Component
 
     // Documents step removed
     public $availableDepartments = null;
+
+    public function fillSampleData(): void
+    {
+        $dept = \App\Models\Department::where('is_active', true)->first();
+        $this->form = [
+            'given_name'    => 'Grace',
+            'middle_name'   => 'Atuheire',
+            'family_name'   => 'Tumusiime',
+            'date_of_birth' => '1995-03-22',
+            'gender'        => 'Female',
+            'phone'         => '+256782345678',
+            'email'         => 'grace.tumusiime@example.com',
+            'address'       => '45 Kamukuzi Hill, Mbarara',
+            'country'       => 'Uganda',
+            'district'      => 'Mbarara',
+            'city'          => 'Mbarara',
+            'role_type'     => 'STAFF',
+            'role_title'    => 'Sunday School Teacher',
+            'department_id' => $dept?->id ?? '',
+        ];
+    }
 
     public function mount()
     {
@@ -95,7 +112,6 @@ class PersonSelfRegistrationComponent extends Component
         }
 
         $temporaryPassword = Str::random(10);
-        $department = Department::findOrFail($this->form['department_id']);
         $superOrganization = Organization::where('is_super', true)->firstOrFail();
         $user = null;
         DB::beginTransaction();
@@ -106,9 +122,6 @@ class PersonSelfRegistrationComponent extends Component
                 'email' => $this->form['email'],
                 'password' => bcrypt($temporaryPassword),
             ]);
-            // Store the temporary password in the database
-            $user->temporary_password = $temporaryPassword;
-            $user->save();
 
             Log::info('User created', ['user_id' => $user->id]);
 
@@ -147,8 +160,7 @@ class PersonSelfRegistrationComponent extends Component
             ]);
             Log::info('Person affiliation created', ['person_id' => $person->id]);
 
-            // Assign Organization Admin role
-            $user->assignRole('Organization Admin');
+            $user->assignRole('Person');
             Log::info('Role assigned', ['user_id' => $user->id]);
 
             // Send custom email verification notification with plain text temporary password

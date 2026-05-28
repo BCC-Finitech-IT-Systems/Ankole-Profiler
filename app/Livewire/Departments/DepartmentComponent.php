@@ -95,6 +95,22 @@ class DepartmentComponent extends Component
         $this->resetPage();
     }
 
+    public function fillSampleData(): void
+    {
+        $org = Organization::query()->first();
+        $admin = User::query()->first();
+        $this->createForm = [
+            'organization_id'      => $org?->id ?? '',
+            'name'                 => 'Education & Schools',
+            'code'                 => 'EDU-' . rand(10, 99),
+            'sub_categories_input' => 'Primary, Secondary, Tertiary',
+            'description'          => 'Oversees all educational institutions and academic programmes within the diocese.',
+            'admin_user_id'        => $admin?->id ?? '',
+            'is_active'            => true,
+        ];
+        $this->showCreateModal = true;
+    }
+
     public function openCreateModal(): void
     {
         /** @var User|null $user */

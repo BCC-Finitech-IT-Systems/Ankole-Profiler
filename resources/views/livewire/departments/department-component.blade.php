@@ -277,7 +277,10 @@
         @if($showCreateModal)
             <div class="modal modal-open">
                 <div class="modal-box max-w-2xl">
-                    <h3 class="font-bold text-lg mb-4">Create Department</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-lg">Create Department</h3>
+                        <x-fill-sample-data-btn />
+                    </div>
 
                     <div class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

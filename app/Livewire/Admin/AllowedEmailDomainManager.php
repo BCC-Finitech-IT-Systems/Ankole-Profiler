@@ -25,6 +25,14 @@ class AllowedEmailDomainManager extends Component
         'is_active' => 'boolean',
     ];
 
+    public function fillSampleData(): void
+    {
+        $org = Organization::query()->first();
+        $this->domain          = '@ankole.org';
+        $this->organization_id = $org?->id;
+        $this->is_active       = true;
+    }
+
     public function create()
     {
         $this->validate();

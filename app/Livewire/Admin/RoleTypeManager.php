@@ -225,6 +225,16 @@ class RoleTypeManager extends Component
         $this->resetPage();
     }
 
+    public function fillSampleData(): void
+    {
+        $dept = \App\Models\Department::where('is_active', true)->first();
+        $this->department_id = $dept?->id ?? '';
+        $this->code          = 'COORD';
+        $this->name          = 'Programme Coordinator';
+        $this->description   = 'Responsible for planning and coordinating departmental programmes and activities.';
+        $this->active        = true;
+    }
+
     public function openCreateModal()
     {
         if (!$this->canManageRoleTypes()) {

@@ -2,16 +2,19 @@
 
 namespace App\Livewire\Organizations;
 
-use Livewire\Component;
+use App\Models\Department;
+use App\Models\Organization;
 use App\Models\OrganizationUnit;
-
-
+use App\Models\UnitPersonRole;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class CreateOrganizationUnit extends Component
 {
-    // Stepper
-    public $currentStep = 1;
-    public $totalSteps = 9;
+    public int $currentStep = 1;
+    public int $totalSteps = 4;
 
     // Step 1: Basic Info
     public $name = '';
@@ -19,8 +22,8 @@ class CreateOrganizationUnit extends Component
     public $description = '';
     public $parent_unit_id = null;
     public $organization_id = null;
+    public $department_id = null;      // NEW — links unit to a department
     public $unit_type = '';
-    public $department = '';
     public $community = '';
     public $ministry_committee = '';
     public $administrative_office = '';
@@ -71,65 +74,227 @@ class CreateOrganizationUnit extends Component
     public $approval_workflow = '';
     public $commission_structure = '';
 
-    // Step 9: Roles & Permissions for Unit Users
-    public $unit_roles = [];
+    // Step 9: Initial members/roles — array of {person_id, role, can_view, can_edit, can_approve}
+    public array $initialMembers = [];
 
-    // Misc
-    public $is_active = true;
-    public $orgOptions = [];
+    public bool $is_active = true;
+    public array $orgOptions = [];
+    public array $departmentOptions = [];
 
-    public function mount()
+    public function mount(): void
     {
-        $user = \Illuminate\Support\Facades\Auth::user();
-        if ($user && method_exists($user, 'can') && $user->can('assign-organization-unit')) {
-            $this->orgOptions = method_exists($user, 'accessibleOrganizations') ? $user->accessibleOrganizations() : [];
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        if ($user?->can('assign-organization-unit')) {
+            $this->orgOptions = Organization::orderBy('legal_name')->get(['id', 'legal_name'])->toArray();
         } else {
-            $this->organization_id = $user && property_exists($user, 'organization_id') ? $user->organization_id : null;
+            $this->organization_id = $user?->organization_id;
         }
+
+        $this->loadDepartments();
     }
 
-    public function goToStep($step)
+    public function updatedOrganizationId(): void
+    {
+        $this->department_id = null;
+        $this->loadDepartments();
+    }
+
+    private function loadDepartments(): void
+    {
+        $query = Department::query()->where('is_active', true)->orderBy('name');
+        if ($this->organization_id) {
+            $query->where('organization_id', $this->organization_id);
+        }
+        $this->departmentOptions = $query->get(['id', 'name'])->toArray();
+    }
+
+    public function addInitialMember(): void
+    {
+        $this->initialMembers[] = [
+            'person_id'   => null,
+            'role'        => 'member',
+            'can_view'    => true,
+            'can_edit'    => false,
+            'can_approve' => false,
+        ];
+    }
+
+    public function removeInitialMember(int $index): void
+    {
+        array_splice($this->initialMembers, $index, 1);
+    }
+
+    public function goToStep(int $step): void
     {
         if ($step > 0 && $step <= $this->totalSteps) {
             $this->currentStep = $step;
         }
     }
 
-    public function nextStep()
+    public function nextStep(): void
     {
+        $this->validateCurrentStep();
         if ($this->currentStep < $this->totalSteps) {
             $this->currentStep++;
         }
     }
 
-    public function prevStep()
+    public function prevStep(): void
     {
         if ($this->currentStep > 1) {
             $this->currentStep--;
         }
     }
 
-    public function submit()
+    private function validateCurrentStep(): void
     {
-        $user = auth()->user();
-        if (!$user || !$user->can('create-units')) {
-            abort(403, 'You do not have permission to create organization units.');
+        if ($this->currentStep === 1) {
+            $this->validate([
+                'name'            => 'required|string|max:255',
+                'code'            => 'required|string|max:50|unique:organization_units,code',
+                'organization_id' => 'required|exists:organizations,id',
+            ]);
         }
-        // TODO: Add validation for all steps/fields
-        // TODO: Save all fields to OrganizationUnit and related tables as needed
+    }
+
+    public function fillSampleData(): void
+    {
+        $org  = Organization::where('is_super', false)->first();
+        $dept = Department::where('is_active', true)->first();
+
+        // Step 1
+        $this->name                  = 'Youth Fellowship';
+        $this->code                  = 'YF-' . rand(100, 999);
+        $this->description           = 'A unit dedicated to youth spiritual growth and community service activities.';
+        $this->organization_id       = $org?->id;
+        $this->department_id         = $dept?->id;
+        $this->unit_type             = 'Fellowship';
+        $this->community             = 'Mbarara Central';
+        $this->ministry_committee    = 'Youth & Young Adults';
+        $this->administrative_office = 'Diocese of Ankole';
+        // Step 2
+        $this->appointment_dates  = '2024-2026';
+        $this->reporting_line     = 'Parish Priest';
+        // Step 3
+        $this->mission          = 'To nurture the spiritual, social, and intellectual development of youth in the diocese.';
+        $this->objectives       = 'Weekly Bible study, monthly outreach, annual youth camp.';
+        $this->activities       = 'Bible study, sports, community service, choir.';
+        $this->target_audience  = 'Youth aged 15–35';
+        // Step 4
+        $this->official_email     = 'youth@ankole.org';
+        $this->phone_contact      = '+256701234567';
+        $this->physical_location  = 'St. Peter\'s Hall, Church Road, Mbarara';
+        // Step 5
+        $this->unit_category      = 'Youth';
+        $this->operational_status = 'active';
+        $this->date_established   = '2010-01-15';
+        $this->faith_based        = true;
+        // Step 6
+        $this->membership_type        = 'permanent';
+        $this->membership_eligibility = 'Open to all baptised youth aged 15–35';
+        $this->membership_capacity    = '200';
+        $this->join_requests_enabled  = true;
+    }
+
+    public function submit(): void
+    {
+        /** @var User|null $user */
+        $user = Auth::user();
+        abort_unless($user?->can('create-units'), 403);
+
+        $this->validate([
+            'name'            => 'required|string|max:255',
+            'code'            => 'required|string|max:50|unique:organization_units,code',
+            'organization_id' => 'required|exists:organizations,id',
+            'department_id'   => 'nullable|exists:departments,id',
+            'official_email'  => 'nullable|email|max:255',
+        ]);
+
+        DB::transaction(function () use ($user) {
+            $unit = OrganizationUnit::create([
+                'organization_id'        => $this->organization_id,
+                'department_id'          => $this->department_id,
+                'name'                   => $this->name,
+                'code'                   => $this->code,
+                'description'            => $this->description,
+                'parent_unit_id'         => $this->parent_unit_id,
+                'unit_type'              => $this->unit_type,
+                'community'              => $this->community,
+                'ministry_committee'     => $this->ministry_committee,
+                'administrative_office'  => $this->administrative_office,
+                'unit_head'              => $this->unit_head,
+                'assistant_leader'       => $this->assistant_leader,
+                'leadership_committee'   => $this->leadership_committee ?: null,
+                'appointment_dates'      => $this->appointment_dates,
+                'reporting_line'         => $this->reporting_line,
+                'mission'                => $this->mission,
+                'objectives'             => $this->objectives,
+                'activities'             => $this->activities,
+                'target_audience'        => $this->target_audience,
+                'official_email'         => $this->official_email,
+                'phone_contact'          => $this->phone_contact,
+                'physical_location'      => $this->physical_location,
+                'website'                => $this->website,
+                'social_links'           => $this->social_links,
+                'unit_category'          => $this->unit_category,
+                'operational_status'     => $this->operational_status,
+                'date_established'       => $this->date_established ?: null,
+                'faith_based'            => $this->faith_based,
+                'socio_economic'         => $this->socio_economic,
+                'support_services'       => $this->support_services,
+                'membership_type'        => $this->membership_type,
+                'membership_eligibility' => $this->membership_eligibility,
+                'membership_capacity'    => $this->membership_capacity ?: null,
+                'join_requests_enabled'  => $this->join_requests_enabled,
+                'recurring_programs'     => $this->recurring_programs,
+                'event_schedule'         => $this->event_schedule,
+                'promotion_permissions'  => $this->promotion_permissions,
+                'resource_access_requirements' => $this->resource_access_requirements,
+                'showcase_permissions'   => $this->showcase_permissions,
+                'product_categories_allowed' => $this->product_categories_allowed,
+                'approval_workflow'      => $this->approval_workflow,
+                'commission_structure'   => $this->commission_structure,
+                'is_active'              => $this->is_active,
+            ]);
+
+            // Step 9: save initial members into unit_person_roles (not JSON blob)
+            foreach ($this->initialMembers as $member) {
+                if (empty($member['person_id'])) {
+                    continue;
+                }
+                UnitPersonRole::firstOrCreate(
+                    [
+                        'unit_id'   => $unit->id,
+                        'person_id' => $member['person_id'],
+                        'role'      => $member['role'] ?? 'member',
+                    ],
+                    [
+                        'can_view'    => (bool) ($member['can_view'] ?? true),
+                        'can_edit'    => (bool) ($member['can_edit'] ?? false),
+                        'can_approve' => (bool) ($member['can_approve'] ?? false),
+                        'granted_by'  => Auth::id(),
+                        'granted_at'  => now(),
+                    ]
+                );
+            }
+        });
+
         session()->flash('success', 'Organization unit created successfully.');
-        return redirect()->route('organization-units.index');
+        $this->redirect(route('organization-units.index'));
     }
 
     public function render()
     {
-        $units = OrganizationUnit::all();
+        $units = OrganizationUnit::when($this->organization_id, fn($q) => $q->where('organization_id', $this->organization_id))
+            ->orderBy('name')
+            ->get(['id', 'name', 'parent_unit_id']);
+
         return view('livewire.organizations.create-organization-unit', [
-            'units' => $units,
-            'orgOptions' => $this->orgOptions,
-            'organization_id' => $this->organization_id,
-            'currentStep' => $this->currentStep,
-            'totalSteps' => $this->totalSteps,
+            'units'             => $units,
+            'orgOptions'        => $this->orgOptions,
+            'departmentOptions' => $this->departmentOptions,
         ]);
     }
 }
