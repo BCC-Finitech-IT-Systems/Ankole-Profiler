@@ -1,15 +1,13 @@
-<div>
+<div class="min-h-full py-6 px-4 md:px-8">
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    {{ __('Organization Units') }}
-                </h2>
-                <p class="text-gray-600 text-sm mt-1">Manage organization unit hierarchy and structures</p>
+        <div class="flex items-center justify-between w-full gap-4">
+            <div class="min-w-0">
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects Mgt</div>
+                <h1 class="text-base font-semibold text-gray-800 truncate">Organization Units</h1>
             </div>
             @can('create-units')
-                <div class="flex justify-end mt-2">
-                    <a href="{{ route('organization-units.create') }}" class="btn btn-accent gap-2">
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('organization-units.create') }}" class="btn btn-sm gap-1.5" style="background:#982B55;color:#fff;border-color:#982B55;">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
@@ -20,9 +18,9 @@
         </div>
     </x-slot>
 
-    <div class="py-6 h-[calc(100vh-8rem)] overflow-y-auto">
-        <div class="max-w-full mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
+    <div class="w-full">
+        <div>
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-gray-200">
                     <div class="flex flex-col md:flex-row gap-4">
                         <div class="flex-1">

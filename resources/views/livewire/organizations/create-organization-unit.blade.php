@@ -1,324 +1,454 @@
-<div class="max-w-6xl mt-2 bg-white p-8 rounded shadow">
-    <h2 class="text-2xl font-bold mb-6">Register Project Unit</h2>
+{{-- Page wrapper gives the gray background proper breathing room --}}
+<div class="min-h-full py-8 px-4 md:px-8">
+<div class="w-full">
+
+    {{-- Page header --}}
+    <div class="mb-6">
+        <p class="text-xs text-gray-400 uppercase tracking-widest font-medium mb-0.5">Projects Management</p>
+        <h1 class="text-2xl font-bold text-gray-800">Create Organization Unit</h1>
+        <p class="text-sm text-gray-400 mt-1">Register a new unit within the organizational hierarchy.</p>
+    </div>
+
     @if(session()->has('success'))
-        <div class="bg-green-100 text-green-800 p-2 mb-4 rounded">
+        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 text-sm">
             {{ session('success') }}
         </div>
     @endif
 
-    {{-- Stepper Navigation --}}
-    <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex gap-6">
-                @for ($i = 1; $i <= $totalSteps; $i++)
-                    <button type="button" wire:click="goToStep({{ $i }})"
-                        class="w-8 h-8 rounded-full flex items-center justify-center {{ $currentStep === $i ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600' }} border border-primary/30 text-sm font-bold">
-                        {{ $i }}
-                    </button>
-                @endfor
-            </div>
-            <span class="text-sm text-gray-500">Step {{ $currentStep }} of {{ $totalSteps }}</span>
+    {{-- Step indicator --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm mb-6 px-6 py-4">
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Progress</span>
+            <span class="text-xs text-gray-400">Step {{ $currentStep }} of {{ $totalSteps }}</span>
+        </div>
+        {{-- Progress bar --}}
+        <div class="w-full bg-gray-100 rounded-full h-1.5 mb-4">
+            <div class="h-1.5 rounded-full transition-all duration-300"
+                 style="background:#982B55; width:{{ round(($currentStep / $totalSteps) * 100) }}%"></div>
+        </div>
+        {{-- Step pills --}}
+        <div class="grid grid-cols-4 gap-2">
+            @php
+                $stepLabels = [
+                    1 => ['icon' => '🏛️', 'label' => 'Identity'],
+                    2 => ['icon' => '👥', 'label' => 'Leadership'],
+                    3 => ['icon' => '⚙️', 'label' => 'Operations'],
+                    4 => ['icon' => '🧑‍🤝‍🧑', 'label' => 'Members'],
+                ];
+            @endphp
+            @foreach($stepLabels as $step => $info)
+                @php
+                    $isActive = $currentStep === $step;
+                    $isDone   = $currentStep > $step;
+                @endphp
+                <button type="button" wire:click="goToStep({{ $step }})"
+                    class="flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-center transition-colors
+                           {{ $isActive ? 'bg-rose-50' : ($isDone ? 'hover:bg-gray-50' : 'hover:bg-gray-50 opacity-50') }}">
+                    <span class="text-lg leading-none">
+                        @if($isDone)
+                            <svg class="w-5 h-5 mx-auto" fill="none" stroke="#982B55" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        @else
+                            {{ $info['icon'] }}
+                        @endif
+                    </span>
+                    <span class="text-xs font-medium {{ $isActive ? 'text-rose-700' : ($isDone ? 'text-gray-500' : 'text-gray-400') }}">
+                        {{ $info['label'] }}
+                    </span>
+                </button>
+            @endforeach
         </div>
     </div>
 
-    <form wire:submit.prevent="submit">
-        {{-- Step 1: Basic Info --}}
+    {{-- Form card --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <form wire:submit.prevent="submit">
 
-        @if($currentStep === 1)
-            <div>
-                <h3 class="font-semibold text-lg mb-2">1. Basic Information</h3>
+            {{-- ── STEP 1: Identity & Structure ── --}}
+            @if($currentStep === 1)
+            <div class="p-6 space-y-5">
+                <h3 class="text-base font-semibold text-gray-800">Identity & Structure</h3>
+
+                {{-- Row 1: Org + Name + Code --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    @if(!empty($orgOptions) && count($orgOptions) > 0)
-                        <div class="mb-3">
-                            <label class="block text-sm font-medium text-gray-700">Parent Organization <span class="text-red-500">*</span></label>
-                            <select wire:model="organization_id" class="input input-bordered w-full" required>
-                                <option value="">Select Organization</option>
-                                @foreach($orgOptions as $org)
-                                    <option value="{{ $org->id }}">{{ $org->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('organization_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                        </div>
+                    @if(!empty($orgOptions))
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Parent Organization <span class="text-red-500">*</span></label>
+                        <select wire:model.live="organization_id" class="select select-bordered w-full">
+                            <option value="">Select…</option>
+                            @foreach($orgOptions as $org)
+                                <option value="{{ $org['id'] }}">{{ $org['legal_name'] }}</option>
+                            @endforeach
+                        </select>
+                        @error('organization_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
                     @else
                         <input type="hidden" wire:model="organization_id">
                     @endif
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Unit Name <span class="text-red-500">*</span></label>
-                        <input type="text" wire:model="name" class="input input-bordered w-full" required placeholder="Unit Name">
-                        @error('name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Name <span class="text-red-500">*</span></label>
+                        <input type="text" wire:model="name" class="input input-bordered w-full" placeholder="e.g. Youth Ministry">
+                        @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Unit Code / Reference Number</label>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Code</label>
                         <input type="text" wire:model="code" class="input input-bordered w-full" placeholder="Auto-generated or custom">
-                        @error('code') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        @error('code') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Unit Type</label>
-                        <input type="text" wire:model="unit_type" class="input input-bordered w-full" placeholder="e.g. Ministry, Committee, Department">
+                </div>
+
+                {{-- Row 2: Type + Dept + Parent Unit --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Type</label>
+                        <input type="text" wire:model="unit_type" class="input input-bordered w-full" placeholder="e.g. Ministry, Committee">
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Department</label>
-                        <input type="text" wire:model="department" class="input input-bordered w-full" placeholder="Department">
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Department
+                            <span class="text-xs font-normal text-gray-400 ml-1">links to reporting</span>
+                        </label>
+                        @if(count($departmentOptions) > 0)
+                            <select wire:model.live="department_id" class="select select-bordered w-full">
+                                <option value="">— None —</option>
+                                @foreach($departmentOptions as $dept)
+                                    <option value="{{ $dept['id'] }}">{{ $dept['name'] }}</option>
+                                @endforeach
+                            </select>
+                        @else
+                            <p class="text-xs text-gray-400 mt-2 italic">Select an organization first.</p>
+                        @endif
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Community</label>
-                        <input type="text" wire:model="community" class="input input-bordered w-full" placeholder="Community">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Ministry/Committee</label>
-                        <input type="text" wire:model="ministry_committee" class="input input-bordered w-full" placeholder="Ministry/Committee">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Administrative Office</label>
-                        <input type="text" wire:model="administrative_office" class="input input-bordered w-full" placeholder="Administrative Office">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Parent Unit</label>
-                        <select wire:model="parent_unit_id" class="input input-bordered w-full">
-                            <option value="">None</option>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Parent Unit</label>
+                        <select wire:model="parent_unit_id" class="select select-bordered w-full">
+                            <option value="">None (top-level)</option>
                             @foreach($units as $unit)
                                 <option value="{{ $unit->id }}">{{ $unit->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="mb-3 md:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700">Description</label>
-                        <textarea wire:model="description" class="input input-bordered w-full" rows="2" placeholder="Description"></textarea>
+                </div>
+
+                {{-- Row 3: Community + Ministry + Admin Office --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Community</label>
+                        <input type="text" wire:model="community" class="input input-bordered w-full" placeholder="Community name">
                     </div>
-                    <div class="flex items-center gap-2 mb-3 md:col-span-3">
-                        <input type="checkbox" wire:model="is_active" id="is_active" class="checkbox">
-                        <label for="is_active" class="text-sm font-medium text-gray-700">Active</label>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ministry / Committee</label>
+                        <input type="text" wire:model="ministry_committee" class="input input-bordered w-full" placeholder="Ministry or committee">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Administrative Office</label>
+                        <input type="text" wire:model="administrative_office" class="input input-bordered w-full" placeholder="Office name">
                     </div>
                 </div>
-            </div>
-        @endif
 
-        {{-- Step 2: Leadership & Governance --}}
-    @if($currentStep === 2)
-            <div>
-                <h3 class="font-semibold text-lg mb-2">2. Leadership & Governance</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Unit Head / Leader</label>
-                        <input type="text" wire:model="unit_head" class="input input-bordered w-full" placeholder="Search or select person">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Assistant Leader</label>
-                        <input type="text" wire:model="assistant_leader" class="input input-bordered w-full" placeholder="Search or select person">
-                    </div>
-                    <div class="mb-3 md:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700">Leadership Committee Members</label>
-                        <input type="text" wire:model="leadership_committee" class="input input-bordered w-full" placeholder="Add multiple persons (comma separated)">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Appointment Dates / Terms</label>
-                        <input type="text" wire:model="appointment_dates" class="input input-bordered w-full" placeholder="e.g. 2024-2026">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Reporting Line</label>
-                        <input type="text" wire:model="reporting_line" class="input input-bordered w-full" placeholder="To which office/leader">
+                {{-- Description + Active --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea wire:model="description" class="textarea textarea-bordered w-full" rows="3"
+                              placeholder="Brief description of this unit's role and scope"></textarea>
+                </div>
+
+                <label class="flex items-center gap-2 cursor-pointer w-fit">
+                    <input type="checkbox" wire:model="is_active" class="checkbox checkbox-sm">
+                    <span class="text-sm font-medium text-gray-700">Active</span>
+                </label>
+            </div>
+            @endif
+
+            {{-- ── STEP 2: Leadership & Purpose ── --}}
+            @if($currentStep === 2)
+            <div class="p-6 space-y-6">
+
+                <div class="space-y-4">
+                    <h3 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+                        Leadership & Governance
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Unit Head / Leader</label>
+                            <input type="text" wire:model="unit_head" class="input input-bordered w-full" placeholder="Name or person ID">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Assistant Leader</label>
+                            <input type="text" wire:model="assistant_leader" class="input input-bordered w-full" placeholder="Name or person ID">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Appointment Term</label>
+                            <input type="text" wire:model="appointment_dates" class="input input-bordered w-full" placeholder="e.g. 2024–2026">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Reporting Line</label>
+                            <input type="text" wire:model="reporting_line" class="input input-bordered w-full" placeholder="Reports to which office">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Committee Members</label>
+                            <input type="text" wire:model="leadership_committee" class="input input-bordered w-full" placeholder="Comma-separated names or IDs">
+                        </div>
                     </div>
                 </div>
-            </div>
 
-        {{-- Step 3: Purpose & Mission --}}
-        @endif
-        @if($currentStep === 3)
-            <div>
-                <h3 class="font-semibold text-lg mb-2">3. Purpose & Mission</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="mb-3 md:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700">Mission / Purpose Statement</label>
-                        <textarea wire:model="mission" class="input input-bordered w-full" rows="2" placeholder="Mission or purpose statement"></textarea>
+                <div class="border-t pt-5 space-y-4">
+                    <h3 class="text-base font-semibold text-gray-800">Purpose & Mission</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Mission / Purpose Statement</label>
+                        <textarea wire:model="mission" class="textarea textarea-bordered w-full" rows="2"
+                                  placeholder="What is this unit's core purpose?"></textarea>
                     </div>
-                    <div class="mb-3 md:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700">Objectives</label>
-                        <textarea wire:model="objectives" class="input input-bordered w-full" rows="2" placeholder="Objectives"></textarea>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Objectives</label>
+                            <textarea wire:model="objectives" class="textarea textarea-bordered w-full" rows="2" placeholder="Key objectives"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Activities / Mandates</label>
+                            <textarea wire:model="activities" class="textarea textarea-bordered w-full" rows="2" placeholder="Core activities or mandates"></textarea>
+                        </div>
                     </div>
-                    <div class="mb-3 md:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700">Activities / Mandates</label>
-                        <textarea wire:model="activities" class="input input-bordered w-full" rows="2" placeholder="Activities or mandates"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Target Audience</label>
+                    <div class="md:w-1/2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
                         <input type="text" wire:model="target_audience" class="input input-bordered w-full" placeholder="e.g. youth, clergy, entrepreneurs">
                     </div>
                 </div>
             </div>
-
-        {{-- Step 4: Contact Information --}}
-        @endif
-        @if($currentStep === 4)
-            <div>
-                <h3 class="font-semibold text-lg mb-2">4. Contact Information</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Official Email</label>
-                        <input type="email" wire:model="official_email" class="input input-bordered w-full" placeholder="Email">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Phone Contact</label>
-                        <input type="text" wire:model="phone_contact" class="input input-bordered w-full" placeholder="Phone">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Physical Location</label>
-                        <input type="text" wire:model="physical_location" class="input input-bordered w-full" placeholder="Physical Location">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Website</label>
-                        <input type="text" wire:model="website" class="input input-bordered w-full" placeholder="Website">
-                    </div>
-                    <div class="mb-3 md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700">Social Media Links</label>
-                        <input type="text" wire:model="social_links" class="input input-bordered w-full" placeholder="Social Media Links">
-                    </div>
-                </div>
-            </div>
-
-        {{-- Step 5: Operational Details --}}
-        @endif
-        @if($currentStep === 5)
-            <div>
-                <h3 class="font-semibold text-lg mb-2">5. Operational Details</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Unit Category</label>
-                        <input type="text" wire:model="unit_category" class="input input-bordered w-full" placeholder="Unit Category">
-                    </div>
-                    <div class="mb-3 flex items-center gap-2">
-                        <input type="checkbox" wire:model="faith_based" class="checkbox">
-                        <label class="text-sm font-medium text-gray-700">Faith-based</label>
-                    </div>
-                    <div class="mb-3 flex items-center gap-2">
-                        <input type="checkbox" wire:model="socio_economic" class="checkbox">
-                        <label class="text-sm font-medium text-gray-700">Socio-economic</label>
-                    </div>
-                    <div class="mb-3 flex items-center gap-2">
-                        <input type="checkbox" wire:model="support_services" class="checkbox">
-                        <label class="text-sm font-medium text-gray-700">Support/Services</label>
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Operational Status</label>
-                        <select wire:model="operational_status" class="input input-bordered w-full">
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="pending">Pending Approval</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Date Established</label>
-                        <input type="date" wire:model="date_established" class="input input-bordered w-full">
-                    </div>
-                </div>
-            </div>
-
-        {{-- Step 6: Membership Metadata --}}
-        @endif
-        @if($currentStep === 6)
-            <div>
-                <h3 class="font-semibold text-lg mb-2">6. Membership Metadata</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Membership Type</label>
-                        <select wire:model="membership_type" class="input input-bordered w-full">
-                            <option value="">Select Type</option>
-                            <option value="permanent">Permanent</option>
-                            <option value="volunteer">Volunteer</option>
-                            <option value="rotational">Rotational</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Membership Eligibility Criteria</label>
-                        <input type="text" wire:model="membership_eligibility" class="input input-bordered w-full" placeholder="Eligibility Criteria">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Membership Capacity</label>
-                        <input type="number" wire:model="membership_capacity" class="input input-bordered w-full" placeholder="Capacity">
-                    </div>
-                    <div class="mb-3 flex items-center gap-2 md:col-span-3">
-                        <input type="checkbox" wire:model="join_requests_enabled" id="join_requests_enabled" class="checkbox">
-                        <label for="join_requests_enabled" class="text-sm font-medium text-gray-700">Join Requests Enabled?</label>
-                    </div>
-                </div>
-            </div>
-
-        {{-- Step 7: Events & Programs Metadata --}}
-        @endif
-        @if($currentStep === 7)
-            <div>
-                <h3 class="font-semibold text-lg mb-2">7. Events & Programs Metadata</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Recurring Programs</label>
-                        <input type="text" wire:model="recurring_programs" class="input input-bordered w-full" placeholder="Recurring Programs">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Event Schedule</label>
-                        <input type="text" wire:model="event_schedule" class="input input-bordered w-full" placeholder="Event Schedule">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Promotion Permissions</label>
-                        <input type="text" wire:model="promotion_permissions" class="input input-bordered w-full" placeholder="Promotion Permissions">
-                    </div>
-                    <div class="mb-3 md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700">Resource Access Requirements</label>
-                        <input type="text" wire:model="resource_access_requirements" class="input input-bordered w-full" placeholder="Resource Access Requirements">
-                    </div>
-                </div>
-            </div>
-
-        {{-- Step 8: Showcase & Marketplace Support --}}
-        @endif
-        @if($currentStep === 8)
-            <div>
-                <h3 class="font-semibold text-lg mb-2">8. Showcase & Marketplace Support</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Showcase Permissions</label>
-                        <input type="text" wire:model="showcase_permissions" class="input input-bordered w-full" placeholder="Showcase Permissions">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Product Categories Allowed</label>
-                        <input type="text" wire:model="product_categories_allowed" class="input input-bordered w-full" placeholder="Product Categories Allowed">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700">Approval Workflow</label>
-                        <input type="text" wire:model="approval_workflow" class="input input-bordered w-full" placeholder="Approval Workflow">
-                    </div>
-                    <div class="mb-3 md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700">Commission/Fee Structure</label>
-                        <input type="text" wire:model="commission_structure" class="input input-bordered w-full" placeholder="Commission/Fee Structure">
-                    </div>
-                </div>
-            </div>
-
-        {{-- Step 9: Roles & Permissions for Unit Users --}}
-        @endif
-        @if($currentStep === 9)
-            <div>
-                <h3 class="font-semibold text-lg mb-2">9. Roles & Permissions for Unit Users</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="mb-3 md:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700">Roles</label>
-                        <select wire:model="unit_roles" class="input input-bordered w-full" multiple>
-                            <option value="admin">Unit Admin</option>
-                            <option value="moderator">Moderator</option>
-                            <option value="publisher">Content Publisher</option>
-                            <option value="member">Member</option>
-                            <option value="viewer">Viewer</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-        @endif
-        <div class="flex justify-between mt-8">
-            <button type="button" wire:click="prevStep" class="btn btn-secondary" @if($currentStep === 1) disabled @endif>Previous</button>
-            @if($currentStep < $totalSteps)
-                <button type="button" wire:click="nextStep" class="btn btn-primary">Next</button>
-            @else
-                <button type="submit" class="btn btn-success">Submit</button>
             @endif
-        </div>
-    </form>
+
+            {{-- ── STEP 3: Operations & Membership ── --}}
+            @if($currentStep === 3)
+            <div class="divide-y divide-gray-100">
+
+                {{-- Contact --}}
+                <div class="p-6 space-y-4">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Contact Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Official Email</label>
+                            <input type="email" wire:model="official_email" class="input input-bordered w-full" placeholder="unit@diocese.org">
+                            @error('official_email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="text" wire:model="phone_contact" class="input input-bordered w-full" placeholder="+256 ...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Physical Location</label>
+                            <input type="text" wire:model="physical_location" class="input input-bordered w-full" placeholder="Address or area">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                            <input type="text" wire:model="website" class="input input-bordered w-full" placeholder="https://...">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Social Media Links</label>
+                            <input type="text" wire:model="social_links" class="input input-bordered w-full" placeholder="Facebook, X, Instagram…">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Operational --}}
+                <div class="p-6 space-y-4">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Operational Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Unit Category</label>
+                            <input type="text" wire:model="unit_category" class="input input-bordered w-full" placeholder="Category">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Operational Status</label>
+                            <select wire:model="operational_status" class="select select-bordered w-full">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="pending">Pending Approval</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date Established</label>
+                            <input type="date" wire:model="date_established" class="input input-bordered w-full">
+                        </div>
+                        <div class="md:col-span-3 flex flex-wrap gap-6 pt-1">
+                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                <input type="checkbox" wire:model="faith_based" class="checkbox checkbox-sm"> Faith-based
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                <input type="checkbox" wire:model="socio_economic" class="checkbox checkbox-sm"> Socio-economic
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                <input type="checkbox" wire:model="support_services" class="checkbox checkbox-sm"> Support / Services
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Membership --}}
+                <div class="p-6 space-y-4">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Membership</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Membership Type</label>
+                            <select wire:model="membership_type" class="select select-bordered w-full">
+                                <option value="">Select…</option>
+                                <option value="permanent">Permanent</option>
+                                <option value="volunteer">Volunteer</option>
+                                <option value="rotational">Rotational</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Eligibility Criteria</label>
+                            <input type="text" wire:model="membership_eligibility" class="input input-bordered w-full" placeholder="Who can join?">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
+                            <input type="number" wire:model="membership_capacity" class="input input-bordered w-full" placeholder="Max members">
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer w-fit">
+                                <input type="checkbox" wire:model="join_requests_enabled" class="checkbox checkbox-sm">
+                                Allow public join requests
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Programs & Marketplace --}}
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Programs & Marketplace</h3>
+                        <span class="badge badge-ghost badge-sm">optional</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Recurring Programs</label>
+                            <input type="text" wire:model="recurring_programs" class="input input-bordered w-full" placeholder="e.g. Weekly prayer, Annual retreat">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Event Schedule</label>
+                            <input type="text" wire:model="event_schedule" class="input input-bordered w-full" placeholder="e.g. Every Sunday 10am">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Promotion Permissions</label>
+                            <input type="text" wire:model="promotion_permissions" class="input input-bordered w-full" placeholder="Who can promote events">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Resource Access Requirements</label>
+                            <input type="text" wire:model="resource_access_requirements" class="input input-bordered w-full" placeholder="Prerequisites for access">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Showcase Permissions</label>
+                            <input type="text" wire:model="showcase_permissions" class="input input-bordered w-full" placeholder="Showcase permissions">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Product Categories Allowed</label>
+                            <input type="text" wire:model="product_categories_allowed" class="input input-bordered w-full" placeholder="Allowed product categories">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Approval Workflow</label>
+                            <input type="text" wire:model="approval_workflow" class="input input-bordered w-full" placeholder="How approvals work">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Commission / Fee Structure</label>
+                            <input type="text" wire:model="commission_structure" class="input input-bordered w-full" placeholder="Commission or fee details">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            @endif
+
+            {{-- ── STEP 4: Initial Members ── --}}
+            @if($currentStep === 4)
+            <div class="p-6 space-y-4">
+                <div>
+                    <h3 class="text-base font-semibold text-gray-800">Initial Members</h3>
+                    <p class="text-sm text-gray-400 mt-1">Optionally seed founding members now. You can also add members after creation from the unit details panel.</p>
+                </div>
+
+                @forelse($initialMembers as $i => $member)
+                    <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-semibold text-gray-700">Member {{ $i + 1 }}</span>
+                            <button type="button" wire:click="removeInitialMember({{ $i }})"
+                                    class="text-xs text-red-400 hover:text-red-600 transition-colors">Remove</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Person ID</label>
+                                <input type="number" wire:model="initialMembers.{{ $i }}.person_id"
+                                       class="input input-bordered input-sm w-full" placeholder="Enter person ID" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Role</label>
+                                <select wire:model="initialMembers.{{ $i }}.role" class="select select-bordered select-sm w-full">
+                                    <option value="member">Member</option>
+                                    <option value="leader">Leader</option>
+                                    <option value="secretary">Secretary</option>
+                                    <option value="treasurer">Treasurer</option>
+                                    <option value="youth">Youth Coordinator</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex gap-5 text-xs text-gray-600 pt-1">
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                <input type="checkbox" wire:model="initialMembers.{{ $i }}.can_view" class="checkbox checkbox-xs"> View
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                <input type="checkbox" wire:model="initialMembers.{{ $i }}.can_edit" class="checkbox checkbox-xs"> Edit
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                <input type="checkbox" wire:model="initialMembers.{{ $i }}.can_approve" class="checkbox checkbox-xs"> Approve
+                            </label>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-8 text-gray-400 border border-dashed border-gray-200 rounded-lg">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <p class="text-sm">No members added yet</p>
+                        <p class="text-xs mt-0.5">Click "Add Member" below or skip — you can add them after creation.</p>
+                    </div>
+                @endforelse
+
+                <button type="button" wire:click="addInitialMember"
+                        class="btn btn-sm btn-outline gap-1.5" style="border-color:#982B55;color:#982B55;">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Add Member
+                </button>
+            </div>
+            @endif
+
+            {{-- Navigation footer --}}
+            <div class="flex justify-between items-center px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+                <button type="button" wire:click="prevStep"
+                        class="btn btn-ghost btn-sm gap-1 {{ $currentStep === 1 ? 'invisible' : '' }}">
+                    &larr; Previous
+                </button>
+                @if($currentStep < $totalSteps)
+                    <button type="button" wire:click="nextStep"
+                            class="btn btn-sm border-0 text-white px-6" style="background:#982B55;">
+                        Next &rarr;
+                    </button>
+                @else
+                    <button type="submit" wire:loading.attr="disabled"
+                            class="btn btn-sm border-0 text-white px-6" style="background:#982B55;">
+                        <span wire:loading wire:target="submit">Creating…</span>
+                        <span wire:loading.remove wire:target="submit">Create Unit</span>
+                    </button>
+                @endif
+            </div>
+
+        </form>
+    </div>
+
+</div>
 </div>

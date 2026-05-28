@@ -1,12 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Communication Center') }}
-        </h2>
+        <div class="flex items-center justify-between w-full gap-4">
+            <div class="min-w-0">
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Communication</div>
+                <h1 class="text-base font-semibold text-gray-800 truncate">Communication Center</h1>
+            </div>
+        </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-6 px-4 md:px-8">
+        <div class="w-full">
             <div class="space-y-6">
                 {{-- Quick Actions --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

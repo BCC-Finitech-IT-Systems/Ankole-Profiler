@@ -5,8 +5,8 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-6 px-4 md:px-8">
+        <div class="w-full">
             <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div class="p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-6">Communication Provider Configuration</h3>

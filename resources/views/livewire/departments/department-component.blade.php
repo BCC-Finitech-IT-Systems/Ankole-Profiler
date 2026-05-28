@@ -1,9 +1,28 @@
-<div>
+<div class="min-h-full py-6 px-4 md:px-8">
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Departments</h2>
+        <div class="flex items-center justify-between w-full gap-4">
+            <div class="min-w-0">
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects Mgt</div>
+                <h1 class="text-base font-semibold text-gray-800 truncate">Departments</h1>
+            </div>
+        </div>
     </x-slot>
 
-    <div class="p-6 space-y-6">
+    <div class="w-full space-y-4">
+        @if($canCreateDepartments && !$isOrgAdmin)
+            <div class="flex justify-end">
+                <button type="button"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-colors flex-shrink-0"
+                    style="background:#982B55;"
+                    wire:click="openCreateModal">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                    </svg>
+                    Create Department
+                </button>
+            </div>
+        @endif
+
         @if (session()->has('message'))
             <div class="alert alert-success">
                 <span>{{ session('message') }}</span>
@@ -45,7 +64,7 @@
                                             @if($dept->subCategories->isNotEmpty())
                                                 <div class="flex flex-wrap gap-1">
                                                     @foreach($dept->subCategories as $subCat)
-                                                        <span class="badge badge-outline badge-xs">{{ $subCat->name }}</span>
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">{{ $subCat->name }}</span>
                                                     @endforeach
                                                 </div>
                                             @else
@@ -157,16 +176,6 @@
 
         @if(!$isOrgAdmin)
         <div class="bg-base-100 border border-base-300 rounded-lg p-4">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="font-semibold text-base-content">Departments</h3>
-
-                @if($canCreateDepartments)
-                    <button type="button" class="btn btn-sm btn-primary" wire:click="openCreateModal">
-                        Create Department
-                    </button>
-                @endif
-            </div>
-
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                     <input
@@ -217,7 +226,7 @@
                                     @if($department->subCategories->isNotEmpty())
                                         <div class="flex flex-wrap gap-1">
                                             @foreach($department->subCategories as $subCategory)
-                                                <span class="badge badge-outline">{{ $subCategory->name }}</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">{{ $subCategory->name }}</span>
                                             @endforeach
                                         </div>
                                     @else
@@ -341,7 +350,7 @@
 
                     <div class="modal-action">
                         <button type="button" class="btn" wire:click="closeCreateModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" wire:click="createDepartment">Save Department</button>
+                        <button type="button" class="btn border-0 text-white" style="background:#982B55;" wire:click="createDepartment">Save Department</button>
                     </div>
                 </div>
                 <div class="modal-backdrop" wire:click="closeCreateModal"></div>
@@ -424,7 +433,7 @@
 
                     <div class="modal-action">
                         <button type="button" class="btn" wire:click="closeEditModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" wire:click="updateDepartment">Update Department</button>
+                        <button type="button" class="btn border-0 text-white" style="background:#982B55;" wire:click="updateDepartment">Update Department</button>
                     </div>
                 </div>
                 <div class="modal-backdrop" wire:click="closeEditModal"></div>
@@ -444,17 +453,25 @@
                 <div class="modal-backdrop" wire:click="cancelDeleteDepartment"></div>
             </div>
         @endif
+
+        @if(!empty($selectedOrganizationPersons))
+            <div class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
+                <div class="bg-base-50 px-4 py-3 border-b border-base-300">
+                    <h3 class="font-semibold text-base-content text-sm">Persons in Selected Organization</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table table-sm w-full">
+                        <tbody>
+                            @foreach($selectedOrganizationPersons as $person)
+                                <tr>
+                                    <td class="font-medium">{{ $person->given_name }} {{ $person->family_name }}</td>
+                                    <td class="text-base-content/60 text-xs">{{ $person->email ?? '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
     </div>
 </div>
-            @if(!empty($selectedOrganizationPersons))
-                <div class="mt-6 card bg-base-100 border border-info/30 shadow-sm">
-                    <div class="card-body">
-                        <h3 class="text-lg font-semibold mb-2">Persons in Selected Project/Organization</h3>
-                        <ul class="list-disc ml-6">
-                            @foreach($selectedOrganizationPersons as $person)
-                                <li>{{ $person->given_name }} {{ $person->family_name }} ({{ $person->email ?? 'No email' }})</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-            @endif

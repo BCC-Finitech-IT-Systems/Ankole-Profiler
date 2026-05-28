@@ -3,7 +3,7 @@
 
 
     <!-- Profile Summary -->
-    <div class="max-w-6xl mt-6">
+    <div class="w-full mt-6">
         <div class="flex flex-col md:flex-row gap-6">
 
             <div class="flex-1">

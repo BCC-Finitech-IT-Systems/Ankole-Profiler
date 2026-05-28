@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
     <div class="bg-white shadow">
-        <div class="max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Department Dashboard</h1>
@@ -16,7 +16,7 @@
                 <div class="mt-4 md:mt-0 flex flex-col sm:flex-row gap-3">
                     <!-- Date Range Filter -->
                     <select wire:model.live="dateRange"
-                            class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            class="rounded-md border-gray-300 shadow-sm focus:border-rose-400 focus:ring-rose-400 text-sm">
                         <option value="7">Last 7 Days</option>
                         <option value="30">Last 30 Days</option>
                         <option value="90">Last 90 Days</option>
@@ -26,7 +26,7 @@
                     <!-- Organization Filter -->
                     @if(!empty($organizationsInScope))
                     <select wire:model.live="selectedOrganizationId"
-                            class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            class="rounded-md border-gray-300 shadow-sm focus:border-rose-400 focus:ring-rose-400 text-sm">
                         <option value="">All Projects</option>
                         @foreach($organizationsInScope as $org)
                             <option value="{{ $org['id'] }}">{{ $org['legal_name'] ?? $org['display_name'] }}</option>
@@ -51,7 +51,7 @@
         </div>
     </div>
 
-    <div class="max-w-8xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="w-full px-4 sm:px-6 lg:px-8 py-8">
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <!-- Total Persons -->
@@ -63,8 +63,8 @@
                             {{ number_format($overviewStats['total_persons'] ?? 0) }}
                         </p>
                     </div>
-                    <div class="p-3 bg-blue-100 rounded-full">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-3 bg-rose-100 rounded-full">
+                        <svg class="w-8 h-8 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                     </div>
@@ -138,7 +138,7 @@
                             @foreach($monthlyRegistrations as $data)
                                 <div class="flex flex-col items-center flex-1">
                                     <span class="text-xs text-gray-600 mb-1">{{ $data['count'] }}</span>
-                                    <div class="w-full bg-indigo-500 rounded-t transition-all duration-300 hover:bg-indigo-600"
+                                    <div class="w-full rounded-t transition-all duration-300" style="background:#982B55;"
                                          style="height: {{ ($data['count'] / $maxCount) * 100 }}%; min-height: 4px;">
                                     </div>
                                     <span class="text-xs text-gray-500 mt-2">{{ $data['month'] }}</span>
@@ -160,8 +160,8 @@
                     @if(($genderDistribution['total'] ?? 0) > 0)
                         <div class="flex items-center space-x-8">
                             <div class="text-center">
-                                <div class="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-2">
-                                    <span class="text-2xl font-bold text-blue-600">{{ $genderDistribution['male_percentage'] }}%</span>
+                                <div class="w-20 h-20 rounded-full bg-rose-100 flex items-center justify-center mb-2">
+                                    <span class="text-2xl font-bold text-rose-600">{{ $genderDistribution['male_percentage'] }}%</span>
                                 </div>
                                 <p class="text-sm text-gray-600">Male</p>
                                 <p class="text-xs text-gray-400">{{ number_format($genderDistribution['male']) }}</p>
@@ -187,7 +187,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 class="text-lg font-medium text-gray-900">Projects in Your Department</h3>
-                    <a href="{{ route('persons.create') }}" class="text-sm text-indigo-600 hover:text-indigo-800">
+                    <a href="{{ route('persons.create') }}" class="text-sm text-rose-600 hover:text-rose-800">
                         + Add Person
                     </a>
                 </div>
@@ -233,8 +233,8 @@
                     @forelse($projectHeads as $ph)
                         <div class="px-6 py-4 flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                                    <span class="text-sm font-medium text-indigo-600">
+                                <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center">
+                                    <span class="text-sm font-medium text-rose-600">
                                         {{ substr($ph['name'], 0, 2) }}
                                     </span>
                                 </div>
@@ -257,7 +257,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <h3 class="text-lg font-medium text-gray-900">Recent Registrations</h3>
-                <a href="{{ route('persons.all') }}" class="text-sm text-indigo-600 hover:text-indigo-800">
+                <a href="{{ route('persons.all') }}" class="text-sm text-rose-600 hover:text-rose-800">
                     View All →
                 </a>
             </div>

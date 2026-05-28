@@ -1,7 +1,7 @@
 <div class="p-8" style="background-color: #eeeff2;">
     @role(['Person', 'Organization Admin'])
     {{-- Person Dashboard: Quick Actions --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 w-full">
         <!-- Profile Card -->
         <div class="card bg-base-100 shadow-lg border border-base-300">
             <div class="card-body items-center text-center p-4">
@@ -113,7 +113,7 @@
 
     @hasanyrole('Super Admin')
     {{-- Quick Actions Grid --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 w-full">
 
 
         <!-- Organizations Card -->
@@ -388,7 +388,7 @@
     {{-- Loading Overlay --}}
     <div wire:loading wire:target="refreshData" class="fixed inset-0 flex items-center justify-center bg-transparent z-50">
         <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
-            <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-8 w-8 text-rose-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>

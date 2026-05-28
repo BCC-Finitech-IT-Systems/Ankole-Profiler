@@ -1,13 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Send Message') }}
-        </h2>
+        <div class="flex items-center justify-between w-full gap-4">
+            <div class="min-w-0">
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Communication</div>
+                <h1 class="text-base font-semibold text-gray-800 truncate">Send Message</h1>
+            </div>
+        </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <livewire:communication.send-message />
-        </div>
+    <div class="py-6 px-4 md:px-8">
+        <livewire:communication.send-message />
     </div>
 </x-app-layout>

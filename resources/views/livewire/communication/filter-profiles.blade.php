@@ -1,48 +1,16 @@
 <div>
     <x-slot name="header">
-        <div class="bg-white text-black">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="p-3 bg-white bg-opacity-20 rounded-xl mr-4">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z">
-                                </path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="text-2xl font-bold">
-                                {{ __('Filter Profiles') }}
-                            </h2>
-                            <p class="text-gray-700 mt-1">Create and manage reusable filter criteria for communication
-                                targeting</p>
-                        </div>
-                    </div>
-                    <div class="hidden md:flex items-center space-x-4">
-                        <div class="text-right">
-                            <div class="text-sm text-gray-500">Quick Actions</div>
-                            <div class="flex items-center mt-1 space-x-2">
-                                <span
-                                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-black">
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                                            clip-rule="evenodd"></path>
-                                    </svg>
-                                    Create New
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div class="flex items-center justify-between w-full gap-4">
+            <div class="min-w-0">
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Communication</div>
+                <h1 class="text-base font-semibold text-gray-800 truncate">Filter Profiles</h1>
             </div>
         </div>
     </x-slot>
 
     <!-- Two Column Layout -->
     <div class="py-6 bg-gray-50 min-h-screen">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="w-full px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-12 gap-6">
                 <!-- Left Column - Filter Profiles Table -->
                 <div class="col-span-12">
@@ -85,7 +53,8 @@
                                             @if ($showCreateModal || $showEditModal) checked @endif />
                                         <div class="drawer-content">
                                             <!-- Page content here -->
-                                            <label for="my-drawer-5" class="drawer-button btn btn-primary">
+                                            <label for="my-drawer-5" class="drawer-button btn border-0 text-white"
+                                                style="background:#982B55;">
                                                 @if ($showEditModal)
                                                     Update Filter
                                                 @else
@@ -522,7 +491,7 @@
                         Clear Form
                     </button>
                     <button type="submit"
-                        class="btn btn-primary flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 shadow-lg transition-all duration-200">
+                        class="btn flex-1 border-0 text-white transition-all duration-200" style="background:#982B55;">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -1110,7 +1079,7 @@
                                     Filter Criteria <span class="text-error">*</span>
                                 </h4>
                                 <div class="dropdown dropdown-end">
-                                    <button type="button" tabindex="0" class="btn btn-primary btn-sm gap-2">
+                                    <button type="button" tabindex="0" class="btn btn-sm gap-2 border-0 text-white" style="background:#982B55;">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1370,8 +1339,8 @@
                             </button>
                         @endif
 
-                        <button type="submit" class="btn btn-primary gap-2" wire:loading.attr="disabled"
-                            wire:target="saveProfile">
+                        <button type="submit" class="btn gap-2 border-0 text-white" style="background:#982B55;"
+                            wire:loading.attr="disabled" wire:target="saveProfile">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 wire:loading.remove wire:target="saveProfile">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1476,7 +1445,7 @@
             </div>
 
             <div class="flex justify-end">
-                <button wire:click="closeModals" class="btn btn-primary">Close Preview</button>
+                <button wire:click="closeModals" class="btn btn-ghost">Close Preview</button>
             </div>
         </div>
     </dialog>

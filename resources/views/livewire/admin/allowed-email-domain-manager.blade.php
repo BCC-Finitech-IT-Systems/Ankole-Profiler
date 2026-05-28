@@ -1,86 +1,114 @@
-<div class="p-6">
-
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-900">Allowed Email Domains</h2>
-            <p class="text-gray-600">Manage system Email Domains</p>
+<div>
+    <x-slot name="header">
+        <div class="flex items-center justify-between w-full gap-4">
+            <div class="min-w-0">
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Admin</div>
+                <h1 class="text-base font-semibold text-gray-800 truncate">Allowed Email Domains</h1>
+            </div>
         </div>
-    </div>
+    </x-slot>
 
-    <div class="mb-4">
-        <form wire:submit.prevent="{{ $editing ? 'update' : 'create' }}">
-            <div class="mb-4">
-                <label for="domain" class="block text-sm font-medium text-gray-700">Domain</label>
-                <input type="text" id="domain" wire:model="domain"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                @error('domain')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
+    <div class="p-6 space-y-4 w-full">
+
+        {{-- Form --}}
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100">
+                <h3 class="text-sm font-semibold text-gray-800">{{ $editing ? 'Edit Domain' : 'Add New Domain' }}</h3>
             </div>
+            <div class="p-5">
+                <form wire:submit.prevent="{{ $editing ? 'update' : 'create' }}" class="space-y-4">
+                    <div>
+                        <label for="domain" class="block text-xs font-medium text-gray-700 mb-1.5">Domain</label>
+                        <input type="text" id="domain" wire:model="domain" placeholder="e.g., ankole.org"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300">
+                        @error('domain')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-            <div class="mb-4">
-                <label for="organization_id" class="block text-sm font-medium text-gray-700">Organization</label>
-                <select id="organization_id" wire:model="organization_id"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                    <option value="">Select an organization</option>
-                    @foreach ($organizations as $organization)
-                        <option value="{{ $organization->id }}">{{ $organization->legal_name }}</option>
-                    @endforeach
-                </select>
-                @error('organization_id')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
+                    <div>
+                        <label for="organization_id" class="block text-xs font-medium text-gray-700 mb-1.5">Organization</label>
+                        <select id="organization_id" wire:model="organization_id"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300">
+                            <option value="">Select an organization</option>
+                            @foreach ($organizations as $organization)
+                                <option value="{{ $organization->id }}">{{ $organization->legal_name }}</option>
+                            @endforeach
+                        </select>
+                        @error('organization_id')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                        <input type="checkbox" id="is_active" wire:model="is_active"
+                            class="w-4 h-4 rounded border-gray-300" style="accent-color:#982B55;">
+                        <span class="text-sm text-gray-700">Active</span>
+                    </label>
+
+                    <div class="flex items-center gap-2 pt-2">
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                            style="background:#982B55;">
+                            {{ $editing ? 'Update Domain' : 'Add Domain' }}
+                        </button>
+                        @if ($editing)
+                            <button type="button" wire:click="resetFields"
+                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Cancel
+                            </button>
+                        @endif
+                    </div>
+                </form>
             </div>
+        </div>
 
-            <div class="mb-4">
-                <label for="is_active" class="block text-sm font-medium text-gray-700">Active</label>
-                <input type="checkbox" id="is_active" wire:model="is_active" class="mt-1">
-                @error('is_active')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
+        {{-- Domains Table --}}
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-medium">Domain</th>
+                            <th class="px-4 py-3 text-left font-medium">Organization</th>
+                            <th class="px-4 py-3 text-left font-medium">Status</th>
+                            <th class="px-4 py-3 text-left font-medium">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse ($domains as $domain)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-mono text-sm text-gray-800">{{ $domain->domain }}</td>
+                                <td class="px-4 py-3 text-gray-600">{{ $domain->organization->legal_name ?? '—' }}</td>
+                                <td class="px-4 py-3">
+                                    @if($domain->is_active)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Active</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Inactive</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-2">
+                                        <button wire:click="edit({{ $domain->id }})"
+                                            class="text-xs font-medium hover:underline" style="color:#982B55;">Edit</button>
+                                        <span class="text-gray-300">|</span>
+                                        <button wire:click="delete({{ $domain->id }})"
+                                            class="text-xs font-medium text-red-500 hover:text-red-700 hover:underline">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center py-10 text-gray-400 text-sm">No domains configured yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-
-            <div class="mb-4">
-                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md">
-                    {{ $editing ? 'Update Domain' : 'Add Domain' }}
-                </button>
-                @if ($editing)
-                    <button type="button" wire:click="resetFields"
-                        class="px-4 py-2 bg-gray-500 text-white rounded-md">Cancel</button>
-                @endif
+            <div class="px-4 py-3 border-t border-gray-100">
+                {{ $domains->links() }}
             </div>
-        </form>
-    </div>
+        </div>
 
-    <table class="min-w-full divide-y divide-gray-200">
-        <thead>
-            <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization
-                    ID</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-            @foreach ($domains as $domain)
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $domain->domain }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $domain->organization->legal_name ?? 'not provided'}}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $domain->is_active ? 'Yes' : 'No' }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <button wire:click="edit({{ $domain->id }})"
-                            class="text-blue-600 hover:text-blue-900">Edit</button>
-                        <button wire:click="delete({{ $domain->id }})"
-                            class="text-red-600 hover:text-red-900 ml-2">Delete</button>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <div class="mt-4">
-        {{ $domains->links() }}
     </div>
 </div>

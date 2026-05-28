@@ -1,4 +1,15 @@
-<div class="space-y-6" x-data="{ showDrawer: false, selectedMessage: null }">
+<div class="min-h-full py-6 px-4 md:px-8" x-data="{ showDrawer: false, selectedMessage: null }">
+
+    <x-slot name="header">
+        <div class="flex items-center justify-between w-full gap-4">
+            <div class="min-w-0">
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Communication</div>
+                <h1 class="text-base font-semibold text-gray-800 truncate">Message History</h1>
+            </div>
+        </div>
+    </x-slot>
+
+    <div class="w-full space-y-4">
     @if (session()->has('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
             class="fixed top-4 right-4 z-50">
@@ -12,10 +23,10 @@
     @endif
     {{-- Statistics Cards --}}
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <div class="flex items-center">
-                <div class="p-2 bg-blue-100 rounded-lg">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-2 bg-rose-100 rounded-lg">
+                    <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                     </svg>
                 </div>
@@ -26,7 +37,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <div class="flex items-center">
                 <div class="p-2 bg-green-100 rounded-lg">
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +51,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <div class="flex items-center">
                 <div class="p-2 bg-yellow-100 rounded-lg">
                     <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +65,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <div class="flex items-center">
                 <div class="p-2 bg-red-100 rounded-lg">
                     <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,7 +81,7 @@
     </div>
 
     {{-- Filters --}}
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
         <div class="p-4 border-b border-gray-200">
             <h3 class="text-lg font-medium text-gray-900">Communication History</h3>
             <p class="text-sm text-gray-600 mt-1">View and filter your communication messages</p>
@@ -124,7 +135,7 @@
     </div>
 
     {{-- Messages Table --}}
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
         <div class="overflow-x-auto">
             <table class="table w-full">
                 <thead>
@@ -190,7 +201,7 @@
                                         View
                                     </label>
                                     @if($message->bulk_message_id)
-                                        <button class="btn btn-ghost btn-xs text-blue-600"
+                                        <button class="btn btn-ghost btn-xs text-rose-600"
                                                 onclick="viewBulkStats{{ $message->id }}.showModal()">
                                             Bulk Stats
                                         </button>
@@ -203,7 +214,7 @@
                             <td colspan="7" class="text-center py-8 text-gray-500">
                                 No messages found.
                                 @if($search || $channel_filter || $status_filter || $date_from || $date_to)
-                                    <button wire:click="clearFilters" class="text-blue-600 hover:underline ml-1">Clear filters</button> to see all messages.
+                                    <button wire:click="clearFilters" class="text-rose-600 hover:underline ml-1">Clear filters</button> to see all messages.
                                 @else
                                     Start by sending your first message!
                                 @endif
@@ -222,6 +233,8 @@
         @endif
     </div>
     <!-- DaisyUI Drawer for message details -->
+    </div>{{-- end max-w-6xl --}}
+
     @foreach($messages as $message)
         <div class="drawer drawer-end z-50">
             <input id="drawer-message-{{ $message->id }}" type="checkbox" class="drawer-toggle" />

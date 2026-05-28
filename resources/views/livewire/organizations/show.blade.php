@@ -1,62 +1,31 @@
 <div>
     <x-slot name="header">
-        <div class="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
-            <div class="flex items-center justify-between py-6">
-                <div class="flex items-center gap-4">
-                    <div
-                        class="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg">
-                        <span class="text-xl font-bold text-white">
-                            {{ substr($organization->legal_name, 0, 1) }}
-                        </span>
-                    </div>
-                    <div>
-                        <h2 class="font-bold text-2xl text-gray-900 leading-tight">
-                            {{ $organization->name }}
-                        </h2>
-                        <div class="flex items-center gap-3 mt-1">
-                            <p class="text-gray-600 text-sm">Project Status:</p>
-                            <div class="flex items-center gap-2">
-                                @if ($organization->is_active)
-                                    <div class="w-2 h-2 bg-success rounded-full"></div>
-                                    <span class="text-xs text-success font-medium">Active</span>
-                                @else
-                                    <div class="w-2 h-2 bg-error rounded-full"></div>
-                                    <span class="text-xs text-error font-medium">Inactive</span>
-                                @endif
-                            </div>
-                            @if ($organization->code)
-                                <p class="text-sm font-sm text-gray-500 mb-1">Code:</p>
-                                <p class="text-success text-sm font-bold text-gray-900 tracking-wider">
-                                    {{ $organization->code }}</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('organizations.index') }}" class="btn btn-ghost btn-sm hover:bg-white/50">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to Projects List
-                    </a>
-
-                    <button class="btn btn-primary btn-sm shadow-lg hover:shadow-xl transition-all duration-200"
-                        disabled>
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit Project
-                    </button>
-                </div>
+        <div class="flex items-center justify-between w-full gap-4">
+            <div class="min-w-0">
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects Mgt</div>
+                <h1 class="text-base font-semibold text-gray-800 truncate">{{ $organization->legal_name ?? $organization->name }}</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('organizations.index') }}" class="btn btn-ghost btn-sm gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Projects List
+                </a>
+                <button class="btn btn-sm gap-1.5" style="background:#982B55;color:#fff;border-color:#982B55;" disabled>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit Project
+                </button>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-8">
-        <div class="max-w-7xl sm:px-6 lg:px-8">
+    <div class="min-h-full py-6 px-4 md:px-8">
+        <div class="w-full">
             {{-- Hero Section --}}
             {{-- <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
                 <div class="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-8">
@@ -116,11 +85,11 @@
 
                 {{-- Basic Information --}}
                 <div
-                    class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+                    class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-6">
                             <div
-                                class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                                class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#982B55;">
                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -192,7 +161,7 @@
 
                 {{-- Address Information --}}
                 <div
-                    class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+                    class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-6">
                             <div
@@ -281,7 +250,7 @@
 
                 {{-- Contact Information --}}
                 <div
-                    class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+                    class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-6">
                             <div
@@ -403,11 +372,11 @@
 
                 {{-- Status & Information --}}
                 <div
-                    class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+                    class="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="p-6">
                         <div class="flex items-center gap-3 mb-6">
                             <div
-                                class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                                class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#982B55;">
                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -495,7 +464,7 @@
                                 <div class="group">
                                     <label class="block text-sm font-semibold text-gray-500 mb-2">Created</label>
                                     <div class="flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-4 h-4 text-rose-600" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd"
                                                 d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
                                                 clip-rule="evenodd" />
@@ -508,7 +477,7 @@
                                 <div class="group">
                                     <label class="block text-sm font-semibold text-gray-500 mb-2">Last Updated</label>
                                     <div class="flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-4 h-4 text-rose-600" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd"
                                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
                                                 clip-rule="evenodd" />
@@ -524,7 +493,7 @@
                 {{-- Regulatory Information --}}
                 @if ($organization->regulatory_body || $organization->license_number)
                     <div
-                        class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+                        class="bg-white rounded-xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="flex items-center gap-3 mb-6">
                                 <div
@@ -614,7 +583,7 @@
                 {{-- System Configuration --}}
                 @if ($organization->default_currency || $organization->timezone)
                     <div
-                        class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+                        class="bg-white rounded-xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="flex items-center gap-3 mb-6">
                                 <div

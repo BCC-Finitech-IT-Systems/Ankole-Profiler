@@ -4,7 +4,7 @@
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
     <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="w-full px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">{{ $title ?? 'Admin Dashboard' }}</h1>
@@ -23,7 +23,7 @@
 
     <!-- Navigation Tabs -->
     <div class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="w-full px-4 sm:px-6 lg:px-8">
             <nav class="flex space-x-8" aria-label="Tabs">
                 @can('manage-roles')
                     <a href="{{ route('admin.permissions.index') }}"
@@ -69,7 +69,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="w-full py-6 sm:px-6 lg:px-8">
         {{ $slot }}
     </div>
 </div>
