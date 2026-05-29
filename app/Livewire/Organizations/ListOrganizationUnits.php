@@ -122,9 +122,9 @@ class ListOrganizationUnits extends Component {
 
     public function selectUnit($unitId)
     {
-    $this->selectedUnit = OrganizationUnit::find($unitId);
-    $this->checkMembership();
-    $this->dispatch('open-unit-details-drawer');
+        $this->selectedUnit = OrganizationUnit::with(['organization', 'department'])->find($unitId);
+        $this->checkMembership();
+        $this->dispatch('open-unit-details-drawer');
     }
 
     public function checkMembership()

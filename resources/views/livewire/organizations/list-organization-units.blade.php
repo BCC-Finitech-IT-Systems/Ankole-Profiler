@@ -121,7 +121,7 @@
                         <div class="flex flex-col gap-2 mb-4">
                             <div class="text-xs text-gray-500">Organization:
                                 <span class="font-semibold text-gray-800">
-                                    {{ optional($selectedUnit->Organization)->name ?? (optional(\App\Models\Organization::find($selectedUnit->organization_id))->name ?? 'N/A') }}
+                                    {{ optional($selectedUnit->organization)->display_name ?? optional($selectedUnit->organization)->legal_name ?? 'N/A' }}
                                 </span>
                             </div>
                             <div class="flex items-center gap-4">
@@ -140,7 +140,7 @@
                             <div class="text-gray-500">Type</div>
                             <div>{{ $selectedUnit->unit_type ?? 'N/A' }}</div>
                             <div class="text-gray-500">Department</div>
-                            <div>{{ $selectedUnit->department ?? 'N/A' }}</div>
+                            <div>{{ optional($selectedUnit->getRelation('department'))->name ?? 'N/A' }}</div>
                             <div class="text-gray-500">Community</div>
                             <div>{{ $selectedUnit->community ?? 'N/A' }}</div>
                             <div class="text-gray-500">Ministry Committee</div>
