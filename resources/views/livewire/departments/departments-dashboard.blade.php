@@ -398,7 +398,18 @@
 
     <div class="card bg-base-100 border border-base-300 shadow-sm">
         <div class="card-body">
-            <h2 class="text-lg font-semibold">Department Projects</h2>
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Department Projects</h2>
+                @can('create-projects')
+                    <button wire:click="openCreateProject"
+                            class="btn btn-sm border-0 text-white gap-1" style="background:#982B55;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        New Project
+                    </button>
+                @endcan
+            </div>
 
             @if($selectedDepartment)
                 <div class="overflow-x-auto mt-2">
@@ -410,6 +421,8 @@
                                 <th>Organization</th>
                                 <th>Org Category</th>
                                 <th>Sub-Category</th>
+                                <th>Unit</th>
+                                <th>Client</th>
                                 <th>Project Departments</th>
                                 <th>Code</th>
                                 <th>Admin</th>
@@ -417,7 +430,7 @@
                                 <th>Status</th>
                                 <th>Start Date</th>
                                 <th>End Date</th>
-                                <th>Chart</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -432,6 +445,22 @@
                                     <td>{{ $project->department?->organization?->display_name ?: ($project->department?->organization?->legal_name ?? '—') }}</td>
                                     <td>{{ $project->department?->organization?->category ? ucfirst(strtolower(trim($project->department->organization->category))) : '—' }}</td>
                                     <td>{{ $project->departmentSubCategory?->name ?? $project->sub_category ?? '—' }}</td>
+                                    <td>
+                                        @if($project->organizationUnit)
+                                            <span class="badge badge-outline badge-sm">{{ $project->organizationUnit->name }}</span>
+                                        @else
+                                            <span class="text-base-content/40">—</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($project->client)
+                                            <span class="text-sm font-medium">{{ $project->client->full_name }}</span>
+                                        @elseif($project->external_client_name)
+                                            <span class="text-sm text-base-content/70 italic">{{ $project->external_client_name }}</span>
+                                        @else
+                                            <span class="text-base-content/40">—</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         @if($project->projectDepartments->isNotEmpty())
                                             <div class="flex flex-wrap gap-1">
@@ -458,20 +487,33 @@
                                     <td>{{ $project->starts_on ? $project->starts_on->format('Y-m-d') : '—' }}</td>
                                     <td>{{ $project->ends_on ? $project->ends_on->format('Y-m-d') : '—' }}</td>
                                     <td>
-                                        <button
-                                            wire:click="viewProjectChart({{ $project->id }})"
-                                            class="btn btn-xs btn-ghost btn-circle tooltip"
-                                            data-tip="View chart"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                            </svg>
-                                        </button>
+                                        <div class="flex items-center gap-1">
+                                            <button
+                                                wire:click="viewProjectChart({{ $project->id }})"
+                                                class="btn btn-xs btn-ghost btn-circle tooltip"
+                                                data-tip="View chart"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                                </svg>
+                                            </button>
+                                            @can('edit-projects')
+                                                <button
+                                                    wire:click="openEditProject({{ $project->id }})"
+                                                    class="btn btn-xs btn-ghost btn-circle tooltip"
+                                                    data-tip="Edit project"
+                                                >
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                </button>
+                                            @endcan
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="13" class="text-center py-8 text-base-content/70">No projects found for this department.</td>
+                                    <td colspan="15" class="text-center py-8 text-base-content/70">No projects found for this department.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -525,6 +567,146 @@
         </div>
     </div>
 </div>
+
+{{-- Project Create/Edit Modal --}}
+@if($showProjectModal)
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" wire:click.self="closeProjectModal">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-screen overflow-y-auto">
+        <div class="flex items-center justify-between p-6 border-b">
+            <h3 class="text-lg font-bold">{{ $editingProjectId ? 'Edit Project' : 'New Project' }}</h3>
+            <button wire:click="closeProjectModal" class="btn btn-sm btn-ghost btn-circle">&times;</button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            {{-- Name --}}
+            <div class="form-control">
+                <label class="label"><span class="label-text font-medium">Project Name <span class="text-red-500">*</span></span></label>
+                <input type="text" wire:model="projectName" class="input input-bordered w-full" placeholder="Enter project name" />
+                @error('projectName') <span class="text-xs text-red-500 mt-1">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                {{-- Code --}}
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Code</span></label>
+                    <input type="text" wire:model="projectCode" class="input input-bordered w-full" placeholder="e.g. PROJ-001" />
+                </div>
+
+                {{-- Status --}}
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Status</span></label>
+                    <select wire:model="projectIsActive" class="select select-bordered w-full">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            {{-- Department --}}
+            <div class="form-control">
+                <label class="label"><span class="label-text font-medium">Department <span class="text-red-500">*</span></span></label>
+                <select wire:model.live="projectDepartmentId" class="select select-bordered w-full">
+                    <option value="">Select department…</option>
+                    @foreach($departments as $dept)
+                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                    @endforeach
+                </select>
+                @error('projectDepartmentId') <span class="text-xs text-red-500 mt-1">{{ $message }}</span> @enderror
+            </div>
+
+            {{-- Organization Unit --}}
+            @if(count($availableUnits) > 0)
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Organization Unit</span></label>
+                    <select wire:model="projectOrganizationUnitId" class="select select-bordered w-full">
+                        <option value="">None</option>
+                        @foreach($availableUnits as $unit)
+                            <option value="{{ $unit['id'] }}">{{ $unit['name'] }}{{ $unit['code'] ? ' ('.$unit['code'].')' : '' }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @elseif($projectDepartmentId)
+                <p class="text-xs text-base-content/50 italic">No active units found for the selected department.</p>
+            @endif
+
+            {{-- Client (person search or external name) --}}
+            <div class="rounded-lg border border-base-200 p-4 space-y-3">
+                <p class="text-sm font-semibold text-base-content/70 uppercase tracking-wide">Client</p>
+
+                {{-- Person search --}}
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs">Internal client (person)</span></label>
+                    <div class="relative">
+                        <input type="text"
+                               wire:model.live.debounce.300ms="projectClientSearch"
+                               placeholder="Search by name or person ID…"
+                               class="input input-bordered input-sm w-full pr-8" />
+                        @if($projectClientPersonId)
+                            <svg class="w-4 h-4 text-green-500 absolute right-2 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        @endif
+                        @if(count($projectClientResults))
+                            <ul class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg text-sm max-h-48 overflow-y-auto">
+                                @foreach($projectClientResults as $p)
+                                    <li wire:click="selectProjectClient({{ $p['id'] }}, '{{ addslashes($p['given_name'] . ' ' . $p['family_name']) }}')"
+                                        class="px-3 py-2 cursor-pointer hover:bg-rose-50 flex items-center justify-between">
+                                        <span>{{ $p['given_name'] }} {{ $p['family_name'] }}</span>
+                                        <span class="text-xs text-gray-400">{{ $p['person_id'] }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                    @if($projectClientPersonId)
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-xs text-green-700 font-medium">{{ $projectClientSelectedName }}</span>
+                            <button type="button" wire:click="clearProjectClient" class="text-xs text-red-400 hover:text-red-600">&times; Clear</button>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- External client name (only if no internal person selected) --}}
+                @if(!$projectClientPersonId)
+                    <div class="form-control">
+                        <label class="label"><span class="label-text text-xs">Or external client name</span></label>
+                        <input type="text" wire:model="projectExternalClientName" class="input input-bordered input-sm w-full" placeholder="External organisation or individual name" />
+                    </div>
+                @endif
+            </div>
+
+            {{-- Dates --}}
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Start Date</span></label>
+                    <input type="date" wire:model="projectStartsOn" class="input input-bordered w-full" />
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">End Date</span></label>
+                    <input type="date" wire:model="projectEndsOn" class="input input-bordered w-full" />
+                    @error('projectEndsOn') <span class="text-xs text-red-500 mt-1">{{ $message }}</span> @enderror
+                </div>
+            </div>
+
+            {{-- Description --}}
+            <div class="form-control">
+                <label class="label"><span class="label-text font-medium">Description</span></label>
+                <textarea wire:model="projectDescription" rows="3" class="textarea textarea-bordered w-full" placeholder="Optional project description…"></textarea>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-2 p-6 border-t">
+            <button wire:click="closeProjectModal" class="btn btn-ghost">Cancel</button>
+            <button wire:click="saveProject"
+                    wire:loading.attr="disabled"
+                    class="btn border-0 text-white" style="background:#982B55;">
+                <span wire:loading wire:target="saveProject">Saving…</span>
+                <span wire:loading.remove wire:target="saveProject">{{ $editingProjectId ? 'Save Changes' : 'Create Project' }}</span>
+            </button>
+        </div>
+    </div>
+</div>
+@endif
 
 @if(!empty($registrationChartData['datasets']))
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>

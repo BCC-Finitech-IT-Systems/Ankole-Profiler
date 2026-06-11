@@ -10,7 +10,7 @@
                 <div class="text-xs text-gray-600">Description: {{ $unit->description }}</div>
                 <div class="flex flex-wrap gap-2 mt-1">
                     <span class="text-xs {{ $unit->is_active ? 'text-green-600' : 'text-red-600' }} font-semibold">Status: {{ $unit->is_active ? 'Active' : 'Inactive' }}</span>
-                    <span class="text-xs text-blue-600">Unit Type: {{ $unit->unit_type }}</span>
+                    <span class="text-xs text-rose-600">Unit Type: {{ $unit->unit_type }}</span>
                     </div>
                     <span class="text-xs text-gray-700">Head: {{ $unit->unit_head ? (optional(\App\Models\Person::find($unit->unit_head))->full_name ?? 'N/A') : 'N/A' }}</span>
                     <span class="text-xs text-gray-700">Contact: {{ $unit->official_email ?? $unit->phone_contact ?? 'N/A' }}</span>

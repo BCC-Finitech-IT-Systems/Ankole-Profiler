@@ -8,9 +8,9 @@
                 <div class="flex items-center">
                     <div wire:loading wire:target="filters,dynamicFilters,updatedFilters,updatedDynamicFilters"
                         class="flex items-center">
-                        <div class="w-3 h-3 bg-blue-500 rounded-full mr-2 animate-pulse" title="Searching..."></div>
+                        <div class="w-3 h-3 bg-rose-500 rounded-full mr-2 animate-pulse" title="Searching..."></div>
                         <p class="text-gray-600 animate-pulse">
-                            <span class="font-semibold text-blue-600">Searching...</span> Please wait
+                            <span class="font-semibold text-rose-600">Searching...</span> Please wait
                         </p>
                     </div>
 
@@ -37,7 +37,7 @@
                     </svg>
                     Ready
                 </div>
-                <div wire:loading wire:target="filters,dynamicFilters" class="text-xs text-blue-600 animate-pulse">
+                <div wire:loading wire:target="filters,dynamicFilters" class="text-xs text-rose-600 animate-pulse">
                     <svg class="animate-spin w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                             stroke-width="4"></circle>
@@ -52,7 +52,7 @@
                 {{-- Export Button --}}
                 @can('export-org-persons')
                     <a href="{{ route('persons.export') }}"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-400">
                         <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -64,7 +64,7 @@
                 {{-- Import Button --}}
                 @can('import-org-persons')
                     <a href="{{ route('persons.import') }}"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-400">
                         <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -74,23 +74,21 @@
                 @endcan
 
                 {{-- Add New Person Button --}}
-                <a href="{{ route('persons.search') }}" style="background-color:#01fea1"
-                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white hover:bg-[#01bafe]">
-                    <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                            clip-rule="evenodd"></path>
+                <a href="{{ route('persons.search') }}" style="background-color:#982B55"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                    <span class="text-white">Search Person</span>
+                    Search Person
                 </a>
-                <a href="{{ route('persons.create') }}" style="background-color:#01bafe"
-                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white hover:bg-[#01bafe]">
+                <a href="{{ route('persons.create') }}" style="background-color:#982B55"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
                             d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                            clip-rule="evenodd"></path>
+                            clip-rule="evenodd"/>
                     </svg>
-                    <span class="text-white">Add New Person</span>
+                    Add New Person
                 </a>
             </div>
         </div>
@@ -101,7 +99,7 @@
             <div wire:loading wire:target="filters,dynamicFilters,updatedFilters,updatedDynamicFilters"
                 class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-20">
                 <div class="text-center">
-                    <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg"
+                    <svg class="animate-spin h-8 w-8 text-rose-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg"
                         fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                             stroke-width="4"></circle>
@@ -147,7 +145,7 @@
                                                 <div
                                                     class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center relative">
                                                     <span
-                                                        class="text-blue-600 font-medium text-sm">{{ substr($person->given_name, 0, 1) }}{{ substr($person->family_name, 0, 1) }}</span>
+                                                        class="text-rose-600 font-medium text-sm">{{ substr($person->given_name, 0, 1) }}{{ substr($person->family_name, 0, 1) }}</span>
 
                                                     {{-- Profile completeness indicator --}}
                                                     @php
@@ -292,7 +290,7 @@
                                     </td>
                                     {{-- Classifications --}}
                                     <td class="px-1.5 py-1 whitespace-nowrap">
-                                        {{ $affiliation->role_type }}
+                                        {{ $activeAffiliations->first()?->role_type ?? '' }}
                                         {{-- @if ($person->classification)
                                             <div class="flex flex-wrap gap-1">
                                                 @foreach ($person->classification as $class)
@@ -303,7 +301,7 @@
                                                             'PARENT' => 'bg-purple-100 text-purple-800',
                                                             'VISITOR' => 'bg-orange-100 text-orange-800',
                                                             'ALUMNI' => 'bg-gray-100 text-gray-800',
-                                                            default => 'bg-indigo-100 text-indigo-800',
+                                                            default => 'bg-rose-100 text-rose-800',
                                                         };
                                                     @endphp
                                                     <span
@@ -455,7 +453,8 @@
                     </p>
                     <div class="mt-6">
                         <a href="{{ route('persons.create') }}"
-                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white"
+                            style="background:#982B55;">
                             <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd"
                                     d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"

@@ -118,7 +118,7 @@
 /* Search Input Styles */
 .sidebar-search {
     width: 100%;
-    padding: 0.5rem 1rem 0.5rem 2.5rem;
+    padding: 0.5rem 1rem;
     font-size: 0.875rem;
     background-color: hsl(var(--b2));
     border: 1px solid hsl(var(--b3));

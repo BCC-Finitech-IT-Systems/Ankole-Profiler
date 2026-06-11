@@ -4,9 +4,9 @@ namespace App\Livewire\Organizations;
 
 use Livewire\Component;
 use App\Models\OrganizationUnit;
+use App\Models\OrganizationUnitApplication;
 use App\Models\PersonAffiliation;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class ApplyToUnit extends Component
 {
@@ -38,27 +38,24 @@ class ApplyToUnit extends Component
             return;
         }
 
-        // Check for existing pending application
-        $existing = DB::table('organization_unit_applications')
-            ->where('organization_id', $this->unit->organization_id)
-            ->where('unit_id', $this->unit->id)
-            ->where('person_id', $user->person->id)
-            ->where('status', 'pending')
-            ->first();
+        $personId = $user->person->id;
 
-        if ($existing) {
+        $alreadyExists = OrganizationUnitApplication::where('organization_id', $this->unit->organization_id)
+            ->where('unit_id', $this->unit->id)
+            ->where('person_id', $personId)
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($alreadyExists) {
             session()->flash('error', 'You have already applied to this unit.');
             return;
         }
 
-        // Create new application
-        DB::table('organization_unit_applications')->insert([
+        OrganizationUnitApplication::create([
             'organization_id' => $this->unit->organization_id,
-            'unit_id' => $this->unit->id,
-            'person_id' => $user->person->id,
-            'status' => 'pending',
-            'created_at' => now(),
-            'updated_at' => now(),
+            'unit_id'         => $this->unit->id,
+            'person_id'       => $personId,
+            'status'          => 'pending',
         ]);
 
         $this->hasPendingApplication = true;

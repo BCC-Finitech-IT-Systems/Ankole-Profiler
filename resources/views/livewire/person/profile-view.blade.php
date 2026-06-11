@@ -3,10 +3,10 @@
         <dialog id="profile_modal" class="modal" open>
             <div class="modal-box max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                 <div
-                    class="bg-gradient-to-r from-blue-600 to-blue-600 text-white p-6 rounded-t-lg flex justify-between items-center">
+                    class="text-white p-6 rounded-t-lg flex justify-between items-center" style="background:#982B55;">
                     <div>
                         <h2 class="text-2xl font-bold">{{ $person->full_name }}</h2>
-                        <p class="text-blue-100">Person ID: {{ $person->person_id }} | Global ID:
+                        <p class="text-white/80">Person ID: {{ $person->person_id }} | Global ID:
                             {{ substr($person->global_identifier, 0, 8) }}...</p>
                     </div>
                     <button wire:click="closeModal" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
@@ -54,7 +54,7 @@
                                             $classifications = is_array($person->classification) ? $person->classification : (is_string($person->classification) ? array_filter(explode(',', $person->classification)) : []);
                                         @endphp
                                         @foreach ($classifications as $class)
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">{{ $class }}</span>
+                                            <span class="px-2 py-1 bg-rose-50 text-rose-700 rounded text-xs">{{ $class }}</span>
                                         @endforeach
                                     </div>
                                 @endif
@@ -91,7 +91,7 @@
                                         <span>{{ ucfirst($phone->type) }}</span>
                                         <div class="flex gap-2">
                                             @if ($phone->is_primary)
-                                                <span class="px-1 bg-blue-100 text-blue-800 rounded">Primary</span>
+                                                <span class="px-1 bg-rose-50 text-rose-700 rounded">Primary</span>
                                             @endif
                                             @if ($phone->is_verified)
                                                 <span class="px-1 bg-green-100 text-green-800 rounded">Verified</span>
@@ -117,7 +117,7 @@
                                         <span>{{ ucfirst($email->type) }}</span>
                                         <div class="flex gap-2">
                                             @if ($email->is_primary)
-                                                <span class="px-1 bg-blue-100 text-blue-800 rounded">Primary</span>
+                                                <span class="px-1 bg-rose-50 text-rose-700 rounded">Primary</span>
                                             @endif
                                             @if ($email->is_verified)
                                                 <span class="px-1 bg-green-100 text-green-800 rounded">Verified</span>

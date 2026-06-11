@@ -89,6 +89,25 @@ class Organization extends Model
         'deleted_at'
     ];
 
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        // Keep is_super and organization_type consistent with each other.
+        // 'super' organization_type is the canonical source of truth for the root org.
+        static::saving(function (self $org) {
+            if ($org->isDirty('organization_type')) {
+                $org->is_super = ($org->organization_type === 'super');
+            } elseif ($org->isDirty('is_super')) {
+                if ($org->is_super && $org->organization_type !== 'super') {
+                    $org->organization_type = 'super';
+                } elseif (!$org->is_super && $org->organization_type === 'super') {
+                    $org->organization_type = 'branch';
+                }
+            }
+        });
+    }
+
     // Relationships
 
     /**

@@ -2,138 +2,157 @@
 
 namespace App\Livewire\Organizations;
 
+use App\Models\OrganizationUnitApplication;
+use App\Models\PersonAffiliation;
+use App\Models\UnitPersonRole;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
 class ReviewUnitApplications extends Component
 {
-    // Removed unnecessary $applications property
     public $selectedApplication = null;
     public $selectedIds = [];
 
-    // No need to fetch applications in mount; will be done in render()
-
     public function selectApplication($id)
     {
-        $this->selectedApplication = DB::table('organization_unit_applications')
-            ->where('id', $id)
-            ->first();
+        $this->selectedApplication = OrganizationUnitApplication::find($id);
     }
 
     public function approve($id)
     {
-        $user = \Illuminate\Support\Facades\Auth::user();
-        if (!$user || !\Illuminate\Support\Facades\Gate::allows('approve-unit-membership')) {
-            if ($user) {
-                return redirect()->route('dashboard'); // Redirect logged-in users to the dashboard
-            }
-            abort(403, 'You do not have permission to approve unit memberships.');
+        /** @var User|null $user */
+        $user = Auth::user();
+        if (!$user || !Gate::allows('approve-unit-membership')) {
+            $user ? redirect()->route('dashboard') : abort(403);
         }
-        $application = DB::table('organization_unit_applications')->where('id', $id)->first();
-        if ($application && $application->status === 'pending') {
-            // Create PersonAffiliation
-            \App\Models\PersonAffiliation::create([
-                'person_id' => $application->person_id,
-                'organization_id' => $application->organization_id,
-                'role_type' => 'MEMBER',
-                'status' => 'active',
-                'domain_record_type' => 'unit',
-                'domain_record_id' => $application->unit_id,
-                'created_by' => $user->id,
-                'start_date' => now(),
-            ]);
-            // Update application status
-            DB::table('organization_unit_applications')->where('id', $id)->update([
-                'status' => 'approved',
+
+        $application = OrganizationUnitApplication::find($id);
+        if (!$application || $application->status !== 'pending') {
+            return;
+        }
+
+        DB::transaction(function () use ($application, $user) {
+            $this->createMembership($application, $user);
+            $application->update([
+                'status'      => 'approved',
                 'approved_at' => now(),
                 'approved_by' => $user->id,
-                'updated_at' => now(),
             ]);
-        }
-    $this->selectedApplication = null;
+        });
+
+        $this->selectedApplication = null;
     }
 
     public function reject($id)
     {
-        $user = \Illuminate\Support\Facades\Auth::user();
-        if (!$user || !\Illuminate\Support\Facades\Gate::allows('approve-unit-membership')) {
-            if ($user) {
-                return redirect()->route('dashboard'); // Redirect logged-in users to the dashboard
-            }
-            abort(403, 'You do not have permission to reject unit memberships.');
+        /** @var User|null $user */
+        $user = Auth::user();
+        if (!$user || !Gate::allows('approve-unit-membership')) {
+            $user ? redirect()->route('dashboard') : abort(403);
         }
-        $application = DB::table('organization_unit_applications')->where('id', $id)->first();
+
+        $application = OrganizationUnitApplication::find($id);
         if ($application && $application->status === 'pending') {
-            DB::table('organization_unit_applications')->where('id', $id)->update([
-                'status' => 'rejected',
-                'updated_at' => now(),
-            ]);
+            $application->update(['status' => 'rejected']);
         }
-    $this->selectedApplication = null;
+
+        $this->selectedApplication = null;
     }
 
     public function bulkApprove()
     {
-        $user = \Illuminate\Support\Facades\Auth::user();
-        if (!$user || !\Illuminate\Support\Facades\Gate::allows('bulk-approve-unit-membership')) {
-            abort(403, 'You do not have permission to bulk approve unit memberships.');
-        }
-        $applications = DB::table('organization_unit_applications')
-            ->whereIn('id', $this->selectedIds)
-            ->where('status', 'pending')
+        /** @var User|null $user */
+        $user = Auth::user();
+        abort_unless($user && Gate::allows('bulk-approve-unit-membership'), 403);
+
+        $applications = OrganizationUnitApplication::whereIn('id', $this->selectedIds)
+            ->pending()
             ->get();
-        foreach ($applications as $application) {
-            \App\Models\PersonAffiliation::create([
-                'person_id' => $application->person_id,
-                'organization_id' => $application->organization_id,
-                'role_type' => 'MEMBER',
-                'status' => 'active',
-                'domain_record_type' => 'unit',
-                'domain_record_id' => $application->unit_id,
-                'created_by' => $user->id,
-                'start_date' => now(),
-            ]);
-            DB::table('organization_unit_applications')->where('id', $application->id)->update([
-                'status' => 'approved',
-                'approved_at' => now(),
-                'approved_by' => $user->id,
-                'updated_at' => now(),
-            ]);
-        }
-    $this->selectedIds = [];
+
+        DB::transaction(function () use ($applications, $user) {
+            foreach ($applications as $application) {
+                $this->createMembership($application, $user);
+                $application->update([
+                    'status'      => 'approved',
+                    'approved_at' => now(),
+                    'approved_by' => $user->id,
+                ]);
+            }
+        });
+
+        $this->selectedIds = [];
     }
 
     public function bulkReject()
     {
-        $user = \Illuminate\Support\Facades\Auth::user();
-        if (!$user || !\Illuminate\Support\Facades\Gate::allows('bulk-approve-unit-membership')) {
-            abort(403, 'You do not have permission to bulk reject unit memberships.');
+        /** @var User|null $user */
+        $user = Auth::user();
+        abort_unless($user && Gate::allows('bulk-approve-unit-membership'), 403);
+
+        OrganizationUnitApplication::whereIn('id', $this->selectedIds)
+            ->pending()
+            ->update(['status' => 'rejected']);
+
+        $this->selectedIds = [];
+    }
+
+    /**
+     * Create PersonAffiliation + UnitPersonRole when an application is approved.
+     * Uses the direct organization_unit_id FK (not the old domain_record_id pattern).
+     */
+    private function createMembership(object $application, object $user): void
+    {
+        // Upsert: if person already has an affiliation for this org+unit, reactivate it
+        $affiliation = PersonAffiliation::firstOrCreate(
+            [
+                'person_id'            => $application->person_id,
+                'organization_id'      => $application->organization_id,
+                'organization_unit_id' => $application->unit_id,
+            ],
+            [
+                'role_type'   => 'MEMBER',
+                'status'      => 'active',
+                'start_date'  => now(),
+                'permissions' => ['view'],
+                'created_by'  => $user->id,
+            ]
+        );
+
+        if (!$affiliation->wasRecentlyCreated) {
+            $affiliation->update(['status' => 'active', 'updated_by' => $user->id]);
         }
-        $applications = DB::table('organization_unit_applications')
-            ->whereIn('id', $this->selectedIds)
-            ->where('status', 'pending')
-            ->get();
-        foreach ($applications as $application) {
-            DB::table('organization_unit_applications')->where('id', $application->id)->update([
-                'status' => 'rejected',
-                'updated_at' => now(),
-            ]);
-        }
-    $this->selectedIds = [];
+
+        // Grant a default 'member' role in the unit_person_roles table
+        UnitPersonRole::firstOrCreate(
+            [
+                'unit_id'   => $application->unit_id,
+                'person_id' => $application->person_id,
+                'role'      => 'member',
+            ],
+            [
+                'can_view'    => true,
+                'can_edit'    => false,
+                'can_approve' => false,
+                'granted_by'  => $user->id,
+                'granted_at'  => now(),
+            ]
+        );
     }
 
     public function render()
     {
-        $user = \Illuminate\Support\Facades\Auth::user();
-        $orgId = $user && $user->organization_id ? $user->organization_id : null;
-        $query = DB::table('organization_unit_applications')
-            ->where('status', 'pending');
-        if ($orgId) {
-            $query->where('organization_id', $orgId);
-        }
-        $applications = $query->get();
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        $query = OrganizationUnitApplication::pending()
+            ->with(['person', 'unit'])
+            ->when($user?->organization_id, fn ($q, $orgId) => $q->forOrganization($orgId));
+
         return view('livewire.organizations.review-unit-applications', [
-            'applications' => $applications
+            'applications' => $query->get(),
         ]);
     }
 }

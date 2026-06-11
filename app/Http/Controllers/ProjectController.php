@@ -134,16 +134,18 @@ class ProjectController extends Controller
             }
 
             return [
-                'project_id' => $project->id,
-                'person_id' => $item['person_id'],
-                'affiliation_type' => $item['affiliation_type'],
-                'role_title' => $item['role_title'] ?? null,
-                'occupation' => $item['occupation'] ?? null,
-                'start_date' => $item['start_date'] ?? null,
-                'end_date' => $item['end_date'] ?? null,
-                'status' => $item['status'] ?? 'active',
-                'updated_by' => $user->id,
-                'created_by' => $user->id,
+                'project_id'            => $project->id,
+                'person_id'             => $item['person_id'],
+                'affiliation_type'      => $item['affiliation_type'],
+                'role_title'            => $item['role_title'] ?? null,
+                'occupation'            => $item['occupation'] ?? null,
+                'start_date'            => $item['start_date'] ?? null,
+                'end_date'              => $item['end_date'] ?? null,
+                'status'                => $item['status'] ?? 'active',
+                'organization_unit_id'  => $item['organization_unit_id'] ?? null,
+                'permissions'           => $item['permissions'] ?? ['view'],
+                'updated_by'            => $user->id,
+                'created_by'            => $user->id,
             ];
         });
 

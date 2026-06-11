@@ -1,7 +1,7 @@
 {{-- resources/views/livewire/partials/relationship-card.blade.php --}}
-<div class="bg-white rounded-lg border-2 border-gray-200 hover:border-indigo-400 hover:shadow-lg transition-all duration-200 overflow-hidden group">
+<div class="bg-white rounded-lg border-2 border-gray-200 hover:border-rose-400 hover:shadow-lg transition-all duration-200 overflow-hidden group">
     {{-- Header with Avatar --}}
-    <div class="relative bg-gradient-to-br from-indigo-500 to-purple-600 p-4">
+    <div class="relative p-4" style="background:#982B55;">
         <div class="flex items-start justify-between">
             <div class="flex items-center space-x-3">
                 <div class="h-14 w-14 rounded-full bg-white bg-opacity-20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border-2 border-white">
@@ -9,7 +9,7 @@
                 </div>
                 <div>
                     <h4 class="text-white font-semibold text-sm">{{ $person->full_name }}</h4>
-                    <p class="text-indigo-100 text-xs">ID: {{ $person->person_id }}</p>
+                    <p class="text-white/70 text-xs">ID: {{ $person->person_id }}</p>
                 </div>
             </div>
             
@@ -26,7 +26,7 @@
         {{-- Relationship Tags --}}
         <div class="flex flex-wrap gap-1">
             @foreach($person->relationships as $rel)
-                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
                     <i class="fas fa-link mr-1"></i>
                     {{ ucwords(str_replace('_', ' ', $rel['type'])) }}
                 </span>
@@ -43,7 +43,7 @@
                 </div>
             @endforeach
             @if($person->relationships->count() > 2)
-                <span class="text-xs text-indigo-600 font-medium">
+                <span class="text-xs text-rose-600 font-medium">
                     +{{ $person->relationships->count() - 2 }} more
                 </span>
             @endif
@@ -88,7 +88,7 @@
                 {{ ucfirst($person->status) }}
             </span>
             <a href="{{ route('persons.show', $person) }}" 
-               class="text-indigo-600 hover:text-indigo-800 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+               class="text-rose-600 hover:text-rose-800 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                 View Details <i class="fas fa-arrow-right ml-1"></i>
             </a>
         </div>

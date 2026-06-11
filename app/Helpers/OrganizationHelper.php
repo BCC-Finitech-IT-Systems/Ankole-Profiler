@@ -1,12 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Auth;
 use App\Models\PersonAffiliation;
-use App\Models\User;
-
-// app/Helpers/OrganizationHelper.php
-
 use App\Models\Organization;
-use Illuminate\Support\Facades\Log;
 
 if (!function_exists('current_organization_id')) {
     /**
@@ -76,39 +71,39 @@ if (!function_exists('user_current_organization')) {
             return null;
         }
 
-        Log::info('User Details:', ['user' => $user]);
-
-        if (method_exists($user, 'hasRole') && $user->hasRole('Super Admin')) {
-            Log::info('User is a Super Admin, no organization assigned.');
-            return null;
+        // Prefer the session value — OrganizationSwitcher keeps this up-to-date
+        $sessionId = session('current_organization_id');
+        if ($sessionId) {
+            return Organization::find($sessionId);
         }
 
-        // Fetch the person affiliation using user_id
-        $affiliation = \App\Models\PersonAffiliation::where('user_id', $user->id)
-            ->with('organization')
-            ->first();
+        // Fall back: resolve via person → affiliation chain (works for all roles)
+        $affiliation = $user->personAffiliation;
+        $org = $affiliation?->Organization ?? null;
 
-        Log::info('Person Affiliation Debug:', [
-            'user_id' => $user->id,
-            'affiliation' => $affiliation,
-            'organization_id' => $affiliation?->organization_id ?? null,
-            'organization_exists' => $affiliation?->organization ? true : false
-        ]);
-
-        if ($affiliation && $affiliation->organization) {
-            return $affiliation->organization;
+        if ($org) {
+            // Cache in session so subsequent requests skip this lookup
+            session([
+                'current_organization_id'   => $org->id,
+                'current_organization_name' => $org->display_name ?? $org->legal_name,
+            ]);
         }
 
-        return null;
+        return $org;
     }
 }
 
 if (!function_exists('user_current_organization_name')) {
     function user_current_organization_name()
     {
+        // Fast path: session name is always set by OrganizationSwitcher on switch
+        $sessionName = session('current_organization_name');
+        if ($sessionName) {
+            return $sessionName;
+        }
+
         $org = user_current_organization();
-        Log::info('Current Organization Name Debug:', ['organization' => $org]);
-        return $org?->legal_name ?? 'No organization';
+        return $org?->display_name ?? $org?->legal_name ?? null;
     }
 }
 

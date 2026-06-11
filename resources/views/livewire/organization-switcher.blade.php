@@ -4,7 +4,7 @@
         @if ($canSwitchOrganizations && count($availableOrganizations) > 0)
             {{-- Switcher Button --}}
             <button @click="open = !open" type="button"
-                class="w-full bg-indigo-800 rounded-lg p-3 hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                class="w-full rounded-lg p-3 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400 text-white" style="background:#982B55;">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3 text-left flex-1 min-w-0">
                         {{-- Organization Logo/Icon --}}
@@ -13,7 +13,7 @@
                                 class="w-8 h-8 rounded-lg object-cover flex-shrink-0">
                         @else
                             <div
-                                class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#7a2244;">
                                 <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd"
                                         d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z"
@@ -24,7 +24,7 @@
 
                         {{-- Organization Name --}}
                         <div class="flex-1 min-w-0">
-                            <div class="text-xs text-indigo-300 font-medium">Organization</div>
+                            <div class="text-xs text-white/70 font-medium">Organization</div>
                             <div class="text-sm font-semibold text-white truncate">
                                 {{ $currentOrganizationName }}
                             </div>
@@ -32,7 +32,7 @@
                     </div>
 
                     {{-- Dropdown Icon --}}
-                    <svg class="w-4 h-4 text-indigo-300 transition-transform flex-shrink-0"
+                    <svg class="w-4 h-4 text-white/70 transition-transform flex-shrink-0"
                         :class="{ 'rotate-180': open }" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
                             d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
@@ -42,8 +42,8 @@
 
                 {{-- Role Badge --}}
                 @if ($userRole)
-                    <div class="mt-2 pt-2 border-t border-indigo-700">
-                        <span class="text-xs text-indigo-300">
+                    <div class="mt-2 pt-2 border-t border-white/20">
+                        <span class="text-xs text-white/70">
                             Your role: <span class="font-semibold text-white">{{ $userRole }}</span>
                         </span>
                     </div>
@@ -69,7 +69,7 @@
                             </svg>
                             <input type="text" wire:model.debounce.300ms="searchTerm"
                                 placeholder="Search organizations..."
-                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent text-sm">
                         </div>
                     </div>
                 @endif
@@ -80,8 +80,8 @@
                         <div class="p-2">
                             @foreach ($availableOrganizations as $org)
                                 <button wire:click="switchOrganization('{{ $org['id'] }}')" type="button"
-                                    class="w-full text-left px-3 py-3 rounded-lg hover:bg-indigo-50 transition-colors group
-                                           {{ $org['id'] == $currentOrganizationId ? 'bg-indigo-100 ring-2 ring-indigo-500' : '' }}">
+                                    class="w-full text-left px-3 py-3 rounded-lg hover:bg-rose-50 transition-colors group
+                                           {{ $org['id'] == $currentOrganizationId ? 'bg-rose-50 ring-2 ring-rose-500' : '' }}">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3 flex-1 min-w-0">
                                             {{-- Organization Logo/Icon --}}
@@ -91,7 +91,7 @@
                                                     class="w-10 h-10 rounded-lg object-cover flex-shrink-0">
                                             @else
                                                 <div
-                                                    class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#982B55;">
                                                     <span class="text-white font-bold text-sm">
                                                         {{ substr($org['display_name'], 0, 2) }}
                                                     </span>
@@ -108,7 +108,7 @@
                                                     {{-- Primary Badge --}}
                                                     @if ($org['is_primary'])
                                                         <span
-                                                            class="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                                                            class="px-2 py-0.5 bg-rose-50 text-rose-700 text-xs font-medium rounded">
                                                             Primary
                                                         </span>
                                                     @endif
@@ -128,7 +128,7 @@
 
                                                 {{-- User Role in Organization --}}
                                                 @if ($org['user_role'])
-                                                    <div class="text-xs text-indigo-600 font-medium mt-1">
+                                                    <div class="text-xs text-rose-600 font-medium mt-1">
                                                         {{ $org['user_role'] }}
                                                     </div>
                                                 @endif
@@ -137,7 +137,7 @@
 
                                         {{-- Current Indicator --}}
                                         @if ($org['id'] == $currentOrganizationId)
-                                            <svg class="w-5 h-5 text-indigo-600 flex-shrink-0" fill="currentColor"
+                                            <svg class="w-5 h-5 text-rose-600 flex-shrink-0" fill="currentColor"
                                                 viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd"
                                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -159,7 +159,7 @@
                             <p class="text-sm text-gray-500">No organizations found</p>
                             @if ($searchTerm)
                                 <button wire:click="$set('searchTerm', '')"
-                                    class="mt-2 text-sm text-indigo-600 hover:text-indigo-700">
+                                    class="mt-2 text-sm text-rose-600 hover:text-rose-700">
                                     Clear search
                                 </button>
                             @endif
@@ -177,14 +177,14 @@
             </div>
         @else
             {{-- Single Organization (No Switching) --}}
-            <div class="w-full bg-indigo-800 rounded-lg p-3">
+            <div class="w-full rounded-lg p-3" style="background:#982B55;">
                 <div class="flex items-center gap-3">
                     {{-- Organization Logo/Icon --}}
                     @if ($currentOrganizationLogo)
                         <img src="{{ Storage::url($currentOrganizationLogo) }}" alt="{{ $currentOrganizationName }}"
                             class="w-8 h-8 rounded-lg object-cover">
                     @else
-                        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#7a2244;">
                             <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd"
                                     d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z"
@@ -195,7 +195,7 @@
 
                     {{-- Organization Name --}}
                     <div class="flex-1">
-                        <div class="text-xs text-indigo-300 font-medium">Organization</div>
+                        <div class="text-xs text-white/70 font-medium">Organization</div>
                         <div class="text-sm font-semibold text-white">
                             {{ $currentOrganizationName }}
                         </div>
@@ -203,8 +203,8 @@
                 </div>
 
                 @if ($userRole)
-                    <div class="mt-2 pt-2 border-t border-indigo-700">
-                        <span class="text-xs text-indigo-300">
+                    <div class="mt-2 pt-2 border-t border-white/20">
+                        <span class="text-xs text-white/70">
                             Your role: <span class="font-semibold text-white">{{ $userRole }}</span>
                         </span>
                     </div>
@@ -217,7 +217,7 @@
             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-lg p-6 shadow-xl">
                 <div class="flex items-center gap-3">
-                    <svg class="animate-spin h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin h-5 w-5 text-rose-600" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                             stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor"

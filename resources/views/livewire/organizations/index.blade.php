@@ -1,29 +1,24 @@
 <div>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    {{ __('Projects') }}
-                </h2>
-                <p class="text-gray-600 text-sm mt-1">Manage Project hierarchy and structures oop</p>
+        <div class="flex items-center justify-between w-full gap-3">
+            <div class="min-w-0">
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects Mgt</div>
+                <h1 class="text-base font-semibold text-gray-800 truncate">All Projects</h1>
             </div>
-
             @can('create-units')
-                <div class="flex items-center gap-2">
-                    <button wire:click="toggleFilters" class="btn btn-ghost btn-sm gap-2">
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <button wire:click="toggleFilters" class="btn btn-ghost btn-sm gap-1.5">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
                         </svg>
                         Filters
                     </button>
-
-                    <button class="btn btn-accent gap-2" disabled>
+                    <button class="btn btn-sm gap-1.5" style="background:#982B55;color:#fff;border-color:#982B55;" disabled>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        Add Organization
+                        Add Project
                     </button>
                 </div>
             @endcan
@@ -32,7 +27,7 @@
 
     <div class="py-6 h-[calc(100vh-8rem)] overflow-y-auto">
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
+            <div class="bg-white overflow-hidden border border-gray-200 sm:rounded-lg">
 
                 {{-- Search and Filters --}}
                 <div class="p-6 border-b border-gray-200">

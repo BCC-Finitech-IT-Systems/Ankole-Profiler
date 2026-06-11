@@ -6,7 +6,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\Organization;
+use App\Models\Person;
+use App\Models\PersonAffiliation;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class UserManager extends Component
 {
@@ -52,9 +56,8 @@ class UserManager extends Component
         $users = $query->orderBy('name')->paginate(15);
         $roles = Role::orderBy('name')->get();
         $allRoles = Role::orderBy('name')->get();
-        $organizations = Organization::whereHas('personAffiliations', function($query) {
-            $query->where('status', 'active');
-        })->orderBy('legal_name')->get();
+        // Show all organizations in dropdown for assignment
+        $organizations = Organization::orderBy('legal_name')->get();
         $organizationsWithContacts = Organization::select('legal_name', 'contact_email', 'contact_phone')->get();
 
 
@@ -131,10 +134,17 @@ class UserManager extends Component
 
     public function openOrganizationModal($userId)
     {
-        $user = User::with('Organization')->findOrFail($userId);
+        $user = User::with(['person.affiliations'])->findOrFail($userId);
 
         $this->userId = $user->id;
-        $this->selectedOrganization = $user->organization_id;
+        
+        // Get organization from PersonAffiliation if user has a person record
+        if ($user->person && $user->person->affiliations->count() > 0) {
+            $activeAffiliation = $user->person->affiliations->where('status', 'active')->first();
+            $this->selectedOrganization = $activeAffiliation ? $activeAffiliation->organization_id : null;
+        } else {
+            $this->selectedOrganization = null;
+        }
 
         $this->showOrganizationModal = true;
     }
@@ -143,12 +153,61 @@ class UserManager extends Component
     {
         $user = User::findOrFail($this->userId);
 
-        $user->update([
-            'organization_id' => $this->selectedOrganization
-        ]);
+        // If user doesn't have a person record, create one
+        if (!$user->person) {
+            $nameParts = explode(' ', $user->name, 2);
+            $person = Person::create([
+                'person_id' => Person::generatePersonId(),
+                'global_identifier' => Str::uuid(),
+                'user_id' => $user->id,
+                'given_name' => $nameParts[0] ?? $user->name,
+                'family_name' => $nameParts[1] ?? '',
+                'status' => 'active',
+            ]);
+        } else {
+            $person = $user->person;
+        }
+
+        // If an organization is selected, create or update PersonAffiliation
+        if ($this->selectedOrganization) {
+            // Generate unique affiliation ID
+            $lastAffiliation = PersonAffiliation::where('affiliation_id', 'like', 'AFF-%')
+                ->orderByRaw("CAST(SUBSTRING(affiliation_id, 5) AS UNSIGNED) DESC")
+                ->first();
+            
+            if ($lastAffiliation) {
+                $lastNumber = (int) substr($lastAffiliation->affiliation_id, 4);
+                $newNumber = $lastNumber + 1;
+            } else {
+                $newNumber = 1;
+            }
+            
+            $affiliationId = 'AFF-' . str_pad($newNumber, 6, '0', STR_PAD_LEFT);
+            
+            PersonAffiliation::updateOrCreate(
+                [
+                    'person_id' => $person->id,
+                    'organization_id' => $this->selectedOrganization,
+                ],
+                [
+                    'affiliation_id' => $affiliationId,
+                    'role_type' => 'MEMBER', // Default role type for user-assigned organization
+                    'start_date' => now()->toDateString(),
+                    'status' => 'active',
+                ]
+            );
+        } else {
+            // If no organization selected, deactivate existing affiliation
+            PersonAffiliation::where('person_id', $person->id)
+                ->where('status', 'active')
+                ->update(['status' => 'inactive', 'end_date' => now()->toDateString()]);
+        }
 
         $this->showOrganizationModal = false;
         $this->resetForm();
+
+        // Clear pagination to reset to first page and refresh data
+        $this->resetPage();
 
         session()->flash('message', 'User organization updated successfully!');
     }

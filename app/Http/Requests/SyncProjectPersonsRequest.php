@@ -23,6 +23,9 @@ class SyncProjectPersonsRequest extends FormRequest
             'affiliations.*.start_date' => ['nullable', 'date'],
             'affiliations.*.end_date' => ['nullable', 'date', 'after_or_equal:affiliations.*.start_date'],
             'affiliations.*.status' => ['nullable', Rule::in(['active', 'inactive', 'suspended', 'terminated'])],
+            'affiliations.*.organization_unit_id' => ['nullable', 'exists:organization_units,id'],
+            'affiliations.*.permissions' => ['nullable', 'array'],
+            'affiliations.*.permissions.*' => ['string', Rule::in(['view', 'edit', 'approve', 'export', 'manage'])],
         ];
     }
 }

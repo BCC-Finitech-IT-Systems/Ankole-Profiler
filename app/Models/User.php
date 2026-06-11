@@ -84,7 +84,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'person_id', // Foreign key on the person_affiliations table
             'id', // Local key on the users table
             'id'  // Local key on the persons table
-        );
+        )->where('person_affiliations.status', 'active')->latest('person_affiliations.created_at');
     }
 
     public function Organization()

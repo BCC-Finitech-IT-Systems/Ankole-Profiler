@@ -1,4 +1,13 @@
 <div>
+    <style>
+        .brand-btn { background-color: #982B55 !important; color: #fff !important; }
+        .brand-btn:hover { background-color: #7a2244 !important; }
+        .from-primary-600 { --tw-gradient-from: #982B55; }
+        .to-primary-700 { --tw-gradient-to: #7a2244; }
+        .text-primary-600, .text-primary-100 { color: #982B55; }
+        .focus\:ring-primary-500:focus { --tw-ring-color: #982B55; }
+    </style>
+
     {{-- Flash Messages --}}
     @if (session()->has('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
@@ -25,10 +34,10 @@
                     @endphp
                     @if ($currentProfile)
                         <div
-                            class="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
-                            <i class="fas fa-filter text-blue-600"></i>
-                            <span class="text-sm font-medium text-blue-700">{{ $currentProfile['name'] }}</span>
-                            <button wire:click="clearCurrentProfile" class="text-blue-400 hover:text-blue-600 ml-2"
+                            class="flex items-center space-x-2 px-3 py-1.5 bg-rose-50 border border-rose-200 rounded-lg">
+                            <i class="fas fa-filter text-rose-600"></i>
+                            <span class="text-sm font-medium text-rose-700">{{ $currentProfile['name'] }}</span>
+                            <button wire:click="clearCurrentProfile" class="text-rose-400 hover:text-rose-600 ml-2"
                                 title="Clear profile">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -41,14 +50,14 @@
             <div class="flex items-center space-x-2">
                 @if ($hasActiveFilters)
                     <button wire:click="openCreateFilterDrawer"
-                        class="inline-flex items-center px-4 py-2 bg-green-600 border  border-blue-300 text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                        class="inline-flex items-center px-4 py-2 brand-btn text-sm font-medium rounded-lg transition-colors shadow-sm">
                         <i class="fas fa-save mr-2"></i>
                         Save as Filter Profile
                     </button>
                 @endif
 
                 <button wire:click="openViewFiltersDrawer"
-                    class="inline-flex items-center px-4 py-2 bg-primary-600 text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-sm">
+                    class="inline-flex items-center px-4 py-2 brand-btn text-sm font-medium rounded-lg hover:opacity-90 transition-colors shadow-sm">
                     <i class="fas fa-folder-open mr-2"></i>
                     View Saved Filters
                     @if (count($availableProfiles) > 0)
@@ -226,7 +235,7 @@
                     @if ($persons->count() > 0)
                         <div class="flex items-center space-x-2">
                             <input wire:model.live="selectAll" type="checkbox" id="selectAll"
-                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                class="h-4 w-4 text-rose-600 focus:ring-rose-500 border-gray-300 rounded">
                             <label for="selectAll" class="text-sm text-gray-700">Select All</label>
                         </div>
                     @endif
@@ -235,7 +244,7 @@
                 <div class="flex items-center space-x-4">
                     @if (!empty($selectedPersons))
                         <button wire:click="exportSelected"
-                            class="px-4 py-2 text-sm font-medium bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            class="px-4 py-2 text-sm font-medium brand-btn rounded-md transition-colors">
                             Export Selected ({{ count($selectedPersons) }})
                         </button>
                     @endif
@@ -324,7 +333,7 @@
                                         Cancel
                                     </button>
                                     <button type="submit"
-                                        class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                                        class="flex-1 px-4 py-2 brand-btn text-white rounded-lg hover:opacity-90 transition-colors">
                                         <i class="fas fa-save mr-2"></i>Save Profile
                                     </button>
                                 </div>
@@ -396,7 +405,7 @@
 
                                                 <div class="flex items-center space-x-2 ml-4">
                                                     <button wire:click="loadFilterProfile({{ $profile['id'] }})"
-                                                        class="bg-primary-600 border border-gray-500 px-3 py-1 rounded text-sm hover:bg-primary-700 transition-colors">
+                                                        class="brand-btn border border-gray-500 px-3 py-1 rounded text-sm hover:opacity-90 transition-colors">
                                                         <i class="fas fa-download mr-1"></i>Load
                                                     </button>
 
@@ -537,7 +546,7 @@
                                         Cancel
                                     </button>
                                     <button type="submit"
-                                        class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                                        class="flex-1 px-4 py-2 brand-btn text-white rounded-lg hover:opacity-90 transition-colors font-medium">
                                         <i class="fas fa-save mr-2"></i>Save Profile
                                     </button>
                                 </div>
@@ -616,7 +625,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <input wire:model.live="selectAll" type="checkbox"
-                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    class="h-4 w-4 text-rose-600 focus:ring-rose-500 border-gray-300 rounded">
                             </th>
 
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -646,7 +655,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <input wire:model.live="selectedPersons" type="checkbox"
                                         value="{{ $person->id }}"
-                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        class="h-4 w-4 text-rose-600 focus:ring-rose-500 border-gray-300 rounded">
                                 </td>
 
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -742,7 +751,7 @@
                                         {{-- <a href="{{ route('persons.show', $person) }}"
                                            class="text-blue-600 hover:text-blue-900">View</a>
                                         <a href="{{ route('persons.edit', $person) }}"
-                                           class="text-indigo-600 hover:text-indigo-900">Edit</a> --}}
+                                           class="text-rose-600 hover:text-rose-900">Edit</a> --}}
                                     </div>
                                 </td>
                             </tr>
@@ -773,11 +782,11 @@
     <div class="mt-6">
     {{-- Relationship Toggle Button --}}
     @if($persons->isNotEmpty())
-        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
+        <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-lg p-4 border border-rose-200">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-100">
-                        <i class="fas fa-project-diagram text-indigo-600"></i>
+                    <div class="flex items-center justify-center h-10 w-10 rounded-full bg-rose-100">
+                        <i class="fas fa-project-diagram text-rose-600"></i>
                     </div>
                     <div>
                         <h4 class="text-sm font-semibold text-gray-900">View Related Connections</h4>
@@ -789,7 +798,7 @@
                 </div>
 
                 <button wire:click="toggleRelationships"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+                        class="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors shadow-sm" style="background:#982B55;">
                     <i class="fas fa-{{ $showRelationships ? 'eye-slash' : 'eye' }} mr-2"></i>
                     {{ $showRelationships ? 'Hide' : 'Show' }} Relationships
                 </button>
@@ -898,7 +907,7 @@
                                             Active Filters Preview
                                         </h4>
                                         <div
-                                            class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                                            class="bg-rose-50 rounded-lg p-4 border border-rose-200">
                                             @php $currentFilters = $this->getCurrentFiltersArray(); @endphp
                                             @if (empty($currentFilters))
                                                 <div class="text-center py-4">
@@ -922,12 +931,12 @@
                                                 </div>
 
                                                 {{-- Results Count --}}
-                                                <div class="pt-3 border-t border-blue-200">
+                                                <div class="pt-3 border-t border-rose-200">
                                                     <div class="flex items-center justify-between">
-                                                        <span class="text-sm font-medium text-blue-900">
+                                                        <span class="text-sm font-medium text-rose-900">
                                                             <i class="fas fa-users mr-2"></i>Results Found:
                                                         </span>
-                                                        <span class="text-lg font-bold text-blue-600">
+                                                        <span class="text-lg font-bold text-rose-600">
                                                             {{ $persons->total() ?? 0 }}
                                                         </span>
                                                     </div>
@@ -1014,7 +1023,7 @@
                                         <p class="text-gray-500 mb-6">Create your first filter profile by applying
                                             filters and clicking "Save as Filter Profile"</p>
                                         <button wire:click="closeViewFiltersDrawer"
-                                            class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                                            class="inline-flex items-center px-4 py-2 brand-btn text-white rounded-lg hover:opacity-90 transition-colors">
                                             <i class="fas fa-plus mr-2"></i>Create First Profile
                                         </button>
                                     </div>
@@ -1056,9 +1065,9 @@
                                                             <div class="flex flex-wrap gap-2 mb-3">
                                                                 @foreach ($profile['filter_criteria'] as $key => $value)
                                                                     <span
-                                                                        class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200">
+                                                                        class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-rose-50 to-pink-50 text-rose-700 border border-rose-200">
                                                                         <i
-                                                                            class="fas fa-tag mr-1.5 text-indigo-400"></i>
+                                                                            class="fas fa-tag mr-1.5 text-rose-400"></i>
                                                                         <span
                                                                             class="font-semibold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
                                                                         <span
@@ -1105,7 +1114,7 @@
                                                         @else
                                                             <button
                                                                 wire:click="loadFilterProfile({{ $profile['id'] }})"
-                                                                class="px-3 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors shadow-sm"
+                                                                class="px-3 py-2 brand-btn text-white rounded-lg text-sm font-medium hover:opacity-90 transition-colors shadow-sm"
                                                                 title="Load this profile">
                                                                 <i class="fas fa-download mr-1"></i>Load
                                                             </button>
@@ -1144,8 +1153,8 @@
 
     {{-- Loading Indicator --}}
     <div wire:loading.delay class="fixed inset-0 flex items-center justify-center bg-transparent z-50">
-        <div class="flex items-center space-x-3 p-4 rounded-lg">
-            <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
+        <div class="flex items-center space-x-3 bg-white shadow-lg rounded-lg p-4">
+            <svg class="animate-spin h-6 w-6" style="color:#982B55;" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                     stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2

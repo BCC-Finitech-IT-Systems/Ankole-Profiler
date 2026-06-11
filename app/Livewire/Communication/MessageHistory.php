@@ -12,10 +12,6 @@ class MessageHistory extends Component
 {
     use WithPagination;
 
-
-
-    use WithPagination;
-
     public string $search = '';
     public string $channel_filter = '';
     public string $status_filter = '';
@@ -25,20 +21,19 @@ class MessageHistory extends Component
     public $editingMessage = null;
 
 
-    public function deleteMessage($id)
+    public function deleteMessage(int $id): void
     {
-        $message = CommunicationMessage::where('organization_id', Auth::user()->organization_id)
+        $message = CommunicationMessage::where('organization_id', $this->resolveOrganizationId())
             ->findOrFail($id);
         $message->delete();
         session()->flash('success', 'Message deleted successfully.');
         $this->resetPage();
     }
 
-    public function editMessage($id)
+    public function editMessage(int $id): void
     {
-        $this->editingMessage = CommunicationMessage::where('organization_id', Auth::user()->organization_id)
+        $this->editingMessage = CommunicationMessage::where('organization_id', $this->resolveOrganizationId())
             ->findOrFail($id);
-        // You can now use $editingMessage in your Blade view to show an edit form/modal/drawer
     }
 
     protected $queryString = [
@@ -84,11 +79,27 @@ class MessageHistory extends Component
         $this->resetPage();
     }
 
+    protected function resolveOrganizationId(): ?int
+    {
+        $orgId = Auth::user()->organization_id;
+        if ($orgId) return $orgId;
+
+        $person = Auth::user()->person ?? null;
+        if ($person) {
+            $affiliation = $person->affiliations()->first();
+            if ($affiliation) return $affiliation->organization_id;
+        }
+
+        return null;
+    }
+
     public function getMessages()
     {
+        $organizationId = $this->resolveOrganizationId();
+
         $query = CommunicationMessage::query()
             ->with(['recipientPerson', 'sentByUser'])
-            ->where('organization_id', Auth::user()->organization_id)
+            ->where('organization_id', $organizationId)
             ->orderBy('created_at', 'desc');
 
         // Apply search
@@ -125,22 +136,12 @@ class MessageHistory extends Component
         return $query->paginate($this->per_page);
     }
 
-    public function getChannelStats()
+    public function getChannelStats(): array
     {
-        $organizationId = Auth::user()->organization_id;
+        $organizationId = $this->resolveOrganizationId();
 
         if (!$organizationId) {
-            $person = Auth::user()->person;
-            if ($person) {
-                $affiliation = $person->affiliations()->first();
-                if ($affiliation) {
-                    $organizationId = $affiliation->organization_id;
-                }
-            }
-        }
-
-        if (!$organizationId) {
-            throw new \Exception('No organization associated with the user.');
+            return [];
         }
 
         $communicationManager = app(CommunicationManager::class);

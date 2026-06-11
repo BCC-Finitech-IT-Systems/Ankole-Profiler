@@ -35,7 +35,19 @@ class Department extends Model
         return $this->belongsTo(User::class, 'admin_user_id');
     }
 
-    public function legacyOrganizationUnit()
+    /**
+     * Units that belong to this department (via the new direct FK on organization_units).
+     */
+    public function units()
+    {
+        return $this->hasMany(OrganizationUnit::class, 'department_id');
+    }
+
+    /**
+     * Kept for backward compatibility with pre-migration data.
+     * Prefer units() for new code.
+     */
+    public function legacyUnit()
     {
         return $this->belongsTo(OrganizationUnit::class, 'legacy_organization_unit_id');
     }
@@ -48,6 +60,16 @@ class Department extends Model
     public function subCategories()
     {
         return $this->hasMany(DepartmentSubCategory::class);
+    }
+
+    public function roleTypes()
+    {
+        return $this->hasMany(RoleType::class);
+    }
+
+    public function personAffiliations()
+    {
+        return $this->hasMany(PersonAffiliation::class);
     }
 
     public function projectAffiliations()

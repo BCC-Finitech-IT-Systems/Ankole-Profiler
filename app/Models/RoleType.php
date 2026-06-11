@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Permission\Traits\HasPermissions;
+use App\Models\PersonAffiliation;
 
 class RoleType extends Model
 {
@@ -54,12 +55,12 @@ class RoleType extends Model
     }
 
     /**
-     * Get affiliations for this role type.
-     * Adjust the model name based on your actual affiliations setup.
+     * Get PersonAffiliation records for this role type.
+     * Matched on the string code column, not a numeric FK.
      */
     public function affiliations(): HasMany
     {
-        return $this->hasMany(Affiliation::class);
+        return $this->hasMany(PersonAffiliation::class, 'role_type', 'code');
     }
 
     /**
@@ -68,7 +69,7 @@ class RoleType extends Model
     public function hasActiveAffiliations(): bool
     {
         return $this->affiliations()
-            ->where('active', true)
+            ->where('status', 'active')
             ->exists();
     }
 
@@ -78,7 +79,7 @@ class RoleType extends Model
     public function activeAffiliationsCount(): int
     {
         return $this->affiliations()
-            ->where('active', true)
+            ->where('status', 'active')
             ->count();
     }
 

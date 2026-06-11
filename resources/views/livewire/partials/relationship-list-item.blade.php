@@ -5,7 +5,7 @@
         <div class="flex items-center space-x-4 flex-1">
             {{-- Avatar --}}
             <div class="flex-shrink-0">
-                <div class="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                <div class="h-12 w-12 rounded-full bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-semibold text-sm">
                     {{ substr($person->first_name, 0, 1) }}{{ substr($person->last_name, 0, 1) }}
                 </div>
             </div>
@@ -27,7 +27,7 @@
                 {{-- Relationships --}}
                 <div class="flex flex-wrap gap-1 mt-2">
                     @foreach($person->relationships as $rel)
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-rose-50 text-rose-700">
                             {{ ucwords(str_replace('_', ' ', $rel['type'])) }} of {{ $rel['source_person_name'] }}
                         </span>
                     @endforeach
@@ -60,11 +60,11 @@
         {{-- Right: Actions --}}
         <div class="flex items-center space-x-2">
             <a href="{{ route('persons.show', $person) }}" 
-               class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors">
+               class="px-3 py-2 text-white rounded-lg text-xs font-medium hover:opacity-90" style="background:#982B55; transition-colors">
                 <i class="fas fa-eye mr-1"></i>View
             </a>
             <button wire:click="selectRelationship({{ $person->id }})"
-                    class="p-2 {{ in_array($person->id, $selectedRelationships) ? 'text-indigo-600' : 'text-gray-400' }} hover:text-indigo-600 transition-colors">
+                    class="p-2 {{ in_array($person->id, $selectedRelationships) ? 'text-rose-600' : 'text-gray-400' }} hover:text-rose-600 transition-colors">
                 <i class="fas fa-{{ in_array($person->id, $selectedRelationships) ? 'check-square' : 'square' }}"></i>
             </button>
         </div>

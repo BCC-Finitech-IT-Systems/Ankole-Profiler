@@ -4,6 +4,8 @@ namespace App\Livewire\Departments;
 
 use App\Models\Department;
 use App\Models\Organization;
+use App\Models\OrganizationUnit;
+use App\Models\Person;
 use App\Models\PersonAffiliation;
 use App\Models\User;
 use Carbon\Carbon;
@@ -22,11 +24,29 @@ class DepartmentsDashboard extends Component
     public $chartPeriod = 'monthly';
     public $selectedOrganizationPersons = [];
 
-// Chart view mode: 'all' for combined view, 'single' for individual project
-public string $chartViewMode = 'all';
+    // Chart view mode: 'all' for combined view, 'single' for individual project
+    public string $chartViewMode = 'all';
 
-// Selected project ID when in single chart view mode
-public ?int $selectedChartProjectId = null;
+    // Selected project ID when in single chart view mode
+    public ?int $selectedChartProjectId = null;
+
+    // Project create/edit modal
+    public bool $showProjectModal = false;
+    public ?int $editingProjectId = null;
+    public string $projectName = '';
+    public string $projectCode = '';
+    public string $projectDescription = '';
+    public ?int $projectDepartmentId = null;
+    public ?int $projectOrganizationUnitId = null;
+    public ?int $projectClientPersonId = null;
+    public string $projectClientSearch = '';
+    public string $projectExternalClientName = '';
+    public bool $projectIsActive = true;
+    public string $projectStartsOn = '';
+    public string $projectEndsOn = '';
+    public array $projectClientResults = [];
+    public string $projectClientSelectedName = '';
+    public array $availableUnits = [];
 
     public function mount(): void
     {
@@ -159,6 +179,159 @@ public ?int $selectedChartProjectId = null;
         return ['labels' => $labels, 'datasets' => $datasets];
     }
 
+    public function openCreateProject(): void
+    {
+        $this->resetProjectForm();
+        $this->projectDepartmentId = $this->activeDepartmentId;
+        $this->loadAvailableUnits();
+        $this->showProjectModal = true;
+    }
+
+    public function openEditProject(int $projectId): void
+    {
+        $project = Project::with(['client'])->find($projectId);
+        if (!$project) {
+            return;
+        }
+
+        $this->editingProjectId = $projectId;
+        $this->projectName = $project->name ?? '';
+        $this->projectCode = $project->code ?? '';
+        $this->projectDescription = $project->description ?? '';
+        $this->projectDepartmentId = $project->department_id;
+        $this->projectOrganizationUnitId = $project->organization_unit_id;
+        $this->projectClientPersonId = $project->client_person_id;
+        $this->projectClientSelectedName = $project->client?->full_name ?? '';
+        $this->projectClientSearch = $this->projectClientSelectedName;
+        $this->projectExternalClientName = $project->external_client_name ?? '';
+        $this->projectIsActive = (bool) $project->is_active;
+        $this->projectStartsOn = $project->starts_on?->format('Y-m-d') ?? '';
+        $this->projectEndsOn = $project->ends_on?->format('Y-m-d') ?? '';
+        $this->loadAvailableUnits();
+        $this->showProjectModal = true;
+    }
+
+    public function updatedProjectClientSearch(): void
+    {
+        if (strlen($this->projectClientSearch) < 2) {
+            $this->projectClientResults = [];
+            return;
+        }
+
+        $this->projectClientResults = Person::query()
+            ->where(function ($q) {
+                $q->where('given_name', 'like', "%{$this->projectClientSearch}%")
+                  ->orWhere('family_name', 'like', "%{$this->projectClientSearch}%")
+                  ->orWhere('person_id', 'like', "%{$this->projectClientSearch}%");
+            })
+            ->limit(8)
+            ->get(['id', 'given_name', 'family_name', 'person_id'])
+            ->toArray();
+    }
+
+    public function selectProjectClient(int $personId, string $name): void
+    {
+        $this->projectClientPersonId = $personId;
+        $this->projectClientSelectedName = $name;
+        $this->projectClientSearch = $name;
+        $this->projectClientResults = [];
+    }
+
+    public function clearProjectClient(): void
+    {
+        $this->projectClientPersonId = null;
+        $this->projectClientSelectedName = '';
+        $this->projectClientSearch = '';
+        $this->projectClientResults = [];
+    }
+
+    public function updatedProjectDepartmentId(): void
+    {
+        $this->projectOrganizationUnitId = null;
+        $this->loadAvailableUnits();
+    }
+
+    private function loadAvailableUnits(): void
+    {
+        if (!$this->projectDepartmentId) {
+            $this->availableUnits = [];
+            return;
+        }
+
+        $this->availableUnits = OrganizationUnit::query()
+            ->where('department_id', $this->projectDepartmentId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'code'])
+            ->toArray();
+    }
+
+    public function saveProject(): void
+    {
+        /** @var User|null $user */
+        $user = Auth::user();
+        abort_unless($user?->can('edit-projects') || $user?->can('create-projects'), 403);
+
+        $this->validate([
+            'projectName'            => 'required|string|max:255',
+            'projectCode'            => 'nullable|string|max:50',
+            'projectDescription'     => 'nullable|string',
+            'projectDepartmentId'    => 'required|exists:departments,id',
+            'projectOrganizationUnitId' => 'nullable|exists:organization_units,id',
+            'projectClientPersonId'  => 'nullable|exists:persons,id',
+            'projectExternalClientName' => 'nullable|string|max:255',
+            'projectStartsOn'        => 'nullable|date',
+            'projectEndsOn'          => 'nullable|date|after_or_equal:projectStartsOn',
+        ]);
+
+        $data = [
+            'name'                  => $this->projectName,
+            'code'                  => $this->projectCode ?: null,
+            'description'           => $this->projectDescription ?: null,
+            'department_id'         => $this->projectDepartmentId,
+            'organization_unit_id'  => $this->projectOrganizationUnitId,
+            'client_person_id'      => $this->projectClientPersonId,
+            'external_client_name'  => $this->projectClientPersonId ? null : ($this->projectExternalClientName ?: null),
+            'is_active'             => $this->projectIsActive,
+            'starts_on'             => $this->projectStartsOn ?: null,
+            'ends_on'               => $this->projectEndsOn ?: null,
+        ];
+
+        if ($this->editingProjectId) {
+            $project = Project::find($this->editingProjectId);
+            $project?->update($data);
+        } else {
+            Project::create($data);
+        }
+
+        $this->closeProjectModal();
+    }
+
+    public function closeProjectModal(): void
+    {
+        $this->showProjectModal = false;
+        $this->resetProjectForm();
+    }
+
+    private function resetProjectForm(): void
+    {
+        $this->editingProjectId = null;
+        $this->projectName = '';
+        $this->projectCode = '';
+        $this->projectDescription = '';
+        $this->projectDepartmentId = $this->activeDepartmentId;
+        $this->projectOrganizationUnitId = null;
+        $this->projectClientPersonId = null;
+        $this->projectClientSelectedName = '';
+        $this->projectClientSearch = '';
+        $this->projectExternalClientName = '';
+        $this->projectIsActive = true;
+        $this->projectStartsOn = '';
+        $this->projectEndsOn = '';
+        $this->projectClientResults = [];
+        $this->availableUnits = [];
+    }
+
     public function render()
     {
         /** @var User|null $user */
@@ -276,15 +449,19 @@ public ?int $selectedChartProjectId = null;
             }
         }
 
+        $projectEagerLoad = [
+            'admin:id,name',
+            'departmentSubCategory:id,department_id,name',
+            'projectDepartments:id,project_id,name,is_active',
+            'department.organization:id,legal_name,display_name,category',
+            'client:id,given_name,family_name',
+            'organizationUnit:id,name,code',
+        ];
+
         $selectedDepartmentProjects = $selectedDepartment
             ? ($hasSubCategories
                 ? \App\Models\Project::query()
-                    ->with([
-                        'admin:id,name',
-                        'departmentSubCategory:id,department_id,name',
-                        'projectDepartments:id,project_id,name,is_active',
-                        'department.organization:id,legal_name,display_name,category',
-                    ])
+                    ->with($projectEagerLoad)
                     ->whereHas('department', function ($query) use ($subCategoryNames) {
                         $query->where('id', $this->activeDepartmentId)
                             ->orWhereHas('organization', function ($orgQuery) use ($subCategoryNames) {
@@ -294,12 +471,7 @@ public ?int $selectedChartProjectId = null;
                     ->orderBy('name')
                     ->get()
                 : $selectedDepartment->projects()
-                    ->with([
-                        'admin:id,name',
-                        'departmentSubCategory:id,department_id,name',
-                        'projectDepartments:id,project_id,name,is_active',
-                        'department.organization:id,legal_name,display_name,category',
-                    ])
+                    ->with($projectEagerLoad)
                     ->orderBy('name')
                     ->get())
             : collect();

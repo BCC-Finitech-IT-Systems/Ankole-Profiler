@@ -13,14 +13,15 @@ class RelationshipGrid extends Component
     public $showRelationships = false;
     public $viewMode = 'grid'; // grid, network, list, table
     public $relationshipTypes = [
-        'parent' => true,
-        'child' => true,
-        'sibling' => true,
+        'parent_child' => true,
         'spouse' => true,
-        'guardian' => true,
-        'doctor' => true,
-        'teacher' => true,
+        'sibling' => true,
+        'guardian_ward' => true,
         'emergency_contact' => true,
+        'next_of_kin' => true,
+        'dependent' => true,
+        'colleague' => true,
+        'business_partner' => true,
     ];
     public $groupBy = 'relationship_type'; // relationship_type, person, none
     public $expandedGroups = [];
@@ -76,29 +77,41 @@ class RelationshipGrid extends Component
             return collect();
         }
 
-        // Get all relationships for the filtered persons
+        $filteredIds = $this->filteredPersonIds;
+
+        // Fetch relationships where the filtered persons appear on either side
         $relationships = DB::table('person_relationships')
-            ->whereIn('person_id', $this->filteredPersonIds)
+            ->where(function ($q) use ($filteredIds) {
+                $q->whereIn('person_a_id', $filteredIds)
+                  ->orWhereIn('person_b_id', $filteredIds);
+            })
             ->whereIn('relationship_type', $enabledTypes)
+            ->where('status', 'active')
             ->get();
 
-        // Get unique related person IDs
-        $relatedPersonIds = $relationships->pluck('related_person_id')->unique()->values();
+        // For each relationship, determine the "related" person (the one NOT in filteredIds)
+        $relatedPersonIds = $relationships->map(function ($rel) use ($filteredIds) {
+            return in_array($rel->person_a_id, $filteredIds) ? $rel->person_b_id : $rel->person_a_id;
+        })->unique()->values();
 
         // Fetch the related persons with their details
         $relatedPersons = Person::whereIn('id', $relatedPersonIds)
             ->with(['phones', 'emailAddresses', 'affiliations.Organization'])
             ->get();
 
-        // Attach relationship context to each person
-        return $relatedPersons->map(function ($person) use ($relationships) {
-            $personRelationships = $relationships->where('related_person_id', $person->id);
-            
-            $person->relationships = $personRelationships->map(function ($rel) {
-                $sourcePerson = Person::find($rel->person_id);
+        // Attach relationship context to each related person
+        return $relatedPersons->map(function ($person) use ($relationships, $filteredIds) {
+            $personRelationships = $relationships->filter(function ($rel) use ($person, $filteredIds) {
+                return ($rel->person_a_id === $person->id && in_array($rel->person_b_id, $filteredIds))
+                    || ($rel->person_b_id === $person->id && in_array($rel->person_a_id, $filteredIds));
+            });
+
+            $person->relationships = $personRelationships->map(function ($rel) use ($person, $filteredIds) {
+                $sourceId = in_array($rel->person_a_id, $filteredIds) ? $rel->person_a_id : $rel->person_b_id;
+                $sourcePerson = Person::find($sourceId);
                 return [
                     'type' => $rel->relationship_type,
-                    'source_person_id' => $rel->person_id,
+                    'source_person_id' => $sourceId,
                     'source_person_name' => $sourcePerson ? $sourcePerson->full_name : 'Unknown',
                     'is_primary' => $rel->is_primary ?? false,
                     'notes' => $rel->notes ?? null,
@@ -106,8 +119,8 @@ class RelationshipGrid extends Component
             });
 
             $person->relationship_count = $personRelationships->count();
-            $person->primary_relationship = $personRelationships->where('is_primary', true)->first();
-            
+            $person->primary_relationship = $personRelationships->firstWhere('is_primary', true);
+
             return $person;
         });
     }

@@ -4,7 +4,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
 
 class PersonAffiliation extends Model
 {
@@ -14,6 +13,7 @@ class PersonAffiliation extends Model
         'person_id',
         'organization_id',
         'department_id',
+        'organization_unit_id',
         'user_id',
 
         'site',
@@ -47,7 +47,6 @@ class PersonAffiliation extends Model
                 for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
                     $affiliation->affiliation_id = self::generateAffiliationId();
 
-                    // Double-check that this ID doesn't exist before proceeding
                     if (!self::where('affiliation_id', $affiliation->affiliation_id)->exists()) {
                         break;
                     }
@@ -56,6 +55,16 @@ class PersonAffiliation extends Model
                         throw new \Exception('Could not generate unique affiliation ID after ' . $maxAttempts . ' attempts');
                     }
                 }
+            }
+        });
+
+        // When role_type changes, recalculate impact scores for any cross-org
+        // relationships that reference this affiliation, since scores depend on role combinations.
+        static::updated(function ($affiliation) {
+            if ($affiliation->wasChanged('role_type')) {
+                CrossOrgRelationship::where('primary_affiliation_id', $affiliation->id)
+                    ->orWhere('secondary_affiliation_id', $affiliation->id)
+                    ->each(fn ($rel) => $rel->updateImpactScore());
             }
         });
     }
@@ -69,11 +78,25 @@ class PersonAffiliation extends Model
     }
 
     /**
-     * Get the organization unit for this affiliation.
+     * Direct unit link (replaces the broken domain_record_id assumption).
      */
     public function organizationUnit()
     {
-        return $this->belongsTo(\App\Models\OrganizationUnit::class, 'domain_record_id');
+        return $this->belongsTo(OrganizationUnit::class, 'organization_unit_id');
+    }
+
+    public function permissionGrants()
+    {
+        return $this->morphMany(PermissionGrant::class, 'grantable');
+    }
+
+    /**
+     * Check a specific granular permission stored in the JSON column.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        $permissions = $this->permissions ?? [];
+        return in_array($permission, $permissions, true);
     }
 
 
