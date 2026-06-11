@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\CommunicationFilterProfile;
 use App\Models\Person;
 use Illuminate\Support\Facades\Auth;
-use App\Helpers\OrganizationHelperNew as OrganizationHelper;
+use App\Helpers\OrganizationHelper;
 
 class FilterProfileIntegrationService
 {

@@ -16,7 +16,7 @@ use App\Contracts\Communication\CommunicationMessage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Exception;
-use App\Helpers\OrganizationHelperNew as OrganizationHelper;
+use App\Helpers\OrganizationHelper;
 
 class SendMessage extends Component
 {

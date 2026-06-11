@@ -8,7 +8,7 @@ use App\Models\CommunicationFilterProfile;
 use App\Models\Person;
 use App\Services\PersonFilterService;
 use Illuminate\Support\Facades\Auth;
-use App\Helpers\OrganizationHelperNew as OrganizationHelper;
+use App\Helpers\OrganizationHelper;
 use App\Models\Organization;
 use App\Traits\HandlesSweetAlerts;
 use Illuminate\Support\Facades\Log;

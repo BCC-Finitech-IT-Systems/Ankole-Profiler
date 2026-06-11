@@ -1,7 +1,6 @@
 <?php
 
 use App\Exports\OrganizationTemplateExport;
-use App\Http\Controllers\AfricasTalkingCallbackController;
 use App\Http\Controllers\AllPersonsListController;
 use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\DepartmentController;
@@ -207,10 +206,12 @@ Route::middleware(['auth:sanctum', 'verified'])->prefix('api/relationships')->na
     Route::get('/network-data/{person}', [RelationshipController::class, 'getPersonNetworkData'])->name('network-data');
 });
 
+// Both URLs may be registered in the Africa's Talking dashboard; they share
+// one handler that stores the delivery report and updates message history.
 Route::post('/webhooks/africastalking/delivery-reports', [SMSWebhookController::class, 'handleDeliveryReport'])
     ->name('sms.delivery.webhook');
 
-Route::post('/africastalking/callback', [AfricasTalkingCallbackController::class, 'handle'])
+Route::post('/africastalking/callback', [SMSWebhookController::class, 'handleDeliveryReport'])
     ->name('africastalking.callback');
 
 Route::get('/email/verify/{id}/{hash}', function (CustomVerifyEmailRequest $request) {

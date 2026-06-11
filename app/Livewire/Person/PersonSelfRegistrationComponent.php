@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use App\Models\AllowedEmailDomain;
 use App\Models\Department;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 #[\Livewire\Attributes\Layout('layouts.auth-card')]
@@ -80,6 +81,21 @@ class PersonSelfRegistrationComponent extends Component
 
     public function submit()
     {
+        // Public endpoint: limit registration attempts per IP. The throttle
+        // must live here (not on the GET route) because Livewire submits
+        // through /livewire/update.
+        $rateLimiterKey = 'self-register:' . request()->ip();
+
+        if (RateLimiter::tooManyAttempts($rateLimiterKey, 10)) {
+            $seconds = RateLimiter::availableIn($rateLimiterKey);
+
+            throw ValidationException::withMessages([
+                'form.email' => "Too many registration attempts. Please try again in {$seconds} seconds.",
+            ]);
+        }
+
+        RateLimiter::hit($rateLimiterKey, 600);
+
         $this->validate([
                 'form.given_name' => 'required|string|max:255',
                 'form.family_name' => 'required|string|max:255',
@@ -165,7 +181,7 @@ class PersonSelfRegistrationComponent extends Component
 
             // Send custom email verification notification with plain text temporary password
             $user->sendEmailVerificationNotification($temporaryPassword);
-            Log::info('Custom verification notification sent with plain text temporary password', ['user_id' => $user->id, 'temporary_password' => $temporaryPassword]);
+            Log::info('Custom verification notification sent with temporary password', ['user_id' => $user->id]);
 
             DB::commit();
             Log::info('DB commit successful', ['user_id' => $user->id, 'person_id' => $person->id]);

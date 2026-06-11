@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Contracts\Communication\CommunicationStatus;
+use App\Models\CommunicationMessage;
 use App\Models\SMSDeliveryReport;
 
 class SMSWebhookController extends Controller
@@ -14,7 +16,6 @@ class SMSWebhookController extends Controller
             // Log the incoming webhook data
             Log::info('SMS Delivery Report Webhook Received', [
                 'payload' => $request->all(),
-                'headers' => $request->headers->all()
             ]);
 
             // Validate required fields
@@ -23,10 +24,13 @@ class SMSWebhookController extends Controller
             $phoneNumber = $request->input('phoneNumber');
 
             if (!$messageId || !$status || !$phoneNumber) {
-                Log::warning('Invalid webhook payload - missing required fields', [
+                // Africa's Talking posts other callback shapes (e.g. incoming
+                // SMS) to the same URL in some configurations — acknowledge
+                // them so the provider does not keep retrying.
+                Log::info('SMS webhook payload is not a delivery report - ignoring', [
                     'payload' => $request->all()
                 ]);
-                return response()->json(['error' => 'Invalid payload'], 400);
+                return response()->json(['status' => 'ignored']);
             }
 
             // Store delivery report
@@ -43,8 +47,8 @@ class SMSWebhookController extends Controller
                 ]
             );
 
-            // Update your communication history if you have one
-            $this->updateCommunicationHistory($messageId, $status, $request->all());
+            // Update communication history
+            $this->updateCommunicationHistory($messageId, $status, $request->input('failureReason'));
 
             Log::info('SMS Delivery Report Processed', [
                 'message_id' => $messageId,
@@ -65,25 +69,38 @@ class SMSWebhookController extends Controller
         }
     }
 
-    private function updateCommunicationHistory($messageId, $status, $payload)
+    private function updateCommunicationHistory($messageId, $status, ?string $failureReason): void
     {
         try {
-            // Update your communication log/history table if you have one
-            // This is optional - implement based on your data structure
+            $message = CommunicationMessage::where('provider_message_id', $messageId)->first();
 
-            // Example:
-            // CommunicationLog::where('external_message_id', $messageId)
-            //     ->update([
-            //         'delivery_status' => $status,
-            //         'delivery_updated_at' => now(),
-            //         'delivery_details' => $payload
-            //     ]);
+            if (!$message) {
+                Log::info('No communication message found for delivery report', [
+                    'message_id' => $messageId,
+                ]);
+                return;
+            }
 
+            $communicationStatus = $this->mapAfricasTalkingStatus($status);
+
+            if ($communicationStatus) {
+                $message->updateStatus($communicationStatus, $failureReason);
+            }
         } catch (\Exception $e) {
             Log::warning('Failed to update communication history', [
                 'message_id' => $messageId,
                 'error' => $e->getMessage()
             ]);
         }
+    }
+
+    private function mapAfricasTalkingStatus(string $status): ?CommunicationStatus
+    {
+        return match ($status) {
+            'Buffered', 'Sent' => CommunicationStatus::SENT,
+            'Success' => CommunicationStatus::DELIVERED,
+            'Failed', 'Rejected' => CommunicationStatus::FAILED,
+            default => null,
+        };
     }
 }

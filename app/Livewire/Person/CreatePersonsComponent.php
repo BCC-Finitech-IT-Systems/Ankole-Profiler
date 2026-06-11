@@ -213,10 +213,6 @@ class CreatePersonsComponent extends Component
                 'password' => bcrypt($temporaryPassword),
             ]);
 
-            // Store the temporary password in the database
-            $user->temporary_password = $temporaryPassword;
-            $user->save();
-
             // Store the temporary password encrypted in cache for later use
             try {
                 if (!empty($temporaryPassword)) {

@@ -9,7 +9,7 @@ use App\Models\CommunicationFilterProfile;
 use App\Models\Organization;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
-use App\Helpers\OrganizationHelperNew as OrganizationHelper;
+use App\Helpers\OrganizationHelper;
 use Illuminate\Support\Facades\DB;
 
 class PersonSearch extends Component
