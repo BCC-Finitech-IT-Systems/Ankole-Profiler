@@ -706,7 +706,7 @@ class Create extends Component
             'global_identifier' => 'PER-' . strtoupper(Str::random(8)),
             'given_name' => $givenName,
             'family_name' => $familyName,
-            'classification' => json_encode(['STAFF']),
+            'classification' => ['STAFF'],
         ]);
 
         // Create email address record

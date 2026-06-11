@@ -34,6 +34,7 @@ class PersonFactory extends Factory
         $cities = ['Kampala', 'Entebbe', 'Jinja', 'Mbarara', 'Gulu', 'Lira', 'Arua', 'Masaka', 'Kasese', 'Kabale', 'Soroti', 'Kitgum', 'Hoima', 'Mbale', 'Tororo'];
 
         return [
+            'user_id' => \App\Models\User::factory(),
             'person_id' => \App\Models\Person::generatePersonId(),
             'global_identifier' => $this->faker->uuid(),
             'given_name' => $this->faker->randomElement($firstNames),
@@ -41,7 +42,7 @@ class PersonFactory extends Factory
             'family_name' => $this->faker->randomElement($lastNames),
             'date_of_birth' => $this->faker->dateTimeBetween('-65 years', '-18 years')->format('Y-m-d'),
             'gender' => $gender,
-            'classification' => json_encode([]),
+            'classification' => [],
             'address' => $this->faker->streetAddress(),
             'city' => $this->faker->randomElement($cities),
             'district' => $this->faker->randomElement($districts),
@@ -59,7 +60,7 @@ class PersonFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'classification' => json_encode(['medical']),
+                'classification' => ['medical'],
             ];
         });
     }
@@ -75,12 +76,12 @@ class PersonFactory extends Factory
             if ($isStudent) {
                 return [
                     'date_of_birth' => $this->faker->dateTimeBetween('-25 years', '-5 years')->format('Y-m-d'),
-                    'classification' => json_encode(['student']),
+                    'classification' => ['student'],
                 ];
             }
             return [
                 'date_of_birth' => $this->faker->dateTimeBetween('-60 years', '-25 years')->format('Y-m-d'),
-                'classification' => json_encode(['education']),
+                'classification' => ['education'],
             ];
         });
     }
@@ -93,7 +94,7 @@ class PersonFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'date_of_birth' => $this->faker->dateTimeBetween('-65 years', '-18 years')->format('Y-m-d'),
-                'classification' => json_encode(['financial']),
+                'classification' => ['financial'],
             ];
         });
     }
@@ -105,7 +106,7 @@ class PersonFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'classification' => json_encode(['religious']),
+                'classification' => ['religious'],
             ];
         });
     }
@@ -118,7 +119,7 @@ class PersonFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'date_of_birth' => $this->faker->dateTimeBetween('-60 years', '-20 years')->format('Y-m-d'),
-                'classification' => json_encode(['corporate']),
+                'classification' => ['corporate'],
             ];
         });
     }

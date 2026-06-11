@@ -99,6 +99,10 @@ class PersonSearch extends Component
             ->get()
             ->pluck('classification')
             ->flatMap(function ($item) {
+                if (is_array($item)) {
+                    return $item;
+                }
+
                 $decoded = json_decode($item, true);
                 return is_array($decoded) ? $decoded : [$item];
             })
@@ -668,6 +672,10 @@ class PersonSearch extends Component
             ->get()
             ->pluck('classification')
             ->flatMap(function ($item) {
+                if (is_array($item)) {
+                    return $item;
+                }
+
                 $decoded = json_decode($item, true);
                 return is_array($decoded) ? $decoded : [$item];
             })

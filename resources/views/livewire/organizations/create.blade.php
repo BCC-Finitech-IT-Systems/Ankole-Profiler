@@ -240,9 +240,9 @@
                                             </div>
                                             <div>
                                                 <p class="text-green-800 font-medium">
-                                                    {{ $categories[$category]['label'] }} Selected</p>
+                                                    {{ $categories[$category]['label'] ?? ucfirst($category) }} Selected</p>
                                                 <p class="text-green-600 text-sm">
-                                                    {{ $categories[$category]['description'] }}</p>
+                                                    {{ $categories[$category]['description'] ?? '' }}</p>
                                             </div>
                                         </div>
                                     </div>

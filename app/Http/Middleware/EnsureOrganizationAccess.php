@@ -27,12 +27,11 @@ class EnsureOrganizationAccess
         // Verify user has access to current Organization
         if (!auth()->user()->canAccessOrganization($currentOrgId)) {
             session()->flash('error', 'You do not have access to this Organization.');
-            
-            // Reset to user's primary Organization
-            session([
-                'current_organization_id' => auth()->user()->organization_id
-            ]);
-            
+
+            // Drop the stale selection; SetOrganizationContext will pick a
+            // valid default organization on the next request.
+            session()->forget('current_organization_id');
+
             return redirect()->route('dashboard');
         }
 

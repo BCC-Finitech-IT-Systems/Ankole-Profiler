@@ -12,7 +12,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->web(append: [
+            \App\Http\Middleware\SetOrganizationContext::class,
+        ]);
+
+        $middleware->alias([
+            'org.access' => \App\Http\Middleware\EnsureOrganizationAccess::class,
+        ]);
+
+        // Provider webhooks are server-to-server and cannot carry a CSRF token.
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/*',
+            'africastalking/callback',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

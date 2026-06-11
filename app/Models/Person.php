@@ -35,6 +35,10 @@ class Person extends Model
         'updated_by',
     ];
 
+    protected $casts = [
+        'classification' => 'array',
+    ];
+
     /**
      * Route notifications for the mail channel.
      *

@@ -51,10 +51,6 @@ class AfricasTalkingSmsService
             throw $e;
         }
 
-        // TEMPORARY FIX FOR SSL ISSUE (Development only)
-        if (app()->environment('local') && ($this->config['disable_ssl_verification'] ?? false)) {
-            $this->configureInsecureClient();
-        }
     }
 
     /**
@@ -81,30 +77,6 @@ class AfricasTalkingSmsService
     }
 
     /**
-     * Configure insecure HTTP client for development
-     * WARNING: Only use in local development!
-     */
-    protected function configureInsecureClient(): void
-    {
-        try {
-            $reflection = new \ReflectionClass($this->gateway);
-            $clientProperty = $reflection->getProperty('client');
-            $clientProperty->setAccessible(true);
-
-            $insecureClient = new GuzzleClient([
-                'verify' => false,
-                'timeout' => 30,
-            ]);
-
-            $clientProperty->setValue($this->gateway, $insecureClient);
-
-            Log::warning('SSL verification disabled for Africa\'s Talking API - Development mode only!');
-        } catch (\Exception $e) {
-            Log::error('Failed to configure insecure client', ['error' => $e->getMessage()]);
-        }
-    }
-
-    /**
      * Create AfricasTalking gateway with custom SSL configuration
      */
     private function createGatewayWithSSLConfig(): AfricasTalking
@@ -115,24 +87,43 @@ class AfricasTalkingSmsService
             $this->config['api_key']
         );
 
-        // Set environment for production if needed
-        if ($this->config['environment'] === 'production') {
-            $gateway->setEnvironment('production');
-        }
+        // The SDK has no setEnvironment(); it selects the sandbox endpoints
+        // when the username is "sandbox" and production otherwise.
 
-        // If SSL verification is disabled, we need to configure the underlying Guzzle clients
-        if ($this->config['disable_ssl_verification']) {
-            $this->configureGuzzleClientsForSSL($gateway);
-        }
+        $this->configureGatewayTls($gateway);
 
         return $gateway;
     }
 
     /**
-     * Configure Guzzle clients in the gateway to disable SSL verification
+     * Resolve the Guzzle 'verify' option: the configured CA bundle when it
+     * exists, otherwise the system default. Verification can only be turned
+     * off outside production.
      */
-    private function configureGuzzleClientsForSSL(AfricasTalking $gateway): void
+    protected function resolveTlsVerify(): bool|string
     {
+        if (($this->config['disable_ssl_verification'] ?? false) && !app()->isProduction()) {
+            Log::warning('SSL verification disabled for Africa\'s Talking API - non-production only!');
+
+            return false;
+        }
+
+        $caBundle = $this->config['ca_bundle'] ?? null;
+
+        return ($caBundle && is_file($caBundle)) ? $caBundle : true;
+    }
+
+    /**
+     * Apply the resolved TLS settings to the SDK's internal Guzzle clients
+     */
+    private function configureGatewayTls(AfricasTalking $gateway): void
+    {
+        $verify = $this->resolveTlsVerify();
+
+        if ($verify === true) {
+            return; // SDK default already verifies against the system bundle
+        }
+
         try {
             // Use reflection to access and modify the private client properties
             $reflection = new \ReflectionClass($gateway);
@@ -153,22 +144,14 @@ class AfricasTalkingSmsService
                     $client = $prop->getValue($gateway);
 
                     if ($client instanceof GuzzleClient) {
-                        // Create a new client with SSL verification disabled
                         $config = $client->getConfig();
-                        $config['verify'] = false;
-                        $config['curl'] = [
-                            CURLOPT_SSL_VERIFYPEER => false,
-                            CURLOPT_SSL_VERIFYHOST => false,
-                        ];
+                        $config['verify'] = $verify;
 
                         $newClient = new GuzzleClient($config);
                         $prop->setValue($gateway, $newClient);
                     }
                 }
             }
-
-            Log::info('SSL verification disabled for Africa\'s Talking SDK clients');
-
         } catch (\Exception $e) {
             Log::warning('Could not configure SSL settings for Africa\'s Talking clients', [
                 'error' => $e->getMessage()

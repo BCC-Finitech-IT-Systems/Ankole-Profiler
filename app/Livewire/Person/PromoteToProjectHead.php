@@ -222,11 +222,11 @@ class PromoteToProjectHead extends Component
             }
 
             // Update person's classification to include PROJECT_HEAD
-            $classification = json_decode($this->person->classification ?? '[]', true);
+            $classification = $this->person->classification ?? [];
             if (!in_array('PROJECT_HEAD', $classification)) {
                 $classification[] = 'PROJECT_HEAD';
                 $this->person->update([
-                    'classification' => json_encode($classification),
+                    'classification' => $classification,
                 ]);
             }
 
@@ -293,10 +293,12 @@ class PromoteToProjectHead extends Component
             }
 
             // Update classification
-            $classification = json_decode($this->person->classification ?? '[]', true);
-            $classification = array_filter($classification, fn($c) => $c !== 'PROJECT_HEAD');
+            $classification = array_filter(
+                $this->person->classification ?? [],
+                fn($c) => $c !== 'PROJECT_HEAD'
+            );
             $this->person->update([
-                'classification' => json_encode(array_values($classification)),
+                'classification' => array_values($classification),
             ]);
 
             // Update affiliations to remove Project Head title

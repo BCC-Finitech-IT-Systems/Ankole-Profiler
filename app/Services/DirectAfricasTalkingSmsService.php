@@ -55,13 +55,14 @@ class DirectAfricasTalkingSmsService
             ]
         ];
 
-        // Add SSL configuration if disabled
-        if ($this->config['disable_ssl_verification']) {
+        // TLS verification: use the configured CA bundle when present; the
+        // disable flag is only honoured outside production.
+        if (($this->config['disable_ssl_verification'] ?? false) && !app()->isProduction()) {
+            Log::warning('SSL verification disabled for Africa\'s Talking API - non-production only!');
             $clientConfig['verify'] = false;
-            $clientConfig['curl'] = [
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
-            ];
+        } else {
+            $caBundle = $this->config['ca_bundle'] ?? null;
+            $clientConfig['verify'] = ($caBundle && is_file($caBundle)) ? $caBundle : true;
         }
 
         $this->client = new GuzzleClient($clientConfig);

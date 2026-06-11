@@ -62,8 +62,9 @@ return [
         // Features::api(),
         // Features::teams(['invitations' => true]),
         Features::accountDeletion(),
-        'email-verification' => true,
-        // Features::emailVerification(), // Enable email verification
+        // Email verification is a Fortify feature — see config/fortify.php.
+        // Do not add string => bool entries here: Features::enabled() uses a
+        // loose in_array(), so a `true` value enables every feature check.
     ],
 
     /*

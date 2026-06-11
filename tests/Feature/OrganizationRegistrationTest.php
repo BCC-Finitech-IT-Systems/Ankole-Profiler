@@ -13,6 +13,28 @@ class OrganizationRegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // The create form loads its category list from the
+        // department_sub_categories table, so the categories used in these
+        // tests must exist there.
+        $organization = Organization::factory()->create();
+        $department = \App\Models\Department::create([
+            'organization_id' => $organization->id,
+            'name' => 'General',
+        ]);
+
+        foreach (['hospital', 'school'] as $category) {
+            \App\Models\DepartmentSubCategory::create([
+                'department_id' => $department->id,
+                'name' => $category,
+                'is_active' => true,
+            ]);
+        }
+    }
+
     public function test_organization_creation_form_renders()
     {
         $user = User::factory()->create();
@@ -43,15 +65,12 @@ class OrganizationRegistrationTest extends TestCase
             ->set('primary_contact_name', 'Dr. Byarugaba Baterana')
             ->set('primary_contact_email', 'director@mulagohospital.go.ug')
             ->set('primary_contact_phone', '+256782123456')
-            ->set('categoryDetails.hospital_type', 'REFERRAL')
-            ->set('categoryDetails.bed_capacity', 1500)
-            ->set('categoryDetails.level_of_care', 'TERTIARY')
-            ->set('categoryDetails.emergency_services', 1)
-            ->set('categoryDetails.medical_director', 'Dr. Byarugaba Baterana')
+            ->set('hospital_details.hospital_type', 'REFERRAL')
+            ->set('hospital_details.bed_capacity', 1500)
             ->call('submit')
             ->assertRedirect('/organizations');
 
-        $this->assertDatabaseHas('Organizations', [
+        $this->assertDatabaseHas('organizations', [
             'legal_name' => 'Mulago National Referral Hospital',
             'category' => 'hospital',
             'code' => 'MNH001'
@@ -78,16 +97,14 @@ class OrganizationRegistrationTest extends TestCase
             ->set('primary_contact_name', 'Prof. Barnabas Nawangwe')
             ->set('primary_contact_email', 'vc@mak.ac.ug')
             ->set('primary_contact_phone', '+256782654321')
-            ->set('categoryDetails.school_type', 'UNIVERSITY')
-            ->set('categoryDetails.education_level', 'TERTIARY')
-            ->set('categoryDetails.student_capacity', 50000)
-            ->set('categoryDetails.current_enrollment', 40000)
-            ->set('categoryDetails.number_of_teachers', 1500)
-            ->set('categoryDetails.principal_name', 'Prof. Barnabas Nawangwe')
+            ->set('school_details.school_type', 'UNIVERSITY')
+            ->set('school_details.student_capacity', 50000)
+            ->set('school_details.current_enrollment', 40000)
+            ->set('school_details.number_of_teachers', 1500)
             ->call('submit')
             ->assertRedirect('/organizations');
 
-        $this->assertDatabaseHas('Organizations', [
+        $this->assertDatabaseHas('organizations', [
             'legal_name' => 'Makerere University',
             'category' => 'school',
             'code' => 'MAK001'
@@ -131,15 +148,14 @@ class OrganizationRegistrationTest extends TestCase
             ->assertSet('currentStep', 1);
     }
 
-    public function test_category_specific_fields_are_validated()
+    public function test_category_must_exist_in_sub_categories_table()
     {
         $user = User::factory()->create();
 
         Livewire::actingAs($user)
             ->test(Create::class)
-            ->set('category', 'hospital')
-            ->set('currentStep', 5) // Go to category-specific step
-            ->call('validateCurrentStep')
-            ->assertHasErrors(['categoryDetails.hospital_type', 'categoryDetails.bed_capacity']);
+            ->set('category', 'nonexistent-category')
+            ->call('nextStep')
+            ->assertHasErrors(['category']);
     }
 }

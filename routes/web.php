@@ -17,7 +17,6 @@ use App\Livewire\Departments\DepartmentComponent;
 use App\Livewire\Departments\DepartmentsDashboard;
 use App\Livewire\Organizations\ImportOrganizations;
 use App\Livewire\Person\Notifications as PersonNotificationsLivewire;
-use App\Models\CustomField;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
@@ -30,42 +29,26 @@ $authVerifiedMiddleware = [
     'verified',
 ];
 
-Route::prefix('organizations')->name('organizations.')->group(function () use ($authVerifiedMiddleware) {
+Route::prefix('organizations')->name('organizations.')->middleware($authVerifiedMiddleware)->group(function () {
     Route::post('/export-template', function (Request $request) {
-        $fields = $request->input('fields', []);
-        $headers = array_map('trim', $fields);
-
-        foreach ($fields as $field) {
-            CustomField::updateOrCreate([
-                'model_type' => 'Organization_template',
-                'model_id' => 0,
-                'field_name' => $field,
-            ], [
-                'field_label' => ucfirst(str_replace('_', ' ', $field)),
-                'field_type' => 'string',
-                'field_options' => null,
-                'is_required' => false,
-                'validation_rules' => null,
-                'group' => null,
-                'order' => null,
-                'description' => null,
-            ]);
-        }
+        $validated = $request->validate([
+            'fields' => 'array',
+            'fields.*' => 'string|max:255',
+        ]);
+        $headers = array_map('trim', $validated['fields'] ?? []);
 
         $export = new OrganizationTemplateExport([], $headers);
 
         return Excel::download($export, 'custom_Organization_template.xlsx');
     })->name('export-template');
 
-    Route::middleware($authVerifiedMiddleware)->group(function () {
-        Route::get('/template', function () {
-            $export = new OrganizationTemplateExport();
+    Route::get('/template', function () {
+        $export = new OrganizationTemplateExport();
 
-            return Excel::download($export, 'Organization_import_template.xlsx');
-        })->name('template');
+        return Excel::download($export, 'Organization_import_template.xlsx');
+    })->name('template');
 
-        Route::get('/import', ImportOrganizations::class)->name('import');
-    });
+    Route::get('/import', ImportOrganizations::class)->name('import');
 });
 Route::get('/login', function () {
     return view('auth.login');
@@ -86,24 +69,6 @@ Route::get('/', function () {
     return view('auth.login');
 });
 
-Route::get('/test-at', function () {
-    function testApiConnection($AT, $from, $to)
-    {
-        try {
-            $voice = $AT->voice();
-            $results = $voice->call(['from' => $from, 'to' => $to]);
-
-            return ['success' => true, 'message' => 'API key is active!'];
-        } catch (\Exception $e) {
-            if (strpos($e->getMessage(), 'authentication') !== false) {
-                return ['success' => false, 'message' => 'API key still activating...'];
-            }
-
-            return ['success' => false, 'message' => $e->getMessage()];
-        }
-    }
-});
-
 Route::middleware($authVerifiedMiddleware)->group(function () {
     Route::get('/dashboard', DashboardComponent::class)->name('dashboard');
 
@@ -116,7 +81,7 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
         Route::get('/{id}', App\Livewire\Organizations\Show::class)->name('show');
     });
 
-    Route::prefix('persons')->group(function () {
+    Route::prefix('persons')->middleware('org.access')->group(function () {
         Route::get('/all', [AllPersonsListController::class, 'index'])->name('persons.all');
         Route::get('/create/{edit?}', App\Livewire\Person\CreatePersonsComponent::class)->name('persons.create');
         Route::get('/import', App\Livewire\Person\ImportPersons::class)->name('persons.import');
@@ -137,7 +102,7 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
     Route::get('/person/notifications', PersonNotificationsLivewire::class)
         ->name('person.notifications');
 
-    Route::prefix('organization-units')->name('organization-units.')->group(function () {
+    Route::prefix('organization-units')->name('organization-units.')->middleware('org.access')->group(function () {
         Route::get('/', App\Livewire\Organizations\ListOrganizationUnits::class)->name('index');
         Route::get('/create', App\Livewire\Organizations\CreateOrganizationUnit::class)->name('create');
         Route::get('/applications', App\Livewire\Organizations\ReviewUnitApplications::class)->name('applications');
@@ -201,7 +166,7 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
         Route::get('/allow-email-domains', App\Livewire\Admin\AllowedEmailDomainManager::class)->name('allowEmailDomains');
     });
 
-    Route::prefix('communication')->name('communication.')->group(function () {
+    Route::prefix('communication')->name('communication.')->middleware('org.access')->group(function () {
         Route::get('/', [CommunicationController::class, 'index'])->name('index');
 
         Route::get('/send', [CommunicationController::class, 'sendMessage'])

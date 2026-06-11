@@ -15,7 +15,13 @@ return [
     'api_key' => env('AT_API_KEY'),
     'environment' => env('AT_ENVIRONMENT', 'sandbox'), // 'sandbox' or 'production'
 
+    // Never honoured in production — see the SMS services, which force
+    // verification on when app.env is production.
     'disable_ssl_verification' => env('AT_DISABLE_SSL_VERIFICATION', false),
+
+    // Path to a CA bundle for TLS verification. Fixes local setups whose
+    // PHP has no system CA bundle, without turning verification off.
+    'ca_bundle' => env('AT_CA_BUNDLE', base_path('certs/cacert.pem')),
     /*
     |--------------------------------------------------------------------------
     | SMS Configuration

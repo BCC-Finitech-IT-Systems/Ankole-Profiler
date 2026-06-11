@@ -139,7 +139,7 @@ class PersonSelfRegistrationComponent extends Component
                 'address' => $this->form['address'],
                 'city' => $this->form['city'],
                 'user_id' => $user->id,
-                'classification' => json_encode(['STAFF']),
+                'classification' => ['STAFF'],
                 'created_by' => $user->id,
             ]);
             Log::info('Person created', ['person_id' => $person->id]);
