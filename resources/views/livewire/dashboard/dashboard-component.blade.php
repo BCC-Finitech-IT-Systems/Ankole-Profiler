@@ -177,7 +177,7 @@
                 </div>
                 <h3 class="card-title text-base font-bold mb-1">Affiliations</h3>
                 <p class="text-base-content/70 text-xs mb-3">Link persons to organizations with roles and positions.</p>
-                <a href="#" class="btn btn-outline btn-secondary btn-sm gap-2">
+                <a href="{{ route('persons.all') }}" class="btn btn-outline btn-secondary btn-sm gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
                     </svg>
@@ -196,7 +196,7 @@
                 </div>
                 <h3 class="card-title text-base font-bold mb-1">Compliance</h3>
                 <p class="text-base-content/70 text-xs mb-3">Data privacy, consent management, and audit trails.</p>
-                <a href="#" class="btn btn-outline btn-success btn-sm gap-2">
+                <a href="{{ route('persons.all') }}" class="btn btn-outline btn-success btn-sm gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4" />
                     </svg>
@@ -227,6 +227,9 @@
                 <span wire:loading wire:target="refreshData">Refreshing...</span>
             </button>
         </div>
+        @if($lastRefreshedAt)
+            <p class="text-xs text-base-content/50 -mt-4 mb-6">Last refreshed {{ $lastRefreshedAt }}</p>
+        @endif
 
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <!-- Total Persons -->
@@ -310,13 +313,13 @@
                         </svg>
                         Recent Activity
                     </h3>
-                    <button class="btn btn-ghost btn-sm">View All</button>
+                    <button type="button" wire:click="viewAllActivity" class="btn btn-ghost btn-sm">View All</button>
                 </div>
             </div>
             <div class="card-body p-0">
                 <div class="divide-y divide-base-300">
                     @forelse($recentActivities as $activity)
-                        <div class="p-4 hover:bg-base-50 transition-all duration-200 cursor-pointer flex items-start gap-3">
+                        <a href="{{ $activity['url'] ?? route('persons.all') }}" class="p-4 hover:bg-base-50 transition-all duration-200 flex items-start gap-3">
                             <div class="w-8 h-8 bg-{{ $activity['badge_color'] }}/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                                 <svg class="w-4 h-4 text-{{ $activity['badge_color'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     @if($activity['icon'] === 'user-group')
@@ -334,7 +337,7 @@
                                 <p class="text-xs text-base-content/50 mt-1">{{ $activity['time'] }}</p>
                             </div>
                             <div class="badge badge-{{ $activity['badge_color'] }} badge-sm">{{ $activity['badge'] }}</div>
-                        </div>
+                        </a>
                     @empty
                         <div class="p-8 text-center">
                             <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -357,13 +360,18 @@
                         </svg>
                         Alerts & Notifications
                     </h3>
-                    <button class="btn btn-ghost btn-sm">Mark All Read</button>
+                    <button type="button"
+                            wire:click="markAlertsRead"
+                            @disabled(empty($alerts))
+                            class="btn btn-ghost btn-sm">
+                        Mark All Read
+                    </button>
                 </div>
             </div>
             <div class="card-body p-0">
                 <div class="divide-y divide-base-300">
                     @forelse($alerts as $alert)
-                        <div class="p-4 bg-{{ $alert['level'] }}/5 border-l-4 border-{{ $alert['level'] }} flex items-start gap-3">
+                        <a href="{{ $alert['url'] ?? route('dashboard') }}" class="p-4 bg-{{ $alert['level'] }}/5 border-l-4 border-{{ $alert['level'] }} flex items-start gap-3">
                             <div class="w-8 h-8 bg-{{ $alert['level'] }}/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                                 <svg class="w-4 h-4 text-{{ $alert['level'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     @if($alert['icon'] === 'exclamation-circle')
@@ -382,7 +390,7 @@
                                 <p class="text-xs text-base-content/70 mt-1">{{ $alert['description'] }}</p>
                                 <p class="text-xs text-base-content/50 mt-1">{{ $alert['priority'] }}</p>
                             </div>
-                        </div>
+                        </a>
                     @empty
                         <div class="p-8 text-center">
                             <svg class="w-12 h-12 mx-auto text-green-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

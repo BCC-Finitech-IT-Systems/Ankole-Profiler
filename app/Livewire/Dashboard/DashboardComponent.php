@@ -6,11 +6,9 @@ use Livewire\Component;
 use App\Models\Person;
 use App\Models\Organization;
 use App\Models\PersonAffiliation;
-use App\Models\AuditLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class DashboardComponent extends Component
@@ -21,6 +19,8 @@ class DashboardComponent extends Component
     public $currentOrganization;
     public $isSuperAdmin = false;
     public $membershipPending = false;
+    public $alertsAcknowledged = false;
+    public $lastRefreshedAt;
 
     public function mount()
     {
@@ -57,15 +57,15 @@ class DashboardComponent extends Component
     {
         try {
             // Cache dashboard stats for 5 minutes
-            $orgId = $this->currentOrganization ? $this->currentOrganization->id : 'all';
-            $cacheKey = 'dashboard_stats_' . $orgId;
+            $cacheKey = $this->dashboardCacheKey();
 
             $this->stats = Cache::remember($cacheKey, 300, function () {
                 return $this->calculateStats();
             });
 
             $this->recentActivities = $this->getRecentActivities();
-            $this->alerts = $this->getSystemAlerts();
+            $this->alerts = $this->alertsAcknowledged ? [] : $this->getSystemAlerts();
+            $this->lastRefreshedAt = now()->format('M j, Y g:i A');
         } catch (\Exception $e) {
             Log::error('Dashboard data loading error: ' . $e->getMessage());
 
@@ -77,6 +77,7 @@ class DashboardComponent extends Component
                 'new_organizations' => 0,
                 'active_affiliations' => 0,
                 'expired_affiliations' => 0,
+                'pending_memberships' => 0,
                 'pending_verifications' => 0,
                 'pending_consents' => 0,
                 'system_health' => 100,
@@ -84,7 +85,19 @@ class DashboardComponent extends Component
 
             $this->recentActivities = [];
             $this->alerts = [];
+            $this->lastRefreshedAt = now()->format('M j, Y g:i A');
         }
+    }
+
+    private function dashboardCacheKey(): string
+    {
+        $user = Auth::user();
+        $roleScope = $this->isSuperAdmin ? 'super-admin' : 'org-user';
+        $orgScope = $this->isSuperAdmin
+            ? 'all'
+            : ($this->currentOrganization?->id ?? 'none');
+
+        return "dashboard_stats_{$roleScope}_{$orgScope}_user_" . ($user?->id ?? 'guest');
     }
 
     private function calculateStats()
@@ -143,6 +156,7 @@ class DashboardComponent extends Component
             }
 
             // Common stats for all users
+            $stats['pending_memberships'] = $this->getPendingMemberships();
             $stats['pending_verifications'] = $this->getPendingVerifications();
             $stats['pending_consents'] = $this->getPendingConsents();
             $stats['system_health'] = $this->calculateSystemHealth($stats);
@@ -153,6 +167,22 @@ class DashboardComponent extends Component
         }
 
         return $stats;
+    }
+
+    private function getPendingMemberships(): int
+    {
+        try {
+            $query = PersonAffiliation::where('status', 'pending');
+
+            if (!$this->isSuperAdmin && $this->currentOrganization) {
+                $query->where('organization_id', $this->currentOrganization->id);
+            }
+
+            return $query->count();
+        } catch (\Exception $e) {
+            Log::error('Pending memberships calculation error: ' . $e->getMessage());
+            return 0;
+        }
     }
 
     private function getPendingVerifications()
@@ -221,9 +251,18 @@ class DashboardComponent extends Component
             }
 
             // Check for data quality issues
-            $missingData = Person::whereNull('given_name')
-                ->orWhereNull('family_name')
-                ->count();
+            $missingDataQuery = Person::where(function ($query) {
+                $query->whereNull('given_name')
+                    ->orWhereNull('family_name');
+            });
+
+            if (!$this->isSuperAdmin && $this->currentOrganization) {
+                $missingDataQuery->whereHas('affiliations', function ($query) {
+                    $query->where('organization_id', $this->currentOrganization->id);
+                });
+            }
+
+            $missingData = $missingDataQuery->count();
 
             if ($missingData > 0) {
                 $healthScore -= min(20, $missingData * 2);
@@ -236,7 +275,7 @@ class DashboardComponent extends Component
             }
 
             // Check for pending verifications
-            $pendingVerifications = isset($stats['pending_verifications']) ? $stats['pending_verifications'] : 0;
+            $pendingVerifications = ($stats['pending_verifications'] ?? 0) + ($stats['pending_memberships'] ?? 0);
             if ($pendingVerifications > 50) {
                 $healthScore -= 15;
             }
@@ -279,9 +318,11 @@ class DashboardComponent extends Component
                     'title' => 'New person "' . $person->full_name . '" registered',
                     'description' => 'Complete profile with organizational affiliation to ' . $orgName,
                     'time' => $person->created_at->diffForHumans(),
+                    'timestamp' => $person->created_at?->timestamp ?? 0,
                     'badge' => 'Person',
                     'badge_color' => 'success',
                     'icon' => 'user-group',
+                    'url' => route('persons.show', $person->id),
                 ];
             }
 
@@ -297,9 +338,11 @@ class DashboardComponent extends Component
                         'title' => 'Organization "' . $orgDisplayName . '" updated',
                         'description' => 'Organization information modified',
                         'time' => $org->updated_at->diffForHumans(),
+                        'timestamp' => $org->updated_at?->timestamp ?? 0,
                         'badge' => 'Organization',
                         'badge_color' => 'info',
                         'icon' => 'building',
+                        'url' => route('organizations.show', $org->id),
                     ];
                 }
             }
@@ -315,24 +358,27 @@ class DashboardComponent extends Component
             }
 
             foreach ($recentAffiliations->get() as $affiliation) {
-                $orgDisplayName = $affiliation->Organization->display_name
-                    ? $affiliation->Organization->display_name
-                    : $affiliation->Organization->legal_name;
+                $orgDisplayName = $affiliation->Organization
+                    ? ($affiliation->Organization->display_name ?: $affiliation->Organization->legal_name)
+                    : 'Unknown Organization';
+                $personName = $affiliation->person?->full_name ?? 'Unknown person';
 
                 $activities[] = [
                     'type' => 'affiliation',
                     'title' => 'New affiliation verified',
-                    'description' => $affiliation->person->full_name . ' affiliated with ' . $orgDisplayName,
+                    'description' => $personName . ' affiliated with ' . $orgDisplayName,
                     'time' => $affiliation->created_at->diffForHumans(),
+                    'timestamp' => $affiliation->created_at?->timestamp ?? 0,
                     'badge' => 'Affiliation',
                     'badge_color' => 'secondary',
                     'icon' => 'link',
+                    'url' => $affiliation->person_id ? route('persons.show', $affiliation->person_id) : route('persons.all'),
                 ];
             }
 
             // Sort by time (most recent first)
             usort($activities, function($a, $b) {
-                return strcmp($b['time'], $a['time']);
+                return ($b['timestamp'] ?? 0) <=> ($a['timestamp'] ?? 0);
             });
 
             return array_slice($activities, 0, 8);
@@ -356,6 +402,19 @@ class DashboardComponent extends Component
                     'description' => $pendingConsents . ' person records lack proper consent documentation. Immediate action required.',
                     'priority' => 'High Priority',
                     'icon' => 'exclamation-circle',
+                    'url' => route('persons.all'),
+                ];
+            }
+
+            $pendingMemberships = isset($this->stats['pending_memberships']) ? $this->stats['pending_memberships'] : 0;
+            if ($pendingMemberships > 0) {
+                $alerts[] = [
+                    'level' => 'warning',
+                    'title' => 'Pending Membership Applications',
+                    'description' => $pendingMemberships . ' membership applications are waiting for review.',
+                    'priority' => 'High Priority',
+                    'icon' => 'exclamation-triangle',
+                    'url' => route('organizations.membership-applications'),
                 ];
             }
 
@@ -368,6 +427,7 @@ class DashboardComponent extends Component
                     'description' => $pendingVerifications . ' person profiles require identity verification and document upload.',
                     'priority' => 'Medium Priority',
                     'icon' => 'exclamation-triangle',
+                    'url' => route('persons.all'),
                 ];
             }
 
@@ -380,6 +440,7 @@ class DashboardComponent extends Component
                     'description' => $expiredAffiliations . ' affiliations have expired and may need renewal or archival.',
                     'priority' => 'Low Priority',
                     'icon' => 'information-circle',
+                    'url' => route('persons.all'),
                 ];
             }
 
@@ -392,6 +453,7 @@ class DashboardComponent extends Component
                     'description' => 'All person registry data is healthy with no critical issues detected.',
                     'priority' => 'Information',
                     'icon' => 'check-circle',
+                    'url' => route('dashboard'),
                 ];
             } elseif ($systemHealth < 75) {
                 $alerts[] = [
@@ -400,6 +462,7 @@ class DashboardComponent extends Component
                     'description' => 'System health is below optimal levels. Review data quality and pending actions.',
                     'priority' => 'Medium Priority',
                     'icon' => 'exclamation-triangle',
+                    'url' => route('persons.all'),
                 ];
             }
 
@@ -414,9 +477,8 @@ class DashboardComponent extends Component
     {
         try {
             // Clear cache
-            $orgId = $this->currentOrganization ? $this->currentOrganization->id : 'all';
-            $cacheKey = 'dashboard_stats_' . $orgId;
-            Cache::forget($cacheKey);
+            Cache::forget($this->dashboardCacheKey());
+            $this->alertsAcknowledged = false;
 
             // Reload data
             $this->loadDashboardData();
@@ -432,6 +494,21 @@ class DashboardComponent extends Component
                 'message' => 'Failed to refresh dashboard data'
             ]);
         }
+    }
+
+    public function markAlertsRead()
+    {
+        $this->alertsAcknowledged = true;
+        $this->alerts = [];
+
+        $this->dispatch('dashboard-alerts-read', [
+            'message' => 'Dashboard alerts marked as read'
+        ]);
+    }
+
+    public function viewAllActivity()
+    {
+        return redirect()->route('persons.all');
     }
 
     public function render()

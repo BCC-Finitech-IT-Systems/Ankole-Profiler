@@ -20,23 +20,40 @@ class UserSeeder extends Seeder
         // Ensure the Super Admin role exists
         $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin']);
 
-        // Create or update the Super Admin user
-        $user = User::updateOrCreate(
-            ['email' => 'ategeka.lordrick@bcc.co.ug'], // unique constraint
+        $superAdmins = [
             [
+                'email' => 'ategeka.lordrick@bcc.co.ug',
                 'name' => 'Lordrick Ategeka -BCC -ADMIN',
-                'email_verified_at' => now(),
-                'password' => Hash::make('qwertyui'), // use a strong password in production
-            ]
-        );
+                'password' => 'qwertyui', // use a strong password in production
+            ],
+            [
+                'email' => 'nabukajoshua@gmail.com',
+                'name' => 'Joshua Nabuka',
+                'password' => 'Ankole@2026',
+            ],
+            [
+                'email' => 'demo.superadmin@ankole.test',
+                'name' => 'Demo Super Admin',
+                'password' => 'Demo@Ankole2026',
+            ],
+        ];
 
-        // Assign the role
-        $user->assignRole($superAdminRole);
+        foreach ($superAdmins as $account) {
+            $user = User::updateOrCreate(
+                ['email' => $account['email']], // unique constraint
+                [
+                    'name' => $account['name'],
+                    'email_verified_at' => now(),
+                    'password' => Hash::make($account['password']),
+                ]
+            );
 
-        // Optional: Mark the user as super_admin = 1 (if you have this column)
-        if (Schema::hasColumn('users', 'super_admin')) {
-            $user->update(['super_admin' => 1]);
+            $user->assignRole($superAdminRole);
+
+            // Optional: Mark the user as super_admin = 1 (if you have this column)
+            if (Schema::hasColumn('users', 'super_admin')) {
+                $user->update(['super_admin' => 1]);
+            }
         }
-
     }
 }

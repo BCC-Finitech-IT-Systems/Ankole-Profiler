@@ -30,6 +30,14 @@
         </div>
     @endif
 
+    <button type="button" onclick="fillDemoSuperAdmin()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:1.25rem;padding:0.7rem 0.875rem;border:1px solid #f0d6e1;border-radius:8px;background:#fff7fb;color:#982B55;font-size:0.9rem;font-weight:600;cursor:pointer;">
+        <svg style="width:16px;height:16px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.879 6.196M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20.662V19a5 5 0 0110 0v1.662"/>
+        </svg>
+        Use demo super admin
+    </button>
+
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
@@ -101,6 +109,19 @@
 </div>
 
 <script>
+    const demoSuperAdmin = {
+        email: @js('demo.superadmin@ankole.test'),
+        password: @js('Demo@Ankole2026'),
+    };
+
+    function fillDemoSuperAdmin() {
+        document.getElementById('email').value = demoSuperAdmin.email;
+        document.getElementById('password').value = demoSuperAdmin.password;
+        document.getElementById('remember_me').checked = false;
+        document.getElementById('email').dispatchEvent(new Event('input', { bubbles: true }));
+        document.getElementById('password').dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
     function togglePassword() {
         const input = document.getElementById('password');
         const icon = document.getElementById('eyeIcon');
