@@ -74,6 +74,9 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
     Route::get('/admin/dash', OrgAdminDashboardComponent::class)->name('admin.dashboard');
 
     Route::prefix('organizations')->name('organizations.')->group(function () {
+        Route::get('/membership-applications', App\Livewire\Organizations\ReviewMembershipApplications::class)
+            ->name('membership-applications')
+            ->middleware('can:approve-organization-membership');
         Route::get('/', App\Livewire\Organizations\Index::class)->name('index');
         Route::get('/current-project', App\Livewire\Organizations\CurrentProject::class)->name('current-project');
         Route::get('/create', App\Livewire\Organizations\Create::class)->name('create');
@@ -140,29 +143,46 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
 
     Route::prefix('departments')->name('departments.')->group(function () {
         Route::get('/dashboard', DepartmentsDashboard::class)
-            ->name('dashboard');
+            ->name('dashboard')
+            ->middleware('can:view-departments');
 
         Route::post('/', [DepartmentController::class, 'store'])
-            ->name('store');
+            ->name('store')
+            ->middleware('can:create-departments');
 
         Route::get('/{department}', [DepartmentController::class, 'show'])
-            ->name('show');
+            ->name('show')
+            ->middleware('can:view-departments');
 
         Route::put('/{department}', [DepartmentController::class, 'update'])
-            ->name('update');
+            ->name('update')
+            ->middleware('can:edit-departments');
 
         Route::delete('/{department}', [DepartmentController::class, 'destroy'])
-            ->name('destroy');
+            ->name('destroy')
+            ->middleware('can:delete-departments');
+
         Route::get('/', DepartmentComponent::class)
-            ->name('index');
+            ->name('index')
+            ->middleware('can:view-departments');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {
-        Route::get('/users', App\Livewire\Admin\UserManager::class)->name('users.index');
-        Route::get('/permissions', App\Livewire\Admin\PermissionManager::class)->name('permissions.index');
-        Route::get('/roles', App\Livewire\Admin\RoleManager::class)->name('roles.index');
-        Route::get('/role-types', App\Livewire\Admin\RoleTypeManager::class)->name('role-types.index');
-        Route::get('/allow-email-domains', App\Livewire\Admin\AllowedEmailDomainManager::class)->name('allowEmailDomains');
+        Route::get('/users', App\Livewire\Admin\UserManager::class)
+            ->name('users.index')
+            ->middleware('can:manage-users');
+        Route::get('/permissions', App\Livewire\Admin\PermissionManager::class)
+            ->name('permissions.index')
+            ->middleware('can:manage-permissions');
+        Route::get('/roles', App\Livewire\Admin\RoleManager::class)
+            ->name('roles.index')
+            ->middleware('can:manage-roles');
+        Route::get('/role-types', App\Livewire\Admin\RoleTypeManager::class)
+            ->name('role-types.index')
+            ->middleware('can:manage-role-types');
+        Route::get('/allow-email-domains', App\Livewire\Admin\AllowedEmailDomainManager::class)
+            ->name('allowEmailDomains')
+            ->middleware('can:manage-email-domains');
     });
 
     Route::prefix('communication')->name('communication.')->middleware('org.access')->group(function () {

@@ -50,7 +50,7 @@ class StudentRecord extends Model
      */
     public function isCurrentlyEnrolled()
     {
-        return $this->affiliation->status === 'ACTIVE';
+        return $this->affiliation->status === 'active';
     }
 
     /**

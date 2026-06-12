@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Admin;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\User;
@@ -29,6 +31,11 @@ class UserManager extends Component
     public $selectedUsers = []; // Array to store selected user IDs
     public $selectAll = false; // Flag to handle select all functionality
     public $activeTab = 'users'; // Default active tab
+
+    public function mount(): void
+    {
+        Gate::authorize('manage-users');
+    }
 
     public function render()
     {
@@ -121,9 +128,22 @@ class UserManager extends Component
 
     public function updateUserRoles()
     {
-        $user = User::findOrFail($this->userId);
-        $roles = Role::whereIn('id', $this->selectedRoles)->get();
+        Gate::authorize('manage-users');
 
+        /** @var User $authUser */
+        $authUser = Auth::user();
+        $user = User::findOrFail($this->userId);
+
+        $superAdminRole = Role::where('name', 'Super Admin')->first();
+        $isSuperAdminTarget = $superAdminRole && in_array($superAdminRole->id, $this->selectedRoles);
+        $hadSuperAdmin = $superAdminRole && $user->hasRole('Super Admin');
+
+        // Only Super Admin may grant or revoke the Super Admin role.
+        if (($isSuperAdminTarget || $hadSuperAdmin) && !$authUser->hasRole('Super Admin')) {
+            abort(403, 'Only a Super Admin may modify the Super Admin role.');
+        }
+
+        $roles = Role::whereIn('id', $this->selectedRoles)->get();
         $user->syncRoles($roles);
 
         $this->showRolesModal = false;
@@ -151,6 +171,8 @@ class UserManager extends Component
 
     public function updateUserOrganization()
     {
+        Gate::authorize('manage-users');
+
         $user = User::findOrFail($this->userId);
 
         // If user doesn't have a person record, create one
@@ -220,10 +242,11 @@ class UserManager extends Component
 
     public function deleteUser()
     {
+        Gate::authorize('manage-users');
+
         $user = User::findOrFail($this->userId);
 
-        // Check if user has any critical data that should prevent deletion
-        // Add any business logic checks here
+        abort_if($user->id === Auth::id(), 403, 'You cannot delete your own account.');
 
         $user->delete();
 
@@ -233,12 +256,17 @@ class UserManager extends Component
 
     public function bulkDelete()
     {
+        Gate::authorize('manage-users');
+
         if (empty($this->selectedUsers)) {
             session()->flash('error', 'No users selected for deletion.');
             return;
         }
 
-        User::whereIn('id', $this->selectedUsers)->delete();
+        // Silently exclude self from bulk delete.
+        $ids = array_filter($this->selectedUsers, fn ($id) => $id !== Auth::id());
+
+        User::whereIn('id', $ids)->delete();
 
         $this->selectedUsers = [];
         $this->selectAll = false;

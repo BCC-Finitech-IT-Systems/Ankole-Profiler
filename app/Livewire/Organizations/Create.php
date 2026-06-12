@@ -735,7 +735,7 @@ class Create extends Component
             'organization_id' => $organization->id,
             'role_type' => 'SYSTEM_ADMIN', // Using role_type field as string value
             'role_title' => $adminData['title'],
-            'status' => 'ACTIVE',
+            'status' => 'active',
             'start_date' => now(),
         ]);
 

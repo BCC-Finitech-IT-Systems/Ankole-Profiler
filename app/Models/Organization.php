@@ -151,6 +151,14 @@ class Organization extends Model
     }
 
     /**
+     * Alias kept so callers using either name resolve to the same relation.
+     */
+    public function affiliations(): HasMany
+    {
+        return $this->personAffiliations();
+    }
+
+    /**
      * Department relationship
      */
     public function departments(): HasMany

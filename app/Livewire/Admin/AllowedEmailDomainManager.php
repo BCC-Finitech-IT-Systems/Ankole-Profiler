@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use App\Models\AllowedEmailDomain;
 use App\Models\Organization;
@@ -19,6 +20,11 @@ class AllowedEmailDomainManager extends Component
     public $filteredOrganizations = [];
     public $organizationSearch = '';
 
+    public function mount(): void
+    {
+        Gate::authorize('manage-email-domains');
+    }
+
     protected $rules = [
         'domain' => 'required|string|unique:allowed_email_domains,domain',
         'organization_id' => 'nullable|exists:organizations,id',
@@ -35,6 +41,7 @@ class AllowedEmailDomainManager extends Component
 
     public function create()
     {
+        Gate::authorize('manage-email-domains');
         $this->validate();
 
         AllowedEmailDomain::create([
@@ -59,6 +66,7 @@ class AllowedEmailDomainManager extends Component
 
     public function update()
     {
+        Gate::authorize('manage-email-domains');
         $this->validate();
 
         $domain = AllowedEmailDomain::findOrFail($this->domainId);
@@ -74,6 +82,7 @@ class AllowedEmailDomainManager extends Component
 
     public function delete($id)
     {
+        Gate::authorize('manage-email-domains');
         AllowedEmailDomain::findOrFail($id)->delete();
         session()->flash('success', 'Allowed email domain deleted successfully.');
     }

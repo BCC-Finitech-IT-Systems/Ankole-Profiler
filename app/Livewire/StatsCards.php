@@ -34,7 +34,7 @@ class StatsCards extends Component
         
         // Active affiliations
         $this->activeAffiliations = PersonAffiliation::where('organization_id', $orgId)
-                                                    ->where('status', 'ACTIVE')
+                                                    ->where('status', 'active')
                                                     ->count();
         
         // New this month
@@ -46,7 +46,7 @@ class StatsCards extends Component
         // Pending verification
         $this->pendingVerification = Person::whereHas('affiliations', function($query) use ($orgId) {
             $query->where('organization_id', $orgId)
-                  ->where('status', 'PENDING');
+                  ->where('status', 'pending');
         })->count();
     }
     public function render()

@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Admin;
 
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class PermissionManager extends Component
 {
@@ -20,6 +20,11 @@ class PermissionManager extends Component
     public $name = '';
     public $guardName = 'web';
     public $description = '';
+
+    public function mount(): void
+    {
+        Gate::authorize('manage-permissions');
+    }
 
     protected $rules = [
         'name' => 'required|string|max:255|unique:permissions,name',
@@ -75,6 +80,7 @@ class PermissionManager extends Component
 
     public function createPermission()
     {
+        Gate::authorize('manage-permissions');
         $this->validate();
 
         Permission::create([
@@ -91,6 +97,7 @@ class PermissionManager extends Component
 
     public function updatePermission()
     {
+        Gate::authorize('manage-permissions');
         $this->validate([
             'name' => 'required|string|max:255|unique:permissions,name,' . $this->permissionId,
             'guardName' => 'required|string|max:255',
@@ -112,6 +119,7 @@ class PermissionManager extends Component
 
     public function deletePermission()
     {
+        Gate::authorize('manage-permissions');
         $permission = Permission::findOrFail($this->permissionId);
 
         // Check if permission is assigned to any roles

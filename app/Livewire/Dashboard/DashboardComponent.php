@@ -20,6 +20,7 @@ class DashboardComponent extends Component
     public $alerts = [];
     public $currentOrganization;
     public $isSuperAdmin = false;
+    public $membershipPending = false;
 
     public function mount()
     {
@@ -36,6 +37,15 @@ class DashboardComponent extends Component
             // Check if user is Super Admin
             if (method_exists($user, 'hasRole')) {
                 $this->isSuperAdmin = $user->hasRole('Super Admin');
+            }
+
+            // Self-registered users hold no roles until a diocese admin
+            // approves their pending application.
+            $personId = $user->personId();
+            if ($personId && $user->roles->isEmpty()) {
+                $this->membershipPending = PersonAffiliation::where('person_id', $personId)
+                    ->where('status', 'pending')
+                    ->exists();
             }
         }
 

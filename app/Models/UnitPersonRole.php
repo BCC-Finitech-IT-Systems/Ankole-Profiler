@@ -15,6 +15,7 @@ class UnitPersonRole extends Model
         'unit_id',
         'person_id',
         'role',
+        'role_type_id',
         'can_view',
         'can_edit',
         'can_approve',
@@ -35,6 +36,11 @@ class UnitPersonRole extends Model
     public function unit()
     {
         return $this->belongsTo(OrganizationUnit::class, 'unit_id');
+    }
+
+    public function roleType()
+    {
+        return $this->belongsTo(RoleType::class);
     }
 
     public function person()

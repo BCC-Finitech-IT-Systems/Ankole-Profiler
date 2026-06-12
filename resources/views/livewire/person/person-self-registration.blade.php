@@ -129,32 +129,25 @@
                     @enderror
                 </div>
                 <div>
-                    <label class="block text-gray-600 font-medium mb-1 text-sm">Department*</label>
-                    <select wire:model="form.department_id" class="select select-bordered select-sm w-full" required
-                        oninvalid="this.setCustomValidity('Department is required')"
+                    <label class="block text-gray-600 font-medium mb-1 text-sm">Diocese*</label>
+                    <select wire:model="form.organization_id" class="select select-bordered select-sm w-full" required
+                        oninvalid="this.setCustomValidity('Diocese is required')"
                         oninput="this.setCustomValidity('')">
-                        @if ($availableDepartments->isEmpty())
-                            <option value="">No departments available</option>
+                        @if ($availableOrganizations->isEmpty())
+                            <option value="">No dioceses available</option>
                         @else
-                            <option value="">Select Department</option>
-                            @foreach ($availableDepartments as $dept)
-                                <option value="{{ $dept->id }}" @if (old('form.department_id') == $dept->id) selected @endif>
-                                    {{ $dept->name }}</option>
+                            <option value="">Select Diocese</option>
+                            @foreach ($availableOrganizations as $diocese)
+                                <option value="{{ $diocese->id }}" @if (old('form.organization_id') == $diocese->id) selected @endif>
+                                    {{ $diocese->display_name }}</option>
                             @endforeach
                         @endif
                     </select>
-                    @error('form.department_id')
+                    @error('form.organization_id')
                         <span class="text-error text-xs">{{ $message }}</span>
                     @enderror
-                </div>
-                <div>
-                    <label class="block text-gray-600 font-medium mb-1 text-sm">Role Title*</label>
-                    <input type="text" wire:model="form.role_title" class="input input-bordered input-sm w-full"
-                        placeholder="Role Title" required oninvalid="this.setCustomValidity('Role title is required')"
-                        oninput="this.setCustomValidity('')">
-                    @error('form.role_title')
-                        <span class="text-error text-xs">{{ $message }}</span>
-                    @enderror
+                    <p class="text-gray-500 text-xs mt-1">Your membership becomes active after the diocese approves
+                        your application.</p>
                 </div>
                 <div class="md:col-span-2 flex justify-center gap-4 mt-6">
                     <button type="submit" class="btn btn-success w-full">Submit Registration</button>

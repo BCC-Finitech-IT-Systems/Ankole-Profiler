@@ -107,6 +107,92 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * The id of the linked Person record, or null when the user has no
+     * Person (e.g. seeded system accounts). Users link to persons via
+     * persons.user_id — there is no person_id column on users.
+     */
+    public function personId(): ?int
+    {
+        return $this->person?->id;
+    }
+
+    /**
+     * Active affiliations of the linked person.
+     */
+    public function activeAffiliations()
+    {
+        return $this->hasManyThrough(
+            PersonAffiliation::class,
+            Person::class,
+            'user_id',   // Foreign key on persons
+            'person_id', // Foreign key on person_affiliations
+            'id',
+            'id'
+        )->where('person_affiliations.status', 'active');
+    }
+
+    /**
+     * Ids of organizations this user administers: organizations where the
+     * user holds an admin-capable role AND has an active affiliation.
+     * Super Admin manages all active organizations.
+     */
+    public function managedOrganizationIds(): \Illuminate\Support\Collection
+    {
+        return $this->memoize(__FUNCTION__, function () {
+            if ($this->hasRole('Super Admin')) {
+                return Organization::where('is_active', true)->pluck('id');
+            }
+
+            // Organization-wide scope is reserved for org-level admins;
+            // Department Managers act through managedDepartmentIds().
+            if (!$this->hasRole('Organization Admin')) {
+                return collect();
+            }
+
+            return $this->activeAffiliations()
+                ->pluck('person_affiliations.organization_id')
+                ->unique()
+                ->values();
+        });
+    }
+
+    /**
+     * Ids of departments this user administers, via active affiliations
+     * (for Department Managers) and departments they head directly.
+     */
+    public function managedDepartmentIds(): \Illuminate\Support\Collection
+    {
+        return $this->memoize(__FUNCTION__, function () {
+            if ($this->hasRole('Super Admin')) {
+                return Department::pluck('id');
+            }
+
+            $headed = $this->headedDepartments()->pluck('id');
+
+            if (!$this->hasAnyRole(['Organization Admin', 'Department Manager'])) {
+                return $headed->unique()->values();
+            }
+
+            return $this->activeAffiliations()
+                ->whereNotNull('person_affiliations.department_id')
+                ->pluck('person_affiliations.department_id')
+                ->merge($headed)
+                ->unique()
+                ->values();
+        });
+    }
+
+    /**
+     * Per-request memoization for scope lookups used in policies/loops.
+     */
+    private array $memoized = [];
+
+    private function memoize(string $key, \Closure $resolver)
+    {
+        return $this->memoized[$key] ??= $resolver();
+    }
+
+    /**
      * Get all organizations this user can access
      * Based on their person's affiliations
      */
@@ -120,18 +206,17 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         // Regular users: get organizations from their affiliations
-        if (!$this->person_id) {
-            // No person linked - only their primary organization
-            return collect([$this->organization]);
+        $personId = $this->personId();
+        if (!$personId) {
+            return collect();
         }
 
-        return Organization::whereHas('affiliations', function($query) {
-            $query->where('person_id', $this->person_id)
-                  ->where('status', 'ACTIVE');
-        })
-    ->where('is_active', true)
-        ->orderBy('display_name')
-        ->get();
+        return Organization::whereHas('personAffiliations', function($query) use ($personId) {
+                $query->where('person_id', $personId)->active();
+            })
+            ->where('is_active', true)
+            ->orderBy('display_name')
+            ->get();
     }
 
     /**
@@ -147,8 +232,13 @@ class User extends Authenticatable implements MustVerifyEmail
             return true;
         }
 
+        $personId = $this->personId();
+        if (!$personId) {
+            return false;
+        }
+
         // Check if the user has an active affiliation with the organization
-        return PersonAffiliation::where('person_id', $this->person_id)
+        return PersonAffiliation::where('person_id', $personId)
             ->where('organization_id', $organizationId)
             ->active()
             ->exists();
@@ -159,13 +249,14 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getRoleInOrganization($organizationId)
     {
-        if (!$this->person_id) {
+        $personId = $this->personId();
+        if (!$personId) {
             return null;
         }
 
-        $affiliation = PersonAffiliation::where('person_id', $this->person_id)
+        $affiliation = PersonAffiliation::where('person_id', $personId)
                                        ->where('organization_id', $organizationId)
-                                       ->where('status', 'ACTIVE')
+                                       ->active()
                                        ->with('roleType')
                                        ->first();
 

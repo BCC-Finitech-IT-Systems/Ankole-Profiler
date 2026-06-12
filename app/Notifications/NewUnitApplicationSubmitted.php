@@ -6,7 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Models\PersonAffiliation;
+use App\Models\OrganizationUnitApplication;
 
 class NewUnitApplicationSubmitted extends Notification implements ShouldQueue
 {
@@ -14,7 +14,7 @@ class NewUnitApplicationSubmitted extends Notification implements ShouldQueue
 
     public $application;
 
-    public function __construct(PersonAffiliation $application)
+    public function __construct(OrganizationUnitApplication $application)
     {
         $this->application = $application;
     }
@@ -27,7 +27,7 @@ class NewUnitApplicationSubmitted extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         $person = $this->application->person;
-        $unit = $this->application->organizationUnit;
+        $unit = $this->application->unit;
         $lines = [
             'A new unit membership application has been submitted.',
             'Applicant: ' . ($person->full_name ?? ''),

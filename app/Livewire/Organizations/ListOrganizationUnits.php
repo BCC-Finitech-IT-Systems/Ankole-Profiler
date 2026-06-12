@@ -7,7 +7,6 @@ use App\Models\OrganizationUnit;
 use Illuminate\Support\Facades\Auth;
 use App\Models\PersonAffiliation;
 use App\Exports\UnitMembersExport;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 
@@ -129,63 +128,65 @@ class ListOrganizationUnits extends Component {
 
     public function checkMembership()
     {
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
-        if (!$user || !$this->selectedUnit) {
+        $personId = $user?->personId();
+        if (!$personId || !$this->selectedUnit) {
             $this->isMember = false;
             $this->applicationStatus = null;
             return;
         }
-        $affiliation = PersonAffiliation::where('person_id', $user->id)
+        $affiliation = PersonAffiliation::where('person_id', $personId)
             ->where('organization_id', $this->selectedUnit->organization_id)
-            ->where('domain_record_type', 'unit')
-            ->where('domain_record_id', $this->selectedUnit->id)
+            ->where('organization_unit_id', $this->selectedUnit->id)
             ->first();
         if ($affiliation) {
-            $this->isMember = in_array($affiliation->status, ['active', 'approved']);
+            $this->isMember = $affiliation->status === 'active';
             $this->applicationStatus = $affiliation->status;
         } else {
+            $application = \App\Models\OrganizationUnitApplication::where('unit_id', $this->selectedUnit->id)
+                ->where('person_id', $personId)
+                ->latest()
+                ->first();
             $this->isMember = false;
-            $this->applicationStatus = null;
+            $this->applicationStatus = $application?->status;
         }
     }
 
     public function applyToJoin()
     {
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
         if (!$user || !$this->selectedUnit) return;
 
-        // Check for existing pending application
-        $existing = DB::table('organization_unit_applications')
-            ->where('organization_id', $this->selectedUnit->organization_id)
-            ->where('unit_id', $this->selectedUnit->id)
-            ->where('person_id', $user->id)
-            ->where('status', 'pending')
-            ->first();
-        if ($existing) {
-            $this->applicationStatus = 'pending';
+        $personId = $user->personId();
+        if (!$personId) {
+            session()->flash('error', 'Your account has no person profile yet. Please complete your profile before applying.');
             return;
         }
 
-        // Create new application
-        $appId = DB::table('organization_unit_applications')->insertGetId([
-            'organization_id' => $this->selectedUnit->organization_id,
-            'unit_id' => $this->selectedUnit->id,
-            'person_id' => $user->id,
-            'status' => 'pending',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        $this->applicationStatus = 'pending';
+        $application = \App\Models\OrganizationUnitApplication::firstOrCreate(
+            [
+                'organization_id' => $this->selectedUnit->organization_id,
+                'unit_id' => $this->selectedUnit->id,
+                'person_id' => $personId,
+            ],
+            ['status' => 'pending']
+        );
+        $this->applicationStatus = $application->status;
 
-        // Notify all admins of the organization (optional: you may want to update notification logic to use the new application model)
-        $admins = \App\Models\User::where('organization_id', $this->selectedUnit->organization_id)
-            ->role('Organization Admin')
+        if (!$application->wasRecentlyCreated) {
+            return;
+        }
+
+        // Notify admins who hold an active affiliation with this organization
+        $admins = \App\Models\User::role('Organization Admin')
+            ->whereHas('person.affiliations', function ($q) {
+                $q->where('organization_id', $this->selectedUnit->organization_id)->active();
+            })
             ->get();
         foreach ($admins as $admin) {
-            $admin->notify(new \App\Notifications\NewUnitApplicationSubmitted((object)[
-                'person' => $user->person,
-                'organizationUnit' => $this->selectedUnit,
-            ]));
+            $admin->notify(new \App\Notifications\NewUnitApplicationSubmitted($application));
         }
     }
 

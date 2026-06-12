@@ -41,6 +41,25 @@ class PersonAffiliation extends Model
     {
         parent::boot();
 
+        // One active membership per (person, unit). The DB cannot enforce
+        // this (MariaDB forbids generated columns over the FK-actioned
+        // organization_unit_id), so the rule lives here.
+        static::saving(function ($affiliation) {
+            if ($affiliation->status !== 'active' || !$affiliation->organization_unit_id) {
+                return;
+            }
+
+            $duplicate = self::where('person_id', $affiliation->person_id)
+                ->where('organization_unit_id', $affiliation->organization_unit_id)
+                ->where('status', 'active')
+                ->when($affiliation->exists, fn ($q) => $q->where('id', '!=', $affiliation->id))
+                ->exists();
+
+            if ($duplicate) {
+                throw new \DomainException('Person already has an active affiliation with this unit.');
+            }
+        });
+
         static::creating(function ($affiliation) {
             if (empty($affiliation->affiliation_id)) {
                 $maxAttempts = 5;

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Permission\Models\Permission;
@@ -22,6 +23,11 @@ class RoleManager extends Component
     public $guardName = 'web';
     public $description = '';
     public $selectedPermissions = [];
+
+    public function mount(): void
+    {
+        Gate::authorize('manage-roles');
+    }
 
     protected $rules = [
         'name' => 'required|string|max:255|unique:roles,name',
@@ -97,6 +103,7 @@ class RoleManager extends Component
 
     public function createRole()
     {
+        Gate::authorize('manage-roles');
         $this->validate();
 
         Role::create([
@@ -113,6 +120,7 @@ class RoleManager extends Component
 
     public function updateRole()
     {
+        Gate::authorize('manage-roles');
         $this->validate([
             'name' => 'required|string|max:255|unique:roles,name,' . $this->roleId,
             'guardName' => 'required|string|max:255',
@@ -134,6 +142,7 @@ class RoleManager extends Component
 
     public function updatePermissions()
     {
+        Gate::authorize('manage-roles');
         $role = Role::findOrFail($this->roleId);
         $permissions = Permission::whereIn('id', $this->selectedPermissions)->get();
 
@@ -147,6 +156,7 @@ class RoleManager extends Component
 
     public function deleteRole()
     {
+        Gate::authorize('manage-roles');
         $role = Role::findOrFail($this->roleId);
 
         // Check if role is assigned to any users

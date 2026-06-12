@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\RoleType;
@@ -18,6 +19,14 @@ class RoleTypeManager extends Component
     public $search = '';
     public $activeFilter = 'all';
     public $showCreateModal = false;
+
+    // Mount-level guard — route middleware covers GET; this covers Livewire POSTs.
+    public function mount(): void
+    {
+        Gate::authorize('manage-role-types');
+    }
+
+
     public $showEditModal = false;
     public $showDeleteModal = false;
     public $showPermissionsModal = false;

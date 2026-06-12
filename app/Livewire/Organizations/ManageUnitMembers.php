@@ -5,10 +5,13 @@ namespace App\Livewire\Organizations;
 use App\Models\OrganizationUnit;
 use App\Models\Person;
 use App\Models\PersonAffiliation;
+use App\Models\RoleType;
 use App\Models\UnitPersonRole;
 use App\Models\User;
+use App\Services\UnitRoleAssigner;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
 class ManageUnitMembers extends Component
@@ -21,7 +24,7 @@ class ManageUnitMembers extends Component
     public string $personSearch = '';
     public ?int $selectedPersonId = null;
     public string $selectedPersonName = '';
-    public string $newRole = 'member';
+    public ?int $newRoleTypeId = null;
     public bool $newCanView = true;
     public bool $newCanEdit = false;
     public bool $newCanApprove = false;
@@ -32,27 +35,23 @@ class ManageUnitMembers extends Component
     // Search results for person picker
     public array $personResults = [];
 
-    public array $roleOptions = [
-        'member'    => 'Member',
-        'leader'    => 'Leader',
-        'secretary' => 'Secretary',
-        'treasurer' => 'Treasurer',
-        'youth'     => 'Youth Coordinator',
-        'custom'    => 'Other',
-    ];
-
     protected $listeners = ['unitSelected' => 'loadUnit'];
 
     public function mount(int $unitId): void
     {
         $this->unitId = $unitId;
         $this->unit = OrganizationUnit::find($unitId);
+
+        Gate::authorize('manage', $this->unit);
     }
 
     public function loadUnit(int $unitId): void
     {
         $this->unitId = $unitId;
         $this->unit = OrganizationUnit::find($unitId);
+
+        Gate::authorize('manage', $this->unit);
+
         $this->resetAddForm();
     }
 
@@ -86,24 +85,33 @@ class ManageUnitMembers extends Component
     {
         /** @var User|null $authUser */
         $authUser = Auth::user();
-        abort_unless($authUser?->can('edit-units'), 403);
+        Gate::authorize('manage', $this->unit);
+
+        $availableIds = $this->availableRoleTypes()->pluck('id')->toArray();
 
         $this->validate([
             'selectedPersonId' => 'required|exists:persons,id',
-            'newRole'          => 'required|string|max:50',
+            'newRoleTypeId'    => ['required', 'integer', 'in:' . implode(',', $availableIds)],
             'newCanView'       => 'boolean',
             'newCanEdit'       => 'boolean',
             'newCanApprove'    => 'boolean',
         ]);
 
-        DB::transaction(function () use ($authUser) {
+        $roleType = RoleType::findOrFail($this->newRoleTypeId);
+
+        // Defense in depth: confirm the chosen RoleType belongs to this unit's department.
+        $assigner = new UnitRoleAssigner();
+        abort_unless($assigner->isValidForUnit($roleType, $this->unit), 422);
+
+        DB::transaction(function () use ($authUser, $roleType) {
             UnitPersonRole::firstOrCreate(
                 [
-                    'unit_id'   => $this->unitId,
-                    'person_id' => $this->selectedPersonId,
-                    'role'      => $this->newRole,
+                    'unit_id'      => $this->unitId,
+                    'person_id'    => $this->selectedPersonId,
+                    'role_type_id' => $roleType->id,
                 ],
                 [
+                    'role'        => strtolower($roleType->code),
                     'can_view'    => $this->newCanView,
                     'can_edit'    => $this->newCanEdit,
                     'can_approve' => $this->newCanApprove,
@@ -112,7 +120,6 @@ class ManageUnitMembers extends Component
                 ]
             );
 
-            // Ensure a PersonAffiliation exists for this unit
             PersonAffiliation::firstOrCreate(
                 [
                     'person_id'            => $this->selectedPersonId,
@@ -120,14 +127,14 @@ class ManageUnitMembers extends Component
                     'organization_unit_id' => $this->unitId,
                 ],
                 [
-                    'role_type'   => strtoupper($this->newRole),
+                    'role_type'   => $roleType->code,
                     'status'      => 'active',
                     'start_date'  => now(),
-                    'permissions' => array_filter([
+                    'permissions' => array_values(array_filter([
                         $this->newCanView    ? 'view'    : null,
                         $this->newCanEdit    ? 'edit'    : null,
                         $this->newCanApprove ? 'approve' : null,
-                    ]),
+                    ])),
                     'created_by' => $authUser->id,
                 ]
             );
@@ -151,7 +158,7 @@ class ManageUnitMembers extends Component
     {
         /** @var User|null $authUser */
         $authUser = Auth::user();
-        abort_unless($authUser?->can('edit-units'), 403);
+        Gate::authorize('manage', $this->unit);
 
         $role = UnitPersonRole::find($this->confirmRevokeId);
         if ($role && $role->unit_id === $this->unitId) {
@@ -167,14 +174,29 @@ class ManageUnitMembers extends Component
 
     public function updatePermissions(int $roleId, string $permission, bool $value): void
     {
-        /** @var User|null $authUser */
-        $authUser = Auth::user();
-        abort_unless($authUser?->can('edit-units'), 403);
+        Gate::authorize('manage', $this->unit);
 
         $role = UnitPersonRole::find($roleId);
         if ($role && $role->unit_id === $this->unitId) {
             $role->update(["can_{$permission}" => $value]);
         }
+    }
+
+    private function availableRoleTypes()
+    {
+        if (!$this->unit) {
+            return collect();
+        }
+
+        $query = RoleType::active();
+
+        if ($this->unit->department_id) {
+            $query->forDepartment($this->unit->department_id);
+        } else {
+            $query->whereNull('department_id');
+        }
+
+        return $query->orderBy('name')->get();
     }
 
     private function resetAddForm(): void
@@ -183,7 +205,7 @@ class ManageUnitMembers extends Component
         $this->personSearch     = '';
         $this->selectedPersonId = null;
         $this->selectedPersonName = '';
-        $this->newRole          = 'member';
+        $this->newRoleTypeId    = null;
         $this->newCanView       = true;
         $this->newCanEdit       = false;
         $this->newCanApprove    = false;
@@ -192,14 +214,15 @@ class ManageUnitMembers extends Component
 
     public function render()
     {
-        $members = UnitPersonRole::with('person')
+        $members = UnitPersonRole::with(['person', 'roleType'])
             ->where('unit_id', $this->unitId)
             ->whereNull('revoked_at')
             ->orderBy('role')
             ->get();
 
         return view('livewire.organizations.manage-unit-members', [
-            'members' => $members,
+            'members'           => $members,
+            'availableRoleTypes' => $this->availableRoleTypes(),
         ]);
     }
 }

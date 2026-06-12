@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use App\Models\AllowedEmailDomain;
-use App\Models\Department;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -38,17 +37,15 @@ class PersonSelfRegistrationComponent extends Component
         'country' => 'Uganda',
         'district' => '',
         'city' => '',
-        'role_type' => 'STAFF',
-        'role_title' => '',
-        'department_id' => '',
+        'organization_id' => '',
     ];
 
     // Documents step removed
-    public $availableDepartments = null;
+    public $availableOrganizations = null;
 
     public function fillSampleData(): void
     {
-        $dept = \App\Models\Department::where('is_active', true)->first();
+        $diocese = Organization::where('is_active', true)->where('is_super', false)->first();
         $this->form = [
             'given_name'    => 'Grace',
             'middle_name'   => 'Atuheire',
@@ -61,20 +58,21 @@ class PersonSelfRegistrationComponent extends Component
             'country'       => 'Uganda',
             'district'      => 'Mbarara',
             'city'          => 'Mbarara',
-            'role_type'     => 'STAFF',
-            'role_title'    => 'Sunday School Teacher',
-            'department_id' => $dept?->id ?? '',
+            'organization_id' => $diocese?->id ?? '',
         ];
     }
 
     public function mount()
     {
-        $this->availableDepartments = collect(Department::where('is_active', true)->get());
+        // Applicants choose the diocese they belong to; the super
+        // organization is never a registration target.
+        $this->availableOrganizations = Organization::where('is_active', true)
+            ->where('is_super', false)
+            ->orderBy('display_name')
+            ->get();
 
-        Log::debug('Available departments during mount', ['departments' => $this->availableDepartments]);
-
-        if ($this->availableDepartments->isEmpty()) {
-            session()->flash('error', 'No departments are available for registration.');
+        if ($this->availableOrganizations->isEmpty()) {
+            session()->flash('error', 'No dioceses are available for registration.');
         }
     }
 
@@ -107,12 +105,13 @@ class PersonSelfRegistrationComponent extends Component
                 'form.country' => 'required|string',
                 'form.district' => 'required|string',
                 'form.city' => 'required|string',
-                'form.role_title' => 'required|string',
-                'form.department_id' => 'required|exists:departments,id',
+                'form.organization_id' => [
+                    'required',
+                    Rule::exists('organizations', 'id')
+                        ->where('is_active', true)
+                        ->where('is_super', false),
+                ],
             ]);
-
-        // Debug log for organization_id
-        Log::debug('Department ID during registration', ['department_id' => $this->form['department_id']]);
 
         // Check if email exists and is not verified
         $existingUser = User::where('email', $this->form['email'])->first();
@@ -128,7 +127,6 @@ class PersonSelfRegistrationComponent extends Component
         }
 
         $temporaryPassword = Str::random(10);
-        $superOrganization = Organization::where('is_super', true)->firstOrFail();
         $user = null;
         DB::beginTransaction();
         try {
@@ -155,7 +153,7 @@ class PersonSelfRegistrationComponent extends Component
                 'address' => $this->form['address'],
                 'city' => $this->form['city'],
                 'user_id' => $user->id,
-                'classification' => ['STAFF'],
+                'classification' => ['MEMBER'],
                 'created_by' => $user->id,
             ]);
             Log::info('Person created', ['person_id' => $person->id]);
@@ -163,28 +161,26 @@ class PersonSelfRegistrationComponent extends Component
             $this->createContactInformation($person);
             Log::info('Contact information created', ['person_id' => $person->id]);
 
+            // Membership application: stays pending (no role, no start date)
+            // until a diocese admin approves it, which is also when the
+            // 'Person' role is assigned.
             PersonAffiliation::create([
                 'person_id' => $person->id,
-                'organization_id' => $superOrganization->id,
-                'department_id' => $this->form['department_id'],
-                'role_type' => $this->form['role_type'] ?? 'STAFF',
-                'role_title' => $this->form['role_title'] ?? 'Department Admin',
-                'start_date' => now(),
-                'status' => 'active',
+                'organization_id' => $this->form['organization_id'],
+                'role_type' => 'MEMBER',
+                'status' => 'pending',
                 'created_by' => $user->id,
                 'user_id' => $user->id, // Capture user_id in PersonAffiliation
             ]);
-            Log::info('Person affiliation created', ['person_id' => $person->id]);
-
-            $user->assignRole('Person');
-            Log::info('Role assigned', ['user_id' => $user->id]);
-
-            // Send custom email verification notification with plain text temporary password
-            $user->sendEmailVerificationNotification($temporaryPassword);
-            Log::info('Custom verification notification sent with temporary password', ['user_id' => $user->id]);
+            Log::info('Pending membership application created', ['person_id' => $person->id]);
 
             DB::commit();
             Log::info('DB commit successful', ['user_id' => $user->id, 'person_id' => $person->id]);
+
+            // Notifications sent after commit so they never fire for a rolled-back registration.
+            $this->notifyOrganizationAdmins($person);
+            $user->sendEmailVerificationNotification($temporaryPassword);
+            Log::info('Custom verification notification sent with temporary password', ['user_id' => $user->id]);
 
             // Only send welcome email after user verifies their email (handled elsewhere, not here)
 
@@ -205,6 +201,23 @@ class PersonSelfRegistrationComponent extends Component
             session()->flash('error_reason', $e->getMessage()); // Keep technical error for debugging
             Log::error('Registration DB error: ' . $e->getMessage(), ['exception' => $e]);
             return;
+        }
+    }
+
+    private function notifyOrganizationAdmins(Person $person): void
+    {
+        try {
+            $admins = User::role('Organization Admin')
+                ->whereHas('person.affiliations', function ($q) {
+                    $q->where('organization_id', $this->form['organization_id'])->active();
+                })
+                ->get();
+
+            foreach ($admins as $admin) {
+                $admin->notify(new \App\Notifications\NewMembershipApplicationSubmitted($person));
+            }
+        } catch (\Exception $e) {
+            Log::warning('Could not notify org admins of new registration: ' . $e->getMessage());
         }
     }
 

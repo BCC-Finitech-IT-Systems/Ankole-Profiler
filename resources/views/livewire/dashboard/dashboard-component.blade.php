@@ -1,4 +1,17 @@
 <div class="p-8" style="background-color: #eeeff2;">
+    @if ($membershipPending)
+        <div class="alert alert-info mb-8">
+            <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+                <h3 class="font-semibold">Membership pending approval</h3>
+                <p class="text-sm">Your application is being reviewed by the diocese. You will receive an email once a
+                    decision has been made.</p>
+            </div>
+        </div>
+    @endif
     @role(['Person', 'Organization Admin'])
     {{-- Person Dashboard: Quick Actions --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 w-full">
