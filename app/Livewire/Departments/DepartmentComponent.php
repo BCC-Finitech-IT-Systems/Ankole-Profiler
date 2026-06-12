@@ -331,6 +331,16 @@ class DepartmentComponent extends Component
                     ->unique()
                     ->values();
 
+                // Category matching must stay inside the departments' own
+                // organization trees; names alone would match organizations
+                // from unrelated trees.
+                $orgTreeIds = $orgAdminDepartments
+                    ->pluck('organization')
+                    ->filter()
+                    ->flatMap(fn($org) => $org->subtreeIds())
+                    ->unique()
+                    ->values();
+
                 // Find organizations whose category matches any sub-category name (case-insensitive)
                 if ($subCategoryNames->isNotEmpty()) {
                     $lowerNames = $subCategoryNames->map(fn($n) => strtolower(trim($n)))->all();
@@ -339,6 +349,7 @@ class DepartmentComponent extends Component
                             "LOWER(TRIM(category)) IN ($placeholders)", $lowerNames
                         )
                         ->where('is_super', false)
+                        ->whereIn('id', $orgTreeIds)
                         ->orderBy('category')
                         ->orderBy('legal_name');
                     if ($this->projectDeptSearch !== '') {

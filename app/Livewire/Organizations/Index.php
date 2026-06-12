@@ -86,6 +86,13 @@ class Index extends Component {
     public function getOrganizationsProperty()
     {
         return Organization::query()
+            ->with('parentOrganization')
+            ->withCount([
+                'departments',
+                'organizationUnits',
+                'sites',
+                'personAffiliations as active_members_count' => fn ($q) => $q->where('status', 'active'),
+            ])
             ->when($this->search, function ($query) {
                 $query->search($this->search);
             })

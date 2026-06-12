@@ -5,7 +5,7 @@
     {{-- Page header --}}
     <div class="mb-6 flex items-start justify-between gap-4">
         <div>
-            <p class="text-xs text-gray-400 uppercase tracking-widest font-medium mb-0.5">Projects Management</p>
+            <p class="text-xs text-gray-400 uppercase tracking-widest font-medium mb-0.5">Organizations Mgt</p>
             <h1 class="text-2xl font-bold text-gray-800">Create Organization Unit</h1>
             <p class="text-sm text-gray-400 mt-1">Register a new unit within the organizational hierarchy.</p>
         </div>

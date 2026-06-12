@@ -175,6 +175,32 @@ class Organization extends Model
     }
 
     /**
+     * Ids of this organization and all its descendants (dioceses, their
+     * member organizations, etc.). Used to keep aggregation queries inside
+     * one organization tree. Cycle-safe.
+     */
+    public function subtreeIds(): \Illuminate\Support\Collection
+    {
+        $ids = collect([$this->id]);
+        $frontier = [$this->id];
+
+        while (!empty($frontier)) {
+            $children = static::whereIn('parent_organization_id', $frontier)
+                ->pluck('id')
+                ->diff($ids);
+
+            if ($children->isEmpty()) {
+                break;
+            }
+
+            $ids = $ids->merge($children);
+            $frontier = $children->all();
+        }
+
+        return $ids->values();
+    }
+
+    /**
      * Projects through departments
      */
     public function projects()

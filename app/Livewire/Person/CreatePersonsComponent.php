@@ -78,16 +78,11 @@ class CreatePersonsComponent extends Component
                 $department = \App\Models\Department::with('subCategories')->find($affiliation->department_id);
                 $this->userDepartmentName = $department?->name;
 
-                // Get sub-category names for this department
-                $subCategoryNames = $department
-                    ? $department->subCategories->pluck('name')->map(fn($n) => strtolower(trim($n)))->filter()->values()
-                    : collect();
+                $allowedIds = $this->orgAdminAllowedOrganizationIds();
 
-                if ($subCategoryNames->isNotEmpty()) {
-                    // Load organizations whose category matches the department's sub-categories
+                if ($allowedIds->isNotEmpty()) {
                     $this->availableOrganizations = Organization::query()
-                        ->where('is_super', false)
-                        ->whereRaw('LOWER(TRIM(category)) IN (' . $subCategoryNames->map(fn() => '?')->join(',') . ')', $subCategoryNames->all())
+                        ->whereIn('id', $allowedIds)
                         ->orderBy('legal_name')
                         ->get()
                         ->toArray();
@@ -109,6 +104,51 @@ class CreatePersonsComponent extends Component
                 $this->form['organization_id'] = $this->availableOrganizations[0]['id'];
             }
         }
+    }
+
+    /**
+     * Organizations an Org Admin may create people under: organizations
+     * whose category matches their department's sub-categories, inside the
+     * department's own organization tree. Used for both the dropdown and
+     * the submit-side check, so a tampered organization_id cannot widen
+     * the scope.
+     */
+    private function orgAdminAllowedOrganizationIds(): \Illuminate\Support\Collection
+    {
+        $authUser = Auth::user();
+
+        if (!$authUser || !$authUser->person) {
+            return collect();
+        }
+
+        $affiliation = PersonAffiliation::where('person_id', $authUser->person->id)
+            ->where('status', 'active')
+            ->whereNotNull('department_id')
+            ->first();
+
+        $department = $affiliation
+            ? \App\Models\Department::with(['subCategories', 'organization'])->find($affiliation->department_id)
+            : null;
+
+        if (!$department) {
+            return collect();
+        }
+
+        $subCategoryNames = $department->subCategories
+            ->pluck('name')
+            ->map(fn($n) => strtolower(trim($n)))
+            ->filter()
+            ->values();
+
+        if ($subCategoryNames->isEmpty()) {
+            return collect();
+        }
+
+        return Organization::query()
+            ->where('is_super', false)
+            ->whereIn('id', $department->organization?->subtreeIds() ?? collect())
+            ->whereRaw('LOWER(TRIM(category)) IN (' . $subCategoryNames->map(fn() => '?')->join(',') . ')', $subCategoryNames->all())
+            ->pluck('id');
     }
 
     /**
@@ -228,9 +268,13 @@ class CreatePersonsComponent extends Component
             $authUser = Auth::user();
 
             if ($this->isOrgAdmin) {
-                // Org Admin: validate the selected organization is in their department scope
-                if (empty($this->form['organization_id']) || !\App\Models\Organization::find($this->form['organization_id'])) {
-                    session()->flash('error', 'Please select a valid project (organization).');
+                // Org Admin: the selected organization must be inside their
+                // department/sub-category scope. Recomputed server-side —
+                // public Livewire properties can be set from the client, so
+                // the dropdown contents cannot be trusted here.
+                if (empty($this->form['organization_id'])
+                    || !$this->orgAdminAllowedOrganizationIds()->contains((int) $this->form['organization_id'])) {
+                    session()->flash('error', 'Please select an organization within your department scope.');
                     DB::rollBack();
                     return;
                 }
@@ -265,10 +309,11 @@ class CreatePersonsComponent extends Component
                 : ['STAFF'];
 
             // Create Person with user_id
+            // No organization_id here: the persons column was dropped and
+            // org membership lives on the PersonAffiliation created below.
             $person = Person::create([
                 'person_id' => \App\Helpers\IdGenerator::generatePersonId(),
                 'global_identifier' => \App\Helpers\IdGenerator::generateGlobalIdentifier(),
-                'organization_id' => $selectedOrgId,
                 'given_name' => $this->form['given_name'],
                 'middle_name' => $this->form['middle_name'],
                 'family_name' => $this->form['family_name'],

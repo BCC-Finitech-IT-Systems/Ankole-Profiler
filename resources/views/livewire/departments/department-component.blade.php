@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex items-center justify-between w-full gap-4">
             <div class="min-w-0">
-                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects Mgt</div>
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Organizations Mgt</div>
                 <h1 class="text-base font-semibold text-gray-800 truncate">Departments</h1>
             </div>
         </div>
@@ -94,12 +94,12 @@
                 @endif
             </div>
 
-            {{-- Project Departments: Organizations grouped by sub-category --}}
+            {{-- Matching Organizations: grouped by department sub-category --}}
             <div class="bg-base-100 border border-primary/30 rounded-lg p-4">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="font-semibold text-base-content mb-3 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                        My Project Departments
+                        Matching Organizations
                     </h3>
                     <div class="w-64">
                         <div class="flex gap-2">

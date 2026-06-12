@@ -72,6 +72,15 @@ class ProjectController extends Controller
         );
     }
 
+    public function persons(Project $project, Request $request)
+    {
+        $this->authorizeProjectView($request->user(), $project);
+
+        $persons = $project->persons;
+
+        return view('projects.persons', compact('project', 'persons'));
+    }
+
     public function update(UpdateProjectRequest $request, Project $project)
     {
         $user = $request->user();

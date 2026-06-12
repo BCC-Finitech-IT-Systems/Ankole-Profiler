@@ -277,12 +277,27 @@ class DepartmentsDashboard extends Component
             'projectCode'            => 'nullable|string|max:50',
             'projectDescription'     => 'nullable|string',
             'projectDepartmentId'    => 'required|exists:departments,id',
-            'projectOrganizationUnitId' => 'nullable|exists:organization_units,id',
+            // The unit must belong to the selected department, not merely
+            // exist — otherwise a crafted request can attach the project to
+            // a unit from another department/organization.
+            'projectOrganizationUnitId' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('organization_units', 'id')
+                    ->where('department_id', $this->projectDepartmentId),
+            ],
             'projectClientPersonId'  => 'nullable|exists:persons,id',
             'projectExternalClientName' => 'nullable|string|max:255',
             'projectStartsOn'        => 'nullable|date',
             'projectEndsOn'          => 'nullable|date|after_or_equal:projectStartsOn',
         ]);
+
+        // Non-super users may only write projects in departments they manage.
+        if (!$user->hasRole('Super Admin')) {
+            abort_unless(
+                $user->managedDepartmentIds()->contains((int) $this->projectDepartmentId),
+                403
+            );
+        }
 
         $data = [
             'name'                  => $this->projectName,
@@ -299,6 +314,15 @@ class DepartmentsDashboard extends Component
 
         if ($this->editingProjectId) {
             $project = Project::find($this->editingProjectId);
+
+            // The project being edited must also be inside the user's scope.
+            if ($project && !$user->hasRole('Super Admin')) {
+                abort_unless(
+                    $user->managedDepartmentIds()->contains($project->department_id),
+                    403
+                );
+            }
+
             $project?->update($data);
         } else {
             Project::create($data);
@@ -400,6 +424,11 @@ class DepartmentsDashboard extends Component
 
         $hasSubCategories = $subCategoryNames->isNotEmpty();
 
+        // Sub-category matching must stay inside the department's own
+        // organization tree; category names alone would match organizations
+        // from unrelated dioceses.
+        $orgTreeIds = $selectedDepartment?->organization?->subtreeIds() ?? collect();
+
         // Find organizations whose category matches any sub-category of the selected department
         $departmentOrganizations = collect();
 
@@ -407,6 +436,7 @@ class DepartmentsDashboard extends Component
             $departmentOrganizations = Organization::query()
                 ->select(['id', 'legal_name', 'display_name', 'category'])
                 ->where('is_super', false)
+                ->whereIn('id', $orgTreeIds)
                 ->whereRaw('LOWER(TRIM(category)) IN (' . $subCategoryNames->map(fn() => '?')->join(',') . ')', $subCategoryNames->all())
                 ->orderBy('legal_name')
                 ->get();
@@ -462,10 +492,11 @@ class DepartmentsDashboard extends Component
             ? ($hasSubCategories
                 ? \App\Models\Project::query()
                     ->with($projectEagerLoad)
-                    ->whereHas('department', function ($query) use ($subCategoryNames) {
+                    ->whereHas('department', function ($query) use ($subCategoryNames, $orgTreeIds) {
                         $query->where('id', $this->activeDepartmentId)
-                            ->orWhereHas('organization', function ($orgQuery) use ($subCategoryNames) {
-                                $orgQuery->whereRaw('LOWER(TRIM(category)) IN (' . $subCategoryNames->map(fn() => '?')->join(',') . ')', $subCategoryNames->all());
+                            ->orWhereHas('organization', function ($orgQuery) use ($subCategoryNames, $orgTreeIds) {
+                                $orgQuery->whereIn('id', $orgTreeIds)
+                                    ->whereRaw('LOWER(TRIM(category)) IN (' . $subCategoryNames->map(fn() => '?')->join(',') . ')', $subCategoryNames->all());
                             });
                     })
                     ->orderBy('name')

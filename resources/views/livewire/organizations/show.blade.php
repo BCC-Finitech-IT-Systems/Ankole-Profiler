@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex items-center justify-between w-full gap-4">
             <div class="min-w-0">
-                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects Mgt</div>
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Organizations Mgt</div>
                 <h1 class="text-base font-semibold text-gray-800 truncate">{{ $organization->legal_name ?? $organization->name }}</h1>
             </div>
             <div class="flex items-center gap-2">
@@ -11,14 +11,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    Back to Projects List
+                    Back to Organizations
                 </a>
                 <button class="btn btn-sm gap-1.5" style="background:#982B55;color:#fff;border-color:#982B55;" disabled>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    Edit Project
+                    Edit Organization
                 </button>
             </div>
         </div>
@@ -672,6 +672,180 @@
                         </div>
                     </div>
                 @endif
+
+                {{-- ============ Structure & Components ============ --}}
+                <div class="mt-8 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-gray-900">Structure &amp; Components</h2>
+                    </div>
+
+                    {{-- Hierarchy + membership summary --}}
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl shadow border border-gray-100 p-6">
+                            <h3 class="text-xl font-bold text-gray-900 mb-4">Hierarchy</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-500 mb-1">Diocese / Parent</label>
+                                    @if ($organization->parentOrganization)
+                                        <a href="{{ route('organizations.show', $organization->parentOrganization->id) }}"
+                                            class="text-gray-900 font-medium hover:underline" style="color:#982B55;">
+                                            {{ $organization->parentOrganization->display_name ?? $organization->parentOrganization->legal_name }}
+                                        </a>
+                                    @else
+                                        <p class="text-gray-500 italic">
+                                            {{ $organization->is_super ? 'Top-level (head office)' : 'No parent diocese assigned' }}
+                                        </p>
+                                    @endif
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-500 mb-1">
+                                        Child Organizations ({{ $organization->childOrganizations->count() }})
+                                    </label>
+                                    @forelse ($organization->childOrganizations as $child)
+                                        <div class="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                                            <a href="{{ route('organizations.show', $child->id) }}"
+                                                class="text-sm text-gray-800 hover:underline">
+                                                {{ $child->display_name ?? $child->legal_name }}
+                                            </a>
+                                            <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{{ $child->category }}</span>
+                                        </div>
+                                    @empty
+                                        <p class="text-sm text-gray-400 italic">None</p>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow border border-gray-100 p-6">
+                            <h3 class="text-xl font-bold text-gray-900 mb-4">Membership</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="rounded-xl bg-green-50 p-4">
+                                    <div class="text-2xl font-bold text-green-700">{{ $membershipSummary['active'] ?? 0 }}</div>
+                                    <div class="text-xs uppercase tracking-wide text-green-600">Active members</div>
+                                </div>
+                                <div class="rounded-xl bg-amber-50 p-4">
+                                    <div class="text-2xl font-bold text-amber-700">{{ $membershipSummary['pending'] ?? 0 }}</div>
+                                    <div class="text-xs uppercase tracking-wide text-amber-600">Pending applications</div>
+                                </div>
+                                <div class="rounded-xl bg-red-50 p-4">
+                                    <div class="text-2xl font-bold text-red-700">{{ $membershipSummary['rejected'] ?? 0 }}</div>
+                                    <div class="text-xs uppercase tracking-wide text-red-600">Rejected</div>
+                                </div>
+                                <div class="rounded-xl bg-gray-50 p-4">
+                                    <div class="text-2xl font-bold text-gray-700">{{ $membershipSummary['inactive'] ?? 0 }}</div>
+                                    <div class="text-xs uppercase tracking-wide text-gray-500">Inactive / past</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Departments --}}
+                    <div class="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100">
+                            <h3 class="text-xl font-bold text-gray-900">Departments ({{ $departments->count() }})</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-medium">Department</th>
+                                        <th class="px-4 py-3 text-left font-medium">Code</th>
+                                        <th class="px-4 py-3 text-left font-medium">Units</th>
+                                        <th class="px-4 py-3 text-left font-medium">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @forelse ($departments as $department)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-medium text-gray-800">{{ $department->name }}</td>
+                                            <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $department->code ?? '—' }}</td>
+                                            <td class="px-4 py-3 text-gray-600">{{ $department->units_count }}</td>
+                                            <td class="px-4 py-3">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $department->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
+                                                    {{ $department->is_active ? 'Active' : 'Inactive' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="4" class="text-center py-8 text-gray-400">No departments.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- Units --}}
+                    <div class="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100">
+                            <h3 class="text-xl font-bold text-gray-900">Organization Units ({{ $units->count() }})</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-medium">Unit</th>
+                                        <th class="px-4 py-3 text-left font-medium">Code</th>
+                                        <th class="px-4 py-3 text-left font-medium">Department</th>
+                                        <th class="px-4 py-3 text-left font-medium">Type</th>
+                                        <th class="px-4 py-3 text-left font-medium">Active Members</th>
+                                        <th class="px-4 py-3 text-left font-medium">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @forelse ($units as $unit)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-medium text-gray-800">{{ $unit->name }}</td>
+                                            <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $unit->code ?? '—' }}</td>
+                                            <td class="px-4 py-3 text-gray-600">{{ $unit->department->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 text-gray-600">{{ $unit->unit_type ?? '—' }}</td>
+                                            <td class="px-4 py-3 text-gray-600">{{ $unit->active_members_count }}</td>
+                                            <td class="px-4 py-3">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $unit->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
+                                                    {{ $unit->is_active ? 'Active' : 'Inactive' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="6" class="text-center py-8 text-gray-400">No units.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- Sites --}}
+                    @if ($organization->sites->isNotEmpty())
+                        <div class="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100">
+                                <h3 class="text-xl font-bold text-gray-900">Sites ({{ $organization->sites->count() }})</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left font-medium">Site</th>
+                                            <th class="px-4 py-3 text-left font-medium">City</th>
+                                            <th class="px-4 py-3 text-left font-medium">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        @foreach ($organization->sites as $site)
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-3 font-medium text-gray-800">{{ $site->name ?? $site->site_name ?? '—' }}</td>
+                                                <td class="px-4 py-3 text-gray-600">{{ $site->city ?? '—' }}</td>
+                                                <td class="px-4 py-3">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ ($site->is_active ?? true) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
+                                                        {{ ($site->is_active ?? true) ? 'Active' : 'Inactive' }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>

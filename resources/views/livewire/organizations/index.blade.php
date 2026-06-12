@@ -2,8 +2,8 @@
     <x-slot name="header">
         <div class="flex items-center justify-between w-full gap-3">
             <div class="min-w-0">
-                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects Mgt</div>
-                <h1 class="text-base font-semibold text-gray-800 truncate">All Projects</h1>
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Organizations Mgt</div>
+                <h1 class="text-base font-semibold text-gray-800 truncate">All Organizations</h1>
             </div>
             @can('create-units')
                 <div class="flex items-center gap-2 flex-shrink-0">
@@ -18,7 +18,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        Add Project
+                        Add Organization
                     </button>
                 </div>
             @endcan
@@ -108,7 +108,7 @@
                                     class="px-1.5 py-0.5 text-left font-medium text-gray-500 uppercase tracking-wider w-80">
                                     <button wire:click="sortBy('legal_name')"
                                         class="flex items-center gap-1 font-medium text-gray-500 hover:text-gray-700 uppercase text-[10px]">
-                                        PROJECTS
+                                        ORGANIZATIONS
                                         @if ($sortField === 'legal_name')
                                             <svg class="w-2.5 h-2.5 {{ $sortDirection === 'asc' ? 'rotate-0' : 'rotate-180' }}"
                                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,6 +132,9 @@
                                         @endif
                                     </button>
                                 </th>
+                                <th
+                                    class="px-1.5 py-0.5 text-left font-small text-gray-500 uppercase tracking-wider w-44">
+                                    DIOCESE / STRUCTURE</th>
                                 <th
                                     class="px-1.5 py-0.5 text-left font-small text-gray-500 uppercase tracking-wider w-40">
                                     LOCATION</th>
@@ -207,6 +210,21 @@
                                             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                             {{ $organization->category }}
                                         </span>
+                                    </td>
+                                    <td class="px-1.5 py-1">
+                                        <div class="text-xs text-gray-700 font-medium">
+                                            {{ $organization->parentOrganization?->display_name ?? ($organization->is_super ? 'Head office' : '—') }}
+                                        </div>
+                                        <div class="flex flex-wrap gap-1 mt-1">
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600"
+                                                title="Departments">{{ $organization->departments_count }} depts</span>
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600"
+                                                title="Units">{{ $organization->organization_units_count }} units</span>
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600"
+                                                title="Sites">{{ $organization->sites_count }} sites</span>
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-green-50 text-green-700"
+                                                title="Active members">{{ $organization->active_members_count }} members</span>
+                                        </div>
                                     </td>
                                     <td class="px-1.5 py-1">
                                         <div class="text-sm text-gray-900">
@@ -334,7 +352,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-12">
+                                    <td colspan="8" class="text-center py-12">
                                         <div class="flex flex-col items-center gap-4">
                                             <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">

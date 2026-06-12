@@ -2,14 +2,14 @@
     <x-slot name="header">
         <div class="flex items-center justify-between w-full gap-4">
             <div class="min-w-0">
-                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects Mgt</div>
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Organizations Mgt</div>
                 <h1 class="text-base font-semibold text-gray-800 truncate flex items-center gap-2">
-                    Register New Project
+                    Register New Organization
                     <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 rounded-full">
                         Step {{ $currentStep }}/{{ $totalSteps }}:
                         @switch($currentStep)
                             @case(1)
-                                Projects Category{{ $category ? ' — ' . ($categories[$category]['label'] ?? 'Selected') : '' }}
+                                Organization Category{{ $category ? ' — ' . ($categories[$category]['label'] ?? 'Selected') : '' }}
                             @break
                             @case(2)
                                 Basic Information
@@ -36,7 +36,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    Back to Projects
+                    Back to Organizations
                 </a>
             </div>
         </div>
@@ -56,8 +56,8 @@
         <div>
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-1">Import Projects</h3>
-                    <p class="text-gray-600 text-sm">Upload an Excel or CSV file to import Projects in bulk. <a href="{{ route('organizations.template') }}" class="link link-primary underline ml-1" target="_blank">Download template</a></p>
+                    <h3 class="text-lg font-medium text-gray-900 mb-1">Import Organizations</h3>
+                    <p class="text-gray-600 text-sm">Upload an Excel or CSV file to import organizations in bulk. <a href="{{ route('organizations.template') }}" class="link link-primary underline ml-1" target="_blank">Download template</a></p>
                 </div>
                 <form wire:submit.prevent="importOrganizations" class="flex flex-col md:flex-row md:items-center gap-2">
                     <input type="file" wire:model="importFile" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="file-input file-input-bordered file-input-sm" />
@@ -284,7 +284,7 @@
 
                                     <div class="space-y-1">
                                         <label class="mb-1">
-                                            <span class="block text-sm font-medium text-gray-700">Project Code <span
+                                            <span class="block text-sm font-medium text-gray-700">Organization Code <span
                                                     class="text-red-500">*</span></span>
                                         </label>
                                         <input type="text" wire:model="code" class="input input-bordered input-sm w-full"
@@ -296,7 +296,7 @@
 
                                     <div class="space-y-1">
                                         <label class="mb-1">
-                                            <span class="block text-sm font-medium text-gray-700">Project Type</span>
+                                            <span class="block text-sm font-medium text-gray-700">Organization Type</span>
                                         </label>
                                         <select wire:model="organization_type" class="select select-bordered select-sm w-full">
                                             <option value="STANDALONE">Standalone Organization</option>

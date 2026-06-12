@@ -4,7 +4,7 @@
     <x-slot name="header">
         <div class="flex items-center justify-between w-full gap-4">
             <div class="min-w-0">
-                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects Management</div>
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Organizations Mgt</div>
                 <h1 class="text-base font-semibold text-gray-800 truncate">Organization Units</h1>
             </div>
             @can('create-units')

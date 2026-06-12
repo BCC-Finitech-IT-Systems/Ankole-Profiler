@@ -111,11 +111,9 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
     });
 
     Route::prefix('projects')->name('projects.')->group(function () {
-        Route::get('/{project}/persons', function ($projectId) {
-            $project = \App\Models\Project::with('persons')->findOrFail($projectId);
-            $persons = $project->persons;
-            return view('projects.persons', compact('project', 'persons'));
-        })->name('persons')->middleware('can:view-projects');
+        Route::get('/{project}/persons', [ProjectController::class, 'persons'])
+            ->name('persons')
+            ->middleware('can:view-projects');
         Route::get('/', [ProjectController::class, 'index'])
             ->name('index')
             ->middleware('can:view-projects');
