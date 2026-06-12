@@ -7,30 +7,13 @@ use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\PersonsExport;
+use App\Exports\PersonsExportAdvanced;
 
 class PersonSearchController extends Controller
 {
-    public function index()
-    {
-        return view('person-search.index');
-    }
-
     public function index2()
     {
         return view('persons.search');
-    }
-    public function show()
-    {
-        // return view('persons.search');
-    }
-    public function edit()
-    {
-        // return view('persons.search');
-    }
-    public function create()
-    {
-        // return view('persons.search');
     }
 
     public function suggestions(Request $request): JsonResponse
@@ -42,7 +25,7 @@ class PersonSearchController extends Controller
             return response()->json([]);
         }
 
-        $suggestions = Person::getSearchSuggestions($term, $limit);
+        $suggestions = Person::getSearchSuggestions($term, $limit, $this->scopedOrganizationId($request));
 
         return response()->json($suggestions);
     }
@@ -71,12 +54,13 @@ class PersonSearchController extends Controller
 
         // If specific persons are selected, export only those
         if (!empty($criteria['selectedPersons'])) {
-            $persons = Person::whereIn('id', $criteria['selectedPersons'])
-                ->with(['phones', 'emailAddresses', 'identifiers', 'Organizations'])
-                ->get();
+            $query = Person::whereIn('id', $criteria['selectedPersons'])
+                ->with(['phones', 'emailAddresses', 'identifiers', 'Organizations']);
+            $this->applyOrganizationScope($query, $request);
+            $persons = $query->get();
         } else {
             // Export all persons matching the search criteria
-            $persons = $this->buildSearchQuery($criteria)->get();
+            $persons = $this->buildSearchQuery($criteria, $request)->get();
         }
 
         if ($persons->isEmpty()) {
@@ -85,7 +69,7 @@ class PersonSearchController extends Controller
 
         $filename = 'persons_export_' . now()->format('Y_m_d_H_i_s') . '.xlsx';
 
-        return Excel::download(new PersonsExport($persons), $filename);
+        return Excel::download(new PersonsExportAdvanced($persons), $filename);
     }
 
     /**
@@ -111,8 +95,8 @@ class PersonSearchController extends Controller
         ]);
 
         $perPage = $criteria['perPage'] ?? 15;
-        
-        $persons = $this->buildSearchQuery($criteria)
+
+        $persons = $this->buildSearchQuery($criteria, $request)
             ->with(['phones', 'emailAddresses', 'identifiers', 'Organizations'])
             ->paginate($perPage);
 
@@ -135,28 +119,27 @@ class PersonSearchController extends Controller
     public function filterOptions(): JsonResponse
     {
         return response()->json([
-            'Organizations' => Organization::active()
-                ->orderBy('name')
-                ->get(['id', 'name']),
-            
+            'Organizations' => Organization::where('is_active', true)
+                ->orderBy('display_name')
+                ->get(['id', 'display_name', 'legal_name']),
+
             'classifications' => Person::whereNotNull('classification')
-                ->get()
                 ->pluck('classification')
                 ->flatten()
                 ->unique()
                 ->sort()
                 ->values(),
-            
+
             'cities' => Person::whereNotNull('city')
                 ->distinct()
                 ->orderBy('city')
                 ->pluck('city'),
-            
+
             'districts' => Person::whereNotNull('district')
                 ->distinct()
                 ->orderBy('district')
                 ->pluck('district'),
-            
+
             'countries' => Person::whereNotNull('country')
                 ->distinct()
                 ->orderBy('country')
@@ -165,11 +148,44 @@ class PersonSearchController extends Controller
     }
 
     /**
+     * The organization id the current user is limited to, or null for
+     * Super Admins who may search across all organizations.
+     */
+    private function scopedOrganizationId(Request $request): ?int
+    {
+        $user = $request->user();
+
+        if ($user && $user->hasRole('Super Admin')) {
+            return null;
+        }
+
+        return (int) session('current_organization_id');
+    }
+
+    /**
+     * Restrict a person query to the user's current organization. The
+     * org.access middleware guarantees the session organization is one the
+     * user has an active affiliation with.
+     */
+    private function applyOrganizationScope($query, Request $request)
+    {
+        $organizationId = $this->scopedOrganizationId($request);
+
+        if ($organizationId) {
+            $query->byOrganization($organizationId);
+        }
+
+        return $query;
+    }
+
+    /**
      * Build search query based on criteria
      */
-    private function buildSearchQuery(array $criteria)
+    private function buildSearchQuery(array $criteria, Request $request)
     {
         $query = Person::query();
+
+        $this->applyOrganizationScope($query, $request);
 
         // Apply search based on search type
         if (!empty($criteria['search'])) {

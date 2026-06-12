@@ -227,6 +227,15 @@ class Organization extends Model
     // Accessors & Mutators
 
     /**
+     * There is no `name` column; callers reading $organization->name get the
+     * display name, falling back to the legal name.
+     */
+    public function getNameAttribute(): ?string
+    {
+        return $this->display_name ?: $this->legal_name;
+    }
+
+    /**
      * Get the full address as a formatted string
      */
     public function getFullAddressAttribute(): string

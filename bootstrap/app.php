@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'org.access' => \App\Http\Middleware\EnsureOrganizationAccess::class,
+            'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class,
         ]);
 
         // Provider webhooks are server-to-server and cannot carry a CSRF token.

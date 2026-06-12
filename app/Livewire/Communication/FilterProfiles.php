@@ -447,8 +447,6 @@ class FilterProfiles extends Component
 
     protected function canManageProfile($profile)
     {
-        $user = Auth::user();
-
         // Users can manage their own profiles
         if ($profile->user_id === Auth::id()) {
             return true;
@@ -456,7 +454,9 @@ class FilterProfiles extends Component
 
         // For now, allow org admins to manage shared profiles in their organization
         // We can enhance permissions later
-        if ($profile->is_shared && $profile->organization_id === $user->organization_id) {
+        $organization = OrganizationHelper::getCurrentOrganization();
+
+        if ($profile->is_shared && $organization && $profile->organization_id === $organization->id) {
             return true;
         }
 

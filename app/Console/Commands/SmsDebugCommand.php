@@ -26,6 +26,11 @@ class SmsDebugCommand extends Command
      */
     public function handle()
     {
+        if (app()->environment("production")) {
+            $this->error("This SMS test command is disabled in production.");
+            return 1;
+        }
+
         $this->info('🔍 SMS Configuration Debug');
         $this->line('=========================');
         

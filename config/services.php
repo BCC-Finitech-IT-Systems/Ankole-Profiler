@@ -53,6 +53,9 @@ return [
                 'username' => env('AFRICAS_TALKING_USERNAME'),
                 'sender_id' => env('AFRICAS_TALKING_SENDER_ID'),
                 'sandbox' => env('AFRICAS_TALKING_SANDBOX', false),
+                // Africa's Talking does not sign webhooks; register the
+                // callback URL with ?token=<this value> to authenticate it.
+                'webhook_token' => env('AT_WEBHOOK_TOKEN'),
             ],
 
             'twilio' => [

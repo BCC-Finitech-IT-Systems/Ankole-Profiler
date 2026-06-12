@@ -29,8 +29,13 @@ class Notifications extends Component
     private function getRecentActivities()
     {
         $activities = [];
-        $user = Auth::user();
-        $orgId = $user->organization_id;
+        $organization = \App\Helpers\OrganizationHelper::getCurrentOrganization();
+
+        if (!$organization) {
+            return [];
+        }
+
+        $orgId = $organization->id;
 
         // Recent person registrations in user's org
         $recentPersons = \App\Models\Person::with('affiliations.Organization')
@@ -48,6 +53,7 @@ class Notifications extends Component
                 'type' => 'person',
                 'title' => 'New person "' . $person->full_name . '" registered',
                 'description' => 'Complete profile with organizational affiliation to ' . $orgName,
+                'timestamp' => $person->created_at->getTimestamp(),
                 'time' => $person->created_at->diffForHumans(),
                 'badge' => 'Person',
                 'badge_color' => 'success',
@@ -69,6 +75,7 @@ class Notifications extends Component
                 'type' => 'affiliation',
                 'title' => 'New affiliation verified',
                 'description' => $affiliation->person->full_name . ' affiliated with ' . $orgDisplayName,
+                'timestamp' => $affiliation->created_at->getTimestamp(),
                 'time' => $affiliation->created_at->diffForHumans(),
                 'badge' => 'Affiliation',
                 'badge_color' => 'secondary',
@@ -78,7 +85,7 @@ class Notifications extends Component
 
         // Sort by time (most recent first)
         usort($activities, function($a, $b) {
-            return strcmp($b['time'], $a['time']);
+            return $b['timestamp'] <=> $a['timestamp'];
         });
 
         return array_slice($activities, 0, 6);

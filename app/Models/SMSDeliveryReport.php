@@ -9,6 +9,10 @@ class SMSDeliveryReport extends Model
 {
     use HasFactory;
 
+    // Eloquent would otherwise derive "s_m_s_delivery_reports" from the
+    // class name; the migration creates "sms_delivery_reports".
+    protected $table = 'sms_delivery_reports';
+
     protected $fillable = [
         'message_id',
         'phone_number',

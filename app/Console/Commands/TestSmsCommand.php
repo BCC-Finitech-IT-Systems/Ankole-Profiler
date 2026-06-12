@@ -34,6 +34,11 @@ class TestSmsCommand extends Command
         CommunicationChannelManager $channelManager,
         EmailTemplateService $templateService
     ): int {
+        if (app()->environment("production")) {
+            $this->error("This SMS test command is disabled in production.");
+            return 1;
+        }
+
         $recipient = $this->argument('recipient');
         $customMessage = $this->option('message');
         $templateId = $this->option('template');

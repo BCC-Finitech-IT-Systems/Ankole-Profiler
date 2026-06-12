@@ -74,9 +74,9 @@ class PersonsExportAdvanced implements FromCollection, WithHeadings, WithMapping
             $person->date_of_birth ? $person->date_of_birth->format('Y-m-d') : '',
             $person->age ?? '',
             $person->gender ? ucfirst($person->gender) : '',
-            $person->primaryPhone() ? $person->primaryPhone()->phone_number : '',
+            $person->primaryPhone() ? $person->primaryPhone()->number : '',
             $person->primaryEmail() ? $person->primaryEmail()->email : '',
-            $person->nationalId() ? $person->nationalId()->identifier_value : '',
+            $person->nationalId() ? $person->nationalId()->identifier : '',
             $person->classification ? implode(', ', array_map('ucfirst', $person->classification)) : '',
             $person->address,
             $person->city,
@@ -177,7 +177,7 @@ class PersonsExportAdvanced implements FromCollection, WithHeadings, WithMapping
                         $sheet->getStyle('A' . $row . ':' . $highestColumn . $row)
                             ->getFill()
                             ->setFillType(Fill::FILL_SOLID)
-                            ->setStartColor(['rgb' => 'F2F2F2']);
+                            ->getStartColor()->setRGB('F2F2F2');
                     }
                 }
                 

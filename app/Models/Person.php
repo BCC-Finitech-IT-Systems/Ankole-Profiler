@@ -37,7 +37,19 @@ class Person extends Model
 
     protected $casts = [
         'classification' => 'array',
+        'date_of_birth' => 'date',
     ];
+
+    /**
+     * There is no `phone_number` column; callers reading $person->phone_number
+     * get the primary (or first) phone's number.
+     */
+    public function getPhoneNumberAttribute(): ?string
+    {
+        $phone = $this->primaryPhone() ?? $this->phones->first();
+
+        return $phone?->number;
+    }
 
     /**
      * Route notifications for the mail channel.
@@ -303,7 +315,7 @@ class Person extends Model
         // Phone search
         if (!empty($criteria['phone'])) {
             $query->whereHas('phones', function ($q) use ($criteria) {
-                $q->where('phone_number', 'like', "%{$criteria['phone']}%");
+                $q->where('number', 'like', "%{$criteria['phone']}%");
             });
         }
 
@@ -387,7 +399,7 @@ class Person extends Model
     public function scopeSearchByIdentifier($query, string $identifier, string $type = null)
     {
         return $query->whereHas('identifiers', function ($q) use ($identifier, $type) {
-            $q->where('identifier_value', 'like', "%{$identifier}%");
+            $q->where('identifier', 'like', "%{$identifier}%");
 
             if ($type) {
                 $q->where('type', $type);
@@ -401,7 +413,7 @@ class Person extends Model
     public function scopeSearchByPhone($query, string $phone)
     {
         return $query->whereHas('phones', function ($q) use ($phone) {
-            $q->where('phone_number', 'like', "%{$phone}%");
+            $q->where('number', 'like', "%{$phone}%");
         });
     }
 
@@ -465,13 +477,13 @@ class Person extends Model
             $q->searchByName($term)
                 ->orWhere('person_id', 'like', "%{$term}%")
                 ->orWhereHas('phones', function ($phoneQuery) use ($term) {
-                    $phoneQuery->where('phone_number', 'like', "%{$term}%");
+                    $phoneQuery->where('number', 'like', "%{$term}%");
                 })
                 ->orWhereHas('emailAddresses', function ($emailQuery) use ($term) {
                     $emailQuery->where('email', 'like', "%{$term}%");
                 })
                 ->orWhereHas('identifiers', function ($identifierQuery) use ($term) {
-                    $identifierQuery->where('identifier_value', 'like', "%{$term}%");
+                    $identifierQuery->where('identifier', 'like', "%{$term}%");
                 })
                 ->orWhere('address', 'like', "%{$term}%")
                 ->orWhere('city', 'like', "%{$term}%")
@@ -561,10 +573,11 @@ class Person extends Model
     /**
      * Get search suggestions based on partial input
      */
-    public static function getSearchSuggestions(string $term, int $limit = 10)
+    public static function getSearchSuggestions(string $term, int $limit = 10, ?int $organizationId = null)
     {
         return self::globalSearch($term)
             ->active()
+            ->when($organizationId, fn ($q) => $q->byOrganization($organizationId))
             ->limit($limit)
             ->get(['id', 'person_id', 'given_name', 'family_name'])
             ->map(function ($person) {

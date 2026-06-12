@@ -12,6 +12,11 @@ class SendTestSmsCommand extends Command
 
     public function handle()
     {
+        if (app()->environment("production")) {
+            $this->error("This SMS test command is disabled in production.");
+            return 1;
+        }
+
         $phone = $this->argument('phone');
         $message = $this->argument('message') ?: 'Hello! This is a test message from your Profiler App sent on ' . now()->format('M j, Y \a\t g:i A');
         

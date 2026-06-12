@@ -264,6 +264,48 @@ class RelationshipController extends Controller
     }
 
     /**
+     * JSON endpoint: relationship statistics.
+     */
+    public function stats(): JsonResponse
+    {
+        return response()->json($this->getRelationshipStats());
+    }
+
+    /**
+     * JSON endpoint: pending verifications.
+     */
+    public function pending(): JsonResponse
+    {
+        return response()->json($this->getPendingVerifications());
+    }
+
+    /**
+     * JSON endpoint: a person's relationship network (graph data).
+     */
+    public function personNetworkData(Person $person): JsonResponse
+    {
+        $personalRelationships = PersonRelationship::forPerson($person->id)
+            ->active()
+            ->with(['personA', 'personB'])
+            ->get();
+
+        $crossOrgRelationships = CrossOrgRelationship::forPerson($person->id)
+            ->active()
+            ->with([
+                'primaryAffiliation.Organization',
+                'secondaryAffiliation.Organization'
+            ])
+            ->get();
+
+        return response()->json([
+            'person' => $person->only(['id', 'person_id', 'given_name', 'family_name']),
+            'personal_relationships' => $personalRelationships,
+            'cross_org_relationships' => $crossOrgRelationships,
+            'family_network' => PersonRelationship::findFamilyNetwork($person->id, 3),
+        ]);
+    }
+
+    /**
      * Get relationship statistics for dashboard
      */
     private function getRelationshipStats(): array

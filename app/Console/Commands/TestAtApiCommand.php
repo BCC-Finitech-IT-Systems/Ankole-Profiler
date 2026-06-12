@@ -12,6 +12,11 @@ class TestAtApiCommand extends Command
 
     public function handle()
     {
+        if (app()->environment("production")) {
+            $this->error("This SMS test command is disabled in production.");
+            return 1;
+        }
+
         $this->info('🔍 Testing Direct Africa\'s Talking API Connection');
         $this->line('=================================================');
         

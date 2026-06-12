@@ -111,6 +111,10 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
     });
 
     Route::prefix('projects')->name('projects.')->group(function () {
+        Route::get('/manage', App\Livewire\Projects\ProjectsManagement::class)
+            ->name('manage')
+            ->middleware('can:view-projects');
+
         Route::get('/{project}/persons', [ProjectController::class, 'persons'])
             ->name('persons')
             ->middleware('can:view-projects');
@@ -222,17 +226,19 @@ Route::middleware(['auth', 'verified'])->prefix('relationships')->name('relation
 });
 
 Route::middleware(['auth:sanctum', 'verified'])->prefix('api/relationships')->name('api.relationships.')->group(function () {
-    Route::get('/stats', [RelationshipController::class, 'getRelationshipStats'])->name('stats');
-    Route::get('/pending', [RelationshipController::class, 'getPendingVerifications'])->name('pending');
-    Route::get('/network-data/{person}', [RelationshipController::class, 'getPersonNetworkData'])->name('network-data');
+    Route::get('/stats', [RelationshipController::class, 'stats'])->name('stats');
+    Route::get('/pending', [RelationshipController::class, 'pending'])->name('pending');
+    Route::get('/network-data/{person}', [RelationshipController::class, 'personNetworkData'])->name('network-data');
 });
 
 // Both URLs may be registered in the Africa's Talking dashboard; they share
 // one handler that stores the delivery report and updates message history.
 Route::post('/webhooks/africastalking/delivery-reports', [SMSWebhookController::class, 'handleDeliveryReport'])
+    ->middleware('webhook.verify:africastalking')
     ->name('sms.delivery.webhook');
 
 Route::post('/africastalking/callback', [SMSWebhookController::class, 'handleDeliveryReport'])
+    ->middleware('webhook.verify:africastalking')
     ->name('africastalking.callback');
 
 Route::get('/email/verify/{id}/{hash}', function (CustomVerifyEmailRequest $request) {
