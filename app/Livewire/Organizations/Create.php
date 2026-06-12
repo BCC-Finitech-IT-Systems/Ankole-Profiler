@@ -36,7 +36,7 @@ class Create extends Component
     public $display_name = '';
     public $code = '';
     public $organization_type = 'STANDALONE';
-    public $parent_organization_id = null;
+    public $parent_organization_id = null; // the diocese this organization belongs to
     public $registration_number = '';
     public $tax_identification_number = '';
     public $country_of_registration = 'UGA';
@@ -145,6 +145,7 @@ class Create extends Component
         'legal_name' => 'required|string|max:255|unique:organizations,legal_name',
         'code' => 'required|string|max:20|unique:organizations,code',
         'organization_type' => 'required|in:HOLDING,SUBSIDIARY,STANDALONE',
+        'parent_organization_id' => 'required|exists:organizations,id,category,diocese,is_active,1',
         'registration_number' => 'required|string|unique:organizations,registration_number',
         'contact_email' => 'required|email|unique:organizations,contact_email',
         'contact_phone' => 'required|string',
@@ -466,6 +467,7 @@ class Create extends Component
                     'legal_name' => $this->rules['legal_name'],
                     'code' => $this->rules['code'],
                     'organization_type' => $this->rules['organization_type'],
+                    'parent_organization_id' => $this->rules['parent_organization_id'],
                     'registration_number' => $this->rules['registration_number'],
                     'contact_email' => $this->rules['contact_email'],
                     'contact_phone' => $this->rules['contact_phone'],
@@ -514,6 +516,7 @@ class Create extends Component
         $this->display_name             = 'St. Peter\'s Church';
         $this->code                     = 'SPC-' . rand(100, 999);
         $this->organization_type        = 'STANDALONE';
+        $this->parent_organization_id   = \App\Models\Organization::where('category', 'diocese')->where('is_active', true)->value('id');
         $this->registration_number      = 'NGO/REG/2019/1042';
         $this->tax_identification_number = '1002345678';
         $this->date_established         = '2005-03-15';
@@ -862,6 +865,10 @@ class Create extends Component
     {
         return view('livewire.organizations.create', [
             'categories' => $this->categories,
+            'dioceses' => \App\Models\Organization::where('category', 'diocese')
+                ->where('is_active', true)
+                ->orderBy('display_name')
+                ->get(),
         ]);
     }
 }

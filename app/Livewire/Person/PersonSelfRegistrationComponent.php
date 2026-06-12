@@ -45,7 +45,7 @@ class PersonSelfRegistrationComponent extends Component
 
     public function fillSampleData(): void
     {
-        $diocese = Organization::where('is_active', true)->where('is_super', false)->first();
+        $diocese = Organization::where('is_active', true)->where('category', 'diocese')->first();
         $this->form = [
             'given_name'    => 'Grace',
             'middle_name'   => 'Atuheire',
@@ -64,10 +64,11 @@ class PersonSelfRegistrationComponent extends Component
 
     public function mount()
     {
-        // Applicants choose the diocese they belong to; the super
-        // organization is never a registration target.
+        // Applicants choose the diocese they belong to. Filtering by
+        // category keeps schools/parishes/SACCOs (and the super org)
+        // out of the registration dropdown.
         $this->availableOrganizations = Organization::where('is_active', true)
-            ->where('is_super', false)
+            ->where('category', 'diocese')
             ->orderBy('display_name')
             ->get();
 
@@ -109,7 +110,7 @@ class PersonSelfRegistrationComponent extends Component
                     'required',
                     Rule::exists('organizations', 'id')
                         ->where('is_active', true)
-                        ->where('is_super', false),
+                        ->where('category', 'diocese'),
                 ],
             ]);
 

@@ -13,6 +13,8 @@ class OrganizationRegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    private Organization $diocese;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -33,6 +35,12 @@ class OrganizationRegistrationTest extends TestCase
                 'is_active' => true,
             ]);
         }
+
+        // Every organization must belong to a diocese.
+        $this->diocese = Organization::factory()->create([
+            'category' => 'diocese',
+            'organization_type' => 'branch',
+        ]);
     }
 
     public function test_organization_creation_form_renders()
@@ -55,6 +63,7 @@ class OrganizationRegistrationTest extends TestCase
             ->set('legal_name', 'Mulago National Referral Hospital')
             ->set('display_name', 'Mulago Hospital')
             ->set('code', 'MNH001')
+            ->set('parent_organization_id', $this->diocese->id)
             ->set('registration_number', 'HOSP/2023/001')
             ->set('date_established', '1962-01-15')
             ->set('contact_email', 'info@mulagohospital.go.ug')
@@ -87,6 +96,7 @@ class OrganizationRegistrationTest extends TestCase
             ->set('legal_name', 'Makerere University')
             ->set('display_name', 'Makerere University')
             ->set('code', 'MAK001')
+            ->set('parent_organization_id', $this->diocese->id)
             ->set('registration_number', 'UNIV/1922/001')
             ->set('date_established', '1922-06-01')
             ->set('contact_email', 'info@mak.ac.ug')

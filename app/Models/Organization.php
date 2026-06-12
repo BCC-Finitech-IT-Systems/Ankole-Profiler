@@ -167,6 +167,14 @@ class Organization extends Model
     }
 
     /**
+     * Organization units relationship
+     */
+    public function organizationUnits(): HasMany
+    {
+        return $this->hasMany(OrganizationUnit::class, 'organization_id');
+    }
+
+    /**
      * Projects through departments
      */
     public function projects()

@@ -24,7 +24,7 @@ class AdminRouteAuthorizationTest extends TestCase
 
         foreach ([
             'manage-users', 'manage-roles', 'manage-permissions',
-            'manage-role-types', 'manage-email-domains',
+            'manage-role-types', 'manage-email-domains', 'manage-dioceses',
             'view-departments', 'create-departments', 'edit-departments', 'delete-departments',
         ] as $perm) {
             Permission::findOrCreate($perm, 'web');
@@ -66,6 +66,7 @@ class AdminRouteAuthorizationTest extends TestCase
             'permissions index'  => ['admin.permissions.index', 'manage-permissions'],
             'role-types index'   => ['admin.role-types.index',  'manage-role-types'],
             'email domains'      => ['admin.allowEmailDomains', 'manage-email-domains'],
+            'dioceses index'     => ['admin.dioceses.index',    'manage-dioceses'],
         ];
     }
 

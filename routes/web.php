@@ -183,6 +183,9 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
         Route::get('/allow-email-domains', App\Livewire\Admin\AllowedEmailDomainManager::class)
             ->name('allowEmailDomains')
             ->middleware('can:manage-email-domains');
+        Route::get('/dioceses', App\Livewire\Admin\DioceseManager::class)
+            ->name('dioceses.index')
+            ->middleware('can:manage-dioceses');
     });
 
     Route::prefix('communication')->name('communication.')->middleware('org.access')->group(function () {

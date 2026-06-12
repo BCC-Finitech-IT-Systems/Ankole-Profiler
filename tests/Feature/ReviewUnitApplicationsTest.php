@@ -139,6 +139,56 @@ class ReviewUnitApplicationsTest extends TestCase
             });
     }
 
+    public function test_approval_succeeds_when_person_already_has_org_level_member_affiliation()
+    {
+        // Self-registration leaves an org-level MEMBER affiliation; approving
+        // a unit application then inserts a second MEMBER row scoped to the
+        // unit. Regression test for the old (person, org, role_type) unique
+        // index that made this crash.
+        \App\Models\PersonAffiliation::create([
+            'person_id'       => $this->application->person_id,
+            'organization_id' => $this->diocese->id,
+            'role_type'       => 'MEMBER',
+            'status'          => 'active',
+            'start_date'      => now(),
+        ]);
+
+        $admin = $this->affiliatedUser(
+            'Organization Admin',
+            $this->diocese,
+            permissions: ['approve-unit-membership']
+        );
+
+        Livewire::actingAs($admin)
+            ->test(ReviewUnitApplications::class)
+            ->call('approve', $this->application->id);
+
+        $this->assertSame('approved', $this->application->fresh()->status);
+        $this->assertDatabaseHas('person_affiliations', [
+            'person_id'            => $this->application->person_id,
+            'organization_id'      => $this->diocese->id,
+            'organization_unit_id' => $this->unit->id,
+            'role_type'            => 'MEMBER',
+            'status'               => 'active',
+        ]);
+    }
+
+    public function test_duplicate_org_level_affiliation_is_rejected_by_model_guard()
+    {
+        $attrs = [
+            'person_id'       => $this->application->person_id,
+            'organization_id' => $this->diocese->id,
+            'role_type'       => 'MEMBER',
+            'status'          => 'active',
+            'start_date'      => now(),
+        ];
+
+        \App\Models\PersonAffiliation::create($attrs);
+
+        $this->expectException(\DomainException::class);
+        \App\Models\PersonAffiliation::create($attrs);
+    }
+
     public function test_approval_writes_role_type_id()
     {
         RoleType::factory()->create([

@@ -60,6 +60,27 @@ class PersonAffiliation extends Model
             }
         });
 
+        // One org-level (unit-less) affiliation per (person, organization,
+        // role_type). The DB unique index includes organization_unit_id and
+        // MariaDB treats NULLs as distinct, so the unit-less case must be
+        // enforced here.
+        static::saving(function ($affiliation) {
+            if ($affiliation->organization_unit_id) {
+                return;
+            }
+
+            $duplicate = self::where('person_id', $affiliation->person_id)
+                ->where('organization_id', $affiliation->organization_id)
+                ->where('role_type', $affiliation->role_type)
+                ->whereNull('organization_unit_id')
+                ->when($affiliation->exists, fn ($q) => $q->where('id', '!=', $affiliation->id))
+                ->exists();
+
+            if ($duplicate) {
+                throw new \DomainException('Person already has an organization-level affiliation with this role.');
+            }
+        });
+
         static::creating(function ($affiliation) {
             if (empty($affiliation->affiliation_id)) {
                 $maxAttempts = 5;

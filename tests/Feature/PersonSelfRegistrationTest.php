@@ -28,7 +28,7 @@ class PersonSelfRegistrationTest extends TestCase
 
         Notification::fake();
         Role::findOrCreate('Person', 'web');
-        $this->diocese = Organization::factory()->create(['is_super' => false]);
+        $this->diocese = Organization::factory()->create(['is_super' => false, 'category' => 'diocese']);
         AllowedEmailDomain::create(['domain' => 'example.com', 'is_active' => true]);
     }
 

@@ -310,6 +310,22 @@
 
                                     <div class="space-y-1">
                                         <label class="mb-1">
+                                            <span class="block text-sm font-medium text-gray-700">Diocese <span
+                                                    class="text-red-500">*</span></span>
+                                        </label>
+                                        <select wire:model="parent_organization_id" class="select select-bordered select-sm w-full">
+                                            <option value="">Select the diocese this organization belongs to</option>
+                                            @foreach ($dioceses as $diocese)
+                                                <option value="{{ $diocese->id }}">{{ $diocese->display_name ?? $diocese->legal_name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('parent_organization_id')
+                                            <span class="text-red-600 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <label class="mb-1">
                                             <span class="block text-sm font-medium text-gray-700">Registration Number <span
                                                     class="text-red-500">*</span></span>
                                         </label>

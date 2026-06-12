@@ -23,6 +23,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'bulk-approve-unit-membership',
             'approve-organization-membership',
             'manage-email-domains',
+            'manage-dioceses',
 
             // Dashboard permissions
             'view-dashboard',
@@ -190,6 +191,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'approve-unit-membership',
             'bulk-approve-unit-membership',
             'approve-organization-membership',
+            'manage-dioceses', // edit own diocese only; create is Super Admin-only in the component
             'view-org-persons',
             'create-org-persons',
             'import-org-persons',

@@ -20,7 +20,9 @@ class DepartmentSeeder extends Seeder
                 'display_name' => 'Ankole Diocese',
                 'code' => $this->generateUniqueOrganizationCode('ANKDIO'),
                 'category' => 'other',
-                'organization_type' => 'branch',
+                // 'super' keeps is_super true through the Organization
+                // saving hook, which derives is_super from organization_type.
+                'organization_type' => 'super',
                 'country' => 'UGA',
                 'country_of_registration' => 'UGA',
                 'is_active' => true,

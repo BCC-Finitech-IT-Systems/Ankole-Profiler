@@ -8,10 +8,13 @@ use App\Models\RoleType;
 class UnitRoleAssigner
 {
     /**
-     * Resolve (or create) the MEMBER RoleType for the unit's department.
+     * Resolve (or create) the MEMBER RoleType usable for the unit.
      *
-     * If the unit has no department_id the globally-scoped MEMBER code is used
-     * as a fallback. Returns null only if neither exists and creation fails.
+     * role_types.code is globally unique, so a department-scoped MEMBER and
+     * a global MEMBER cannot coexist. Prefer the unit's department-scoped
+     * row, fall back to the global one, and create a global MEMBER only
+     * when no row exists at all. Returns null when MEMBER exists but is
+     * scoped to a different department.
      */
     public function memberRoleTypeFor(OrganizationUnit $unit): ?RoleType
     {
@@ -24,22 +27,26 @@ class UnitRoleAssigner
             if ($roleType) {
                 return $roleType;
             }
+        }
 
-            // Auto-create a department-scoped MEMBER type so the workflow
-            // never blocks on missing seed data.
+        $global = RoleType::active()
+            ->whereNull('department_id')
+            ->where('code', 'MEMBER')
+            ->first();
+
+        if ($global) {
+            return $global;
+        }
+
+        if (!RoleType::where('code', 'MEMBER')->exists()) {
             return RoleType::create([
-                'department_id' => $unit->department_id,
-                'code'          => 'MEMBER',
-                'name'          => 'Member',
-                'active'        => true,
+                'code'   => 'MEMBER',
+                'name'   => 'Member',
+                'active' => true,
             ]);
         }
 
-        // No department: use/create a global MEMBER code.
-        return RoleType::firstOrCreate(
-            ['code' => 'MEMBER', 'department_id' => null],
-            ['name' => 'Member', 'active' => true]
-        );
+        return null;
     }
 
     /**

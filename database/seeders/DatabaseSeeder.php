@@ -29,27 +29,28 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        $this->command->info('Running only the UserSeeder...');
+        $this->command->info('Seeding core data and membership-workflow samples...');
 
         // Disable foreign key checks for seeding
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         try {
-            // Run only the UserSeeder
             $this->call([
                 RolesAndPermissionsSeeder::class,
                 UserSeeder::class,
-                AllowedEmailDomainSeeder::class,
                 CommunicationPermissionSeeder::class,
-                DepartmentSeeder::class,
+                DepartmentSeeder::class, // creates the Ankole Diocese organization
                 DepartmentSubCategorySeeder::class,
+                AllowedEmailDomainSeeder::class, // after DepartmentSeeder so domains link to the diocese
+                RoleTypeSeeder::class,
+                SampleDataSeeder::class,
             ]);
         } finally {
             // Re-enable foreign key checks after seeding
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         }
 
-        $this->command->info('UserSeeder has been executed successfully.');
+        $this->command->info('Database seeded successfully.');
     }
 
     /**

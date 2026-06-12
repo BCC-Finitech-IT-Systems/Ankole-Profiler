@@ -92,7 +92,7 @@ class RoleTypeSeeder extends Seeder
         foreach ($roleTypes as $roleType) {
             RoleType::updateOrCreate(
                 ['code' => $roleType['code']],
-                array_merge($roleType, ['id' => Str::uuid()])
+                $roleType
             );
         }
 
