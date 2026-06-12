@@ -744,14 +744,14 @@ class Create extends Component
 
         // Create user account
         $user = \App\Models\User::create([
-            'id' => Str::uuid(),
             'name' => $adminData['name'],
             'email' => $adminData['email'],
             'password' => Hash::make($password),
-            'organization_id' => $organization->id,
-            'person_id' => $person->id,
             'email_verified_at' => now(),
         ]);
+
+        // Link person to their user account now that the user exists
+        $person->update(['user_id' => $user->id]);
 
         // Assign system roles
         $user->assignRole('Organization Admin');

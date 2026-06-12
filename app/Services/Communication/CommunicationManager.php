@@ -356,7 +356,7 @@ class CommunicationManager
         return CommunicationMessage::create([
             'message_id' => 'msg_' . time() . '_' . Str::random(10),
             'sent_by_user_id' => Auth::id(),
-            'organization_id' => Auth::user()?->organization_id ?? 1, // Default fallback
+            'organization_id' => user_current_organization()?->id ?? 1,
             'recipient_person_id' => $recipientPersonId,
             'recipient_identifier' => $message->recipient,
             'recipient_type' => $message->channel,

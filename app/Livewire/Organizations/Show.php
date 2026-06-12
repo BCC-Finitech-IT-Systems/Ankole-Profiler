@@ -20,9 +20,9 @@ class Show extends Component
 
     public function hasAdmin()
     {
-        return User::where('organization_id', $this->Organization->id)
-                   ->role('Organization Admin')
-                   ->exists();
+        return User::role('Organization Admin')
+            ->whereHas('person.affiliations', fn($q) => $q->where('organization_id', $this->organization->id))
+            ->exists();
     }
 
     public function render()

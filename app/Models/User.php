@@ -86,16 +86,11 @@ class User extends Authenticatable implements MustVerifyEmail
         )->where('person_affiliations.status', 'active')->latest('person_affiliations.created_at');
     }
 
-    public function Organization()
+    // Resolved through user → person → active affiliation → organization.
+    // Not an Eloquent relation; use eager loading on personAffiliation instead.
+    public function getOrganizationAttribute(): ?Organization
     {
-        return $this->hasOneThrough(
-            Organization::class,
-            PersonAffiliation::class,
-            'person_id', // Foreign key on person_affiliations table
-            'id', // Foreign key on organizations table
-            'id', // Local key on users table
-            'organization_id' // Local key on person_affiliations table
-        );
+        return $this->personAffiliation?->organization;
     }
 
     /**

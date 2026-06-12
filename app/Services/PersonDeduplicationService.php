@@ -304,6 +304,8 @@ class PersonDeduplicationService
 
         // No significant duplicates, create new person
         $person = Person::create([
+            'person_id' => \App\Helpers\IdGenerator::generatePersonId(),
+            'global_identifier' => \App\Helpers\IdGenerator::generateGlobalIdentifier('GID'),
             'given_name' => $data['given_name'],
             'middle_name' => $data['middle_name'] ?? null,
             'family_name' => $data['family_name'],

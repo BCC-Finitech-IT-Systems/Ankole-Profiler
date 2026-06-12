@@ -49,7 +49,7 @@ class OrganizationHelper
      */
     public static function getCurrentOrganizationId(): ?int
     {
-        return session('current_organization_id', Auth::user()->organization_id ?? null);
+        return session('current_organization_id');
     }
 
     /**
@@ -87,14 +87,7 @@ class OrganizationHelper
 
         $user = Auth::user();
 
-        // Check if it's the user's default organization
-        if ($user->organization_id === $OrganizationId) {
-            return true;
-        }
-
-        // Check if user has access through affiliations or other relationships
-        // For now, just return true if user exists - you can expand this logic
-        return true;
+        return $user->canAccessOrganization($OrganizationId);
     }
 
     /**
@@ -108,20 +101,7 @@ class OrganizationHelper
 
         $user = Auth::user();
 
-        // Get user's primary organization
-        $organizations = collect();
-
-        if ($user->organization_id) {
-            $primaryOrg = Organization::find($user->organization_id);
-            if ($primaryOrg) {
-                $organizations->push($primaryOrg);
-            }
-        }
-
-        // Add any additional organizations the user has access to
-        // This depends on your business logic and relationships
-
-        return $organizations;
+        return $user->accessibleOrganizations();
     }
 
     /**

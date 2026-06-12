@@ -94,7 +94,7 @@ class CreateOrganizationUnit extends Component
         if ($user?->can('assign-organization-unit')) {
             $this->orgOptions = Organization::orderBy('legal_name')->get(['id', 'legal_name'])->toArray();
         } else {
-            $this->organization_id = $user?->organization_id;
+            $this->organization_id = user_current_organization()?->id;
         }
 
         $this->loadDepartments();

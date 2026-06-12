@@ -317,7 +317,6 @@ class PersonsImport implements ToCollection, WithHeadingRow, WithValidation, Wit
             'country' => $row['country'] ?? 'Uganda',
             'classification' => json_encode([$row['role_type'] ?? $this->defaultRoleType]),
             'created_by' => $this->createdBy,
-            'user_id' => $this->createdBy,
         ]);
     }
 

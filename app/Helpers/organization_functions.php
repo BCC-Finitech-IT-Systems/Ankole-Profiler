@@ -9,10 +9,6 @@ if (!function_exists('current_organization_id')) {
      */
     function current_organization_id()
     {
-        $user = Auth::user();
-        if ($user && property_exists($user, 'organization_id')) {
-            return session('current_organization_id', $user->organization_id);
-        }
         return session('current_organization_id');
     }
 }
@@ -129,18 +125,10 @@ if (!function_exists('set_user_current_organization')) {
             return true;
         }
 
-        // For regular users, verify they have access to this organization through affiliations
-        if (isset($user->person_id) && $user->person_id) {
-            $hasAccess = \App\Models\PersonAffiliation::where('person_id', $user->person_id)
-                ->where('organization_id', $organizationId)
-                ->where('status', 'active')
-                ->exists();
-
-            if ($hasAccess) {
-                session(['current_organization_id' => $organizationId]);
-                session(['current_organization_name' => $organization->display_name ?? $organization->legal_name]);
-                return true;
-            }
+        if ($user->canAccessOrganization($organizationId)) {
+            session(['current_organization_id' => $organizationId]);
+            session(['current_organization_name' => $organization->display_name ?? $organization->legal_name]);
+            return true;
         }
 
         return false;
@@ -152,36 +140,7 @@ if (!function_exists('get_user_accessible_organizations')) {
     {
         $user = \Illuminate\Support\Facades\Auth::user();
 
-        if (!$user) {
-            return collect();
-        }
-
-        // Super Admin can access all organizations
-        if (method_exists($user, 'hasRole') && $user->hasRole('Super Admin')) {
-            return \App\Models\Organization::where('is_active', true)
-                ->orderBy('display_name')
-                ->get();
-        }
-
-        // For regular users, get organizations through person affiliations
-        if (isset($user->person_id) && $user->person_id) {
-            return \App\Models\Organization::whereHas('affiliations', function($query) use ($user) {
-                $query->where('person_id', $user->person_id)
-                      ->where('status', 'active');
-            })
-            ->where('is_active', true)
-            ->orderBy('display_name')
-            ->get();
-        }
-
-        // Fallback: if user has direct organization relationship
-        if (isset($user->organization_id) && $user->organization_id) {
-            $org = \App\Models\Organization::find($user->organization_id);
-            return $org ? collect([$org]) : collect();
-        }
-
-        // No organizations accessible
-        return collect();
+        return $user ? $user->accessibleOrganizations() : collect();
     }
 }
 
@@ -195,17 +154,6 @@ if (!function_exists('get_current_user_organization')) {
      */
     function get_current_user_organization()
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->person_id) {
-            return null;
-        }
-
-        $affiliation = PersonAffiliation::where('person_id', $user->person_id)
-            ->active()
-            ->with('organization')
-            ->first();
-
-        return $affiliation ? $affiliation->organization : null;
+        return user_current_organization();
     }
 }

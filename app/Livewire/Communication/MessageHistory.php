@@ -81,7 +81,7 @@ class MessageHistory extends Component
 
     protected function resolveOrganizationId(): ?int
     {
-        $orgId = Auth::user()->organization_id;
+        $orgId = current_organization_id();
         if ($orgId) return $orgId;
 
         $person = Auth::user()->person ?? null;

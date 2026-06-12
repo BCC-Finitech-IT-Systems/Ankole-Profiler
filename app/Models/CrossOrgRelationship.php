@@ -107,10 +107,9 @@ class CrossOrgRelationship extends Model
 
     public function scopeForOrganization(Builder $query, int $orgId): Builder
     {
-        return $query->whereHas('primaryAffiliation.Organization', function ($q) use ($orgId) {
-            $q->where('id', $orgId);
-        })->orWhereHas('secondaryAffiliation.Organization', function ($q) use ($orgId) {
-            $q->where('id', $orgId);
+        return $query->where(function ($q) use ($orgId) {
+            $q->whereHas('primaryAffiliation.Organization', fn($r) => $r->where('id', $orgId))
+              ->orWhereHas('secondaryAffiliation.Organization', fn($r) => $r->where('id', $orgId));
         });
     }
 
@@ -277,11 +276,9 @@ class CrossOrgRelationship extends Model
     public static function getOrganizationConnectionStats(int $orgId): array
     {
         $query = self::active()
-            ->whereHas('primaryAffiliation', function ($q) use ($orgId) {
-                $q->where('organization_id', $orgId);
-            })
-            ->orWhereHas('secondaryAffiliation', function ($q) use ($orgId) {
-                $q->where('organization_id', $orgId);
+            ->where(function ($q) use ($orgId) {
+                $q->whereHas('primaryAffiliation', fn($r) => $r->where('organization_id', $orgId))
+                  ->orWhereHas('secondaryAffiliation', fn($r) => $r->where('organization_id', $orgId));
             });
 
         return [

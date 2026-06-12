@@ -105,6 +105,16 @@
         </button>
     </form>
 
+    <div style="text-align:center;margin-top:1.25rem;font-size:0.875rem;color:#6b7280;">
+        New to the portal?
+        <a href="{{ route('person.self-register') }}"
+           style="color:#982B55;font-weight:600;text-decoration:none;"
+           onmouseover="this.style.textDecoration='underline'"
+           onmouseout="this.style.textDecoration='none'">
+            Register as a member
+        </a>
+    </div>
+
     <div class="auth-footer">&copy; {{ date('Y') }} Ankole Diocese Profiler Portal. All rights reserved.</div>
 </div>
 

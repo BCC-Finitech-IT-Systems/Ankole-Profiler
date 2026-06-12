@@ -54,18 +54,10 @@ class SetOrganizationContext
      */
     private function setDefaultOrganization($user)
     {
-        $defaultOrg = $user->organization_id;
-        
-        // If no primary org set, get first accessible Organization
-        if (!$defaultOrg) {
-            $accessible = $user->accessibleOrganizations();
-            $defaultOrg = $accessible->first()?->id;
-        }
-        
+        $defaultOrg = $user->accessibleOrganizations()->first()?->id;
+
         if ($defaultOrg) {
-            session([
-                'current_organization_id' => $defaultOrg
-            ]);
+            session(['current_organization_id' => $defaultOrg]);
         }
     }
 }
