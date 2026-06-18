@@ -12,17 +12,6 @@
 
             <x-alerts />
 
-            @if ($errors->any())
-                <div class="md:col-span-2 alert alert-error mb-6">
-                    <h3 class="text-sm font-medium mb-2">Please correct the following
-                        {{ $errors->count() > 1 ? 'errors' : 'error' }}:</h3>
-                    <ul class="list-disc list-inside text-sm">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
             <!-- FORM -->
             <div class="flex justify-end mb-2">
                 <x-fill-sample-data-btn />
