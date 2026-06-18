@@ -41,67 +41,50 @@ class SampleDataSeeder extends Seeder
     {
         $this->superOrg = Organization::where('is_super', true)->firstOrFail();
 
-        $dioceses = $this->createDioceses();
+        $diocese = $this->createDiocese();
         $units = $this->createUnits();
 
-        $admin = $this->createOrganizationAdmin($dioceses['east']);
+        $admin = $this->createOrganizationAdmin($diocese);
         $this->createDepartmentManager();
         $this->createActiveUnitMember($units['youth'], $admin);
-        $this->createPendingApplicants($dioceses['east']);
-        $this->createRejectedApplicant($admin, $dioceses['east']);
+        $this->createPendingApplicants($diocese);
+        $this->createRejectedApplicant($admin, $diocese);
         $this->createPendingUnitApplication($units['chaplaincy']);
 
         $this->command->info('Sample data seeded:');
-        $this->command->line('  - 2 dioceses (East / West Ankole Diocese)');
+        $this->command->line('  - 1 diocese (Ankole Diocese)');
         $this->command->line('  - 1 Organization Admin (joanita.asasira.demo@gmail.com)');
         $this->command->line('  - 1 Department Manager, Education (peter.nahabwe.demo@gmail.com)');
         $this->command->line('  - 1 active Youth Ministry member (grace.atuhaire.demo@gmail.com)');
-        $this->command->line('  - 2 pending + 1 rejected membership applications (East Ankole Diocese)');
+        $this->command->line('  - 2 pending + 1 rejected membership applications (Ankole Diocese)');
         $this->command->line('  - 1 pending unit application (School Chaplaincy Committee)');
         $this->command->line('  All sample accounts use password: ' . self::PASSWORD);
     }
 
     /**
-     * Dioceses sit under the super organization; they are what self-
-     * registration and the org create form offer as membership targets.
-     *
-     * @return array{east: Organization, west: Organization}
+     * The diocese sits under the super organization; it is what self-
+     * registration and the org create form offer as the membership target.
+     * Keyed on a non-super "Ankole Diocese" so it never collides with the
+     * super organization (which DepartmentSeeder also names "Ankole Diocese").
      */
-    private function createDioceses(): array
+    private function createDiocese(): Organization
     {
-        $defaults = [
-            'category' => 'diocese',
-            'organization_type' => 'branch',
-            'parent_organization_id' => $this->superOrg->id,
-            'country' => 'UGA',
-            'country_of_registration' => 'UGA',
-            'is_active' => true,
-            'is_super' => false,
-        ];
-
-        $east = Organization::updateOrCreate(
-            ['legal_name' => 'East Ankole Diocese'],
-            $defaults + [
-                'display_name' => 'East Ankole Diocese',
-                'code' => 'EAD-001',
+        return Organization::updateOrCreate(
+            ['legal_name' => 'Ankole Diocese', 'is_super' => false],
+            [
+                'category' => 'diocese',
+                'organization_type' => 'branch',
+                'parent_organization_id' => $this->superOrg->id,
+                'country' => 'UGA',
+                'country_of_registration' => 'UGA',
+                'is_active' => true,
+                'display_name' => 'Ankole Diocese',
+                'code' => 'AD-001',
                 'city' => 'Mbarara',
                 'district' => 'Mbarara',
-                'contact_email' => 'office@eastankole.org',
+                'contact_email' => 'office@ankolediocese.org',
             ]
         );
-
-        $west = Organization::updateOrCreate(
-            ['legal_name' => 'West Ankole Diocese'],
-            $defaults + [
-                'display_name' => 'West Ankole Diocese',
-                'code' => 'WAD-001',
-                'city' => 'Bushenyi',
-                'district' => 'Bushenyi',
-                'contact_email' => 'office@westankole.org',
-            ]
-        );
-
-        return ['east' => $east, 'west' => $west];
     }
 
     /**
