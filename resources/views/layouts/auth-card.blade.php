@@ -132,7 +132,7 @@
         {{-- Left Branding Panel --}}
         <div class="auth-brand">
             <div class="auth-brand-logo">
-                <img src="/images/Ankole-Diocese-Logo.png" alt="Ankole Diocese" />
+                <img src="{{ asset('images/Ankole-Diocese-Logo.png') }}" alt="Ankole Diocese" />
             </div>
             <h2>Ankole Diocese</h2>
             <div class="tagline">Yesu Naamara</div>

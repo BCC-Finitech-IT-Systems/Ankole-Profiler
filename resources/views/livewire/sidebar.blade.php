@@ -4,7 +4,7 @@
     <div class="flex items-center gap-3 px-5 py-4 border-b border-base-300">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
             <div class="rounded-lg bg-white p-1 flex items-center justify-center shadow-sm">
-                <img src="/images/Ankole-Diocese-Logo.png" alt="Logo" class="h-9 w-9 object-contain" />
+                <img src="{{ asset('images/Ankole-Diocese-Logo.png') }}" alt="Logo" class="h-9 w-9 object-contain" />
             </div>
             <div>
                 <div class="text-sm font-bold text-base-content leading-tight">Ankole Diocese</div>
