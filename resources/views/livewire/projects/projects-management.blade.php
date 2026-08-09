@@ -1,23 +1,27 @@
-<div class="min-h-full py-6 px-4 md:px-8">
+<div class="min-h-full">
 
-    {{-- Page header --}}
-    <x-slot name="header">
-        <div class="flex items-center justify-between w-full gap-4">
-            <div class="min-w-0">
-                <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects</div>
-                <h1 class="text-base font-semibold text-gray-800 truncate">Project Management</h1>
-            </div>
-            @can('create-projects')
-                <button wire:click="create" type="button"
-                        class="btn btn-sm border-0 text-white gap-1.5" style="background:#982B55;">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Add Project
-                </button>
-            @endcan
+    {{-- Page header ───────────────────────────────────────────────────────────
+         Rendered inline (not via x-slot="header") so the "Add Project" button
+         stays inside this component's wire:id root. Livewire's page-layout
+         mechanism renders x-slot="header" content outside that root, which
+         silently strips any wire:click bindings placed in it. --}}
+    <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between gap-4">
+        <div class="min-w-0">
+            <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Projects</div>
+            <h1 class="text-base font-semibold text-gray-800 truncate">Project Management</h1>
         </div>
-    </x-slot>
+        @can('create-projects')
+            <button wire:click="create" type="button"
+                    class="btn btn-sm border-0 text-white gap-1.5" style="background:#982B55;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Add Project
+            </button>
+        @endcan
+    </div>
+
+<div class="py-6 px-4 md:px-8">
 
     {{-- Flash message --}}
     @if(session('success'))
@@ -174,6 +178,8 @@
             @endif
         </div>
     </div>
+
+</div>
 
     {{-- Create / Edit modal --}}
     @if($showModal)
