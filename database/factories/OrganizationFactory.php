@@ -47,4 +47,23 @@ class OrganizationFactory extends Factory
             'primary_contact_phone' => $this->faker->phoneNumber(),
         ];
     }
+
+    public function diocese(): static
+    {
+        return $this->state(fn () => [
+            'category' => 'diocese',
+            'organization_type' => 'super',
+            'is_super' => true,
+            'parent_organization_id' => null,
+        ]);
+    }
+
+    public function institution(): static
+    {
+        return $this->state(fn () => [
+            'category' => $this->faker->randomElement(['school', 'hospital', 'sacco', 'parish']),
+            'organization_type' => 'branch',
+            'is_super' => false,
+        ]);
+    }
 }

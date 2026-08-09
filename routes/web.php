@@ -5,6 +5,11 @@ use App\Http\Controllers\AllPersonsListController;
 use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\PersonController;
+use App\Http\Controllers\AssignmentDocumentController;
+use App\Http\Controllers\AuditDocumentController;
+use App\Http\Controllers\LandDocumentController;
+use App\Http\Controllers\PolicyDocumentController;
+use App\Http\Controllers\WorkplanDocumentController;
 use App\Http\Controllers\PersonSearchController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RelationshipController;
@@ -16,6 +21,24 @@ use App\Livewire\Departments\DepartmentComponent;
 use App\Livewire\Departments\DepartmentsDashboard;
 use App\Livewire\Organizations\ImportOrganizations;
 use App\Livewire\Person\Notifications as PersonNotificationsLivewire;
+use App\Livewire\Policies\PoliciesManagement;
+use App\Livewire\Policies\PolicyAdoptionDashboard;
+use App\Livewire\Policies\PolicyAdoptionTracker;
+use App\Livewire\Policies\PolicyAuditTrail;
+use App\Livewire\Assignments\AssignmentDashboard;
+use App\Livewire\Assignments\AssignmentDetail;
+use App\Livewire\Assignments\AssignmentsManagement;
+use App\Livewire\AuditReports\AuditReportAuditTrail;
+use App\Livewire\AuditReports\AuditReportDashboard;
+use App\Livewire\AuditReports\AuditReportDetail;
+use App\Livewire\AuditReports\AuditReportsManagement;
+use App\Livewire\LandParcels\LandParcelDashboard;
+use App\Livewire\LandParcels\LandParcelDetail;
+use App\Livewire\LandParcels\LandParcelsManagement;
+use App\Livewire\Policies\PolicyDetail;
+use App\Livewire\Workplans\WorkplanDashboard;
+use App\Livewire\Workplans\WorkplanDetail;
+use App\Livewire\Workplans\WorkplansManagement;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
@@ -141,6 +164,48 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
         Route::put('/{project}/persons', [ProjectController::class, 'syncPersons'])
             ->name('persons.sync')
             ->middleware('can:manage-project-persons');
+    });
+
+    Route::prefix('policies')->name('policies.')->group(function () {
+        // Static segments before {policy} so they aren't swallowed by it.
+        Route::get('/', PoliciesManagement::class)->name('index')->middleware('can:view-policies');
+        Route::get('/dashboard', PolicyAdoptionDashboard::class)->name('dashboard')->middleware('can:view-policy-dashboard');
+        Route::get('/adoption', PolicyAdoptionTracker::class)->name('adoption')->middleware('can:view-policy-adoption');
+
+        Route::get('/versions/{version}/document', [PolicyDocumentController::class, 'version'])->name('documents.version');
+        Route::get('/attachments/{document}', [PolicyDocumentController::class, 'attachment'])->name('documents.attachment');
+
+        Route::get('/{policy}', PolicyDetail::class)->name('show')->middleware('can:view-policies');
+        Route::get('/{policy}/audit', PolicyAuditTrail::class)->name('audit')->middleware('can:view-audit-logs');
+    });
+
+    Route::prefix('workplans')->name('workplans.')->group(function () {
+        Route::get('/', WorkplansManagement::class)->name('index')->middleware('can:view-workplans');
+        Route::get('/dashboard', WorkplanDashboard::class)->name('dashboard')->middleware('can:view-workplan-dashboard');
+        Route::get('/documents/{document}', [WorkplanDocumentController::class, 'download'])->name('documents.download');
+        Route::get('/{workplan}', WorkplanDetail::class)->name('show')->middleware('can:view-workplans');
+    });
+
+    Route::prefix('assignments')->name('assignments.')->group(function () {
+        Route::get('/', AssignmentsManagement::class)->name('index')->middleware('can:view-assignments');
+        Route::get('/dashboard', AssignmentDashboard::class)->name('dashboard')->middleware('can:view-assignment-dashboard');
+        Route::get('/documents/{document}', [AssignmentDocumentController::class, 'download'])->name('documents.download');
+        Route::get('/{assignment}', AssignmentDetail::class)->name('show')->middleware('can:view-assignments');
+    });
+
+    Route::prefix('land-parcels')->name('land-parcels.')->group(function () {
+        Route::get('/', LandParcelsManagement::class)->name('index')->middleware('can:view-land-parcels');
+        Route::get('/dashboard', LandParcelDashboard::class)->name('dashboard')->middleware('can:view-land-dashboard');
+        Route::get('/documents/{document}', [LandDocumentController::class, 'download'])->name('documents.download');
+        Route::get('/{parcel}', LandParcelDetail::class)->name('show')->middleware('can:view-land-parcels');
+    });
+
+    Route::prefix('audit-reports')->name('audit-reports.')->group(function () {
+        Route::get('/', AuditReportsManagement::class)->name('index')->middleware('can:view-audit-reports');
+        Route::get('/dashboard', AuditReportDashboard::class)->name('dashboard')->middleware('can:view-audit-dashboard');
+        Route::get('/documents/{document}', [AuditDocumentController::class, 'download'])->name('documents.download');
+        Route::get('/{report}', AuditReportDetail::class)->name('show')->middleware('can:view-audit-reports');
+        Route::get('/{report}/audit', AuditReportAuditTrail::class)->name('audit')->middleware('can:view-audit-logs');
     });
 
     Route::prefix('departments')->name('departments.')->group(function () {

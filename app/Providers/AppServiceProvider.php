@@ -2,14 +2,36 @@
 
 namespace App\Providers;
 
+use App\Models\Assignment;
+use App\Models\AuditDocument;
+use App\Models\AuditLog;
+use App\Models\AuditReport;
+use App\Models\LandDocument;
+use App\Models\LandParcel;
 use App\Models\OrganizationUnit;
 use App\Models\OrganizationUnitApplication;
 use App\Models\PersonAffiliation;
+use App\Models\Policy;
+use App\Models\PolicyPublication;
+use App\Models\PolicyVersion;
 use App\Models\RoleType;
+use App\Models\Workplan;
+use App\Models\WorkplanActivity;
+use App\Policies\AssignmentPolicy;
+use App\Policies\AuditDocumentPolicy;
+use App\Policies\AuditLogPolicy;
+use App\Policies\AuditReportPolicy;
+use App\Policies\LandDocumentPolicy;
+use App\Policies\LandParcelPolicy;
 use App\Policies\OrganizationUnitApplicationPolicy;
 use App\Policies\OrganizationUnitPolicy;
 use App\Policies\PersonAffiliationPolicy;
+use App\Policies\PolicyPolicy;
+use App\Policies\PolicyPublicationPolicy;
+use App\Policies\PolicyVersionPolicy;
 use App\Policies\RoleTypePolicy;
+use App\Policies\WorkplanActivityPolicy;
+use App\Policies\WorkplanPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -59,6 +81,17 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(OrganizationUnitApplication::class, OrganizationUnitApplicationPolicy::class);
         Gate::policy(RoleType::class, RoleTypePolicy::class);
         Gate::policy(PersonAffiliation::class, PersonAffiliationPolicy::class);
+        Gate::policy(Policy::class, PolicyPolicy::class);
+        Gate::policy(PolicyVersion::class, PolicyVersionPolicy::class);
+        Gate::policy(PolicyPublication::class, PolicyPublicationPolicy::class);
+        Gate::policy(AuditLog::class, AuditLogPolicy::class);
+        Gate::policy(Workplan::class, WorkplanPolicy::class);
+        Gate::policy(WorkplanActivity::class, WorkplanActivityPolicy::class);
+        Gate::policy(Assignment::class, AssignmentPolicy::class);
+        Gate::policy(LandParcel::class, LandParcelPolicy::class);
+        Gate::policy(LandDocument::class, LandDocumentPolicy::class);
+        Gate::policy(AuditReport::class, AuditReportPolicy::class);
+        Gate::policy(AuditDocument::class, AuditDocumentPolicy::class);
 
         Gate::before(function ($user) {
             return $user->hasRole('Super Admin') ? true : null;

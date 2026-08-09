@@ -237,6 +237,52 @@ class Sidebar extends Component
                     ['label' => 'All Projects', 'route' => 'projects.manage', 'permission' => 'view-projects', 'active' => $activeRoute === 'projects.manage'],
                 ]
             ],
+            'policies' => [
+                'title' => 'Policy Repository',
+                'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                'active' => in_array($activeRoute, ['policies.index', 'policies.dashboard', 'policies.adoption', 'policies.show']),
+                'items' => [
+                    ['label' => 'Policy Register', 'route' => 'policies.index', 'permission' => 'view-policies', 'active' => $activeRoute === 'policies.index'],
+                    ['label' => 'Adoption Dashboard', 'route' => 'policies.dashboard', 'permission' => 'view-policy-dashboard', 'active' => $activeRoute === 'policies.dashboard'],
+                    ['label' => 'Our Adoption', 'route' => 'policies.adoption', 'permission' => 'view-policy-adoption', 'active' => $activeRoute === 'policies.adoption'],
+                ]
+            ],
+            'workplans' => [
+                'title' => 'Workplans',
+                'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+                'active' => in_array($activeRoute, ['workplans.index', 'workplans.dashboard', 'workplans.show']),
+                'items' => [
+                    ['label' => 'Workplan Register', 'route' => 'workplans.index', 'permission' => 'view-workplans', 'active' => $activeRoute === 'workplans.index'],
+                    ['label' => 'Workplan Dashboard', 'route' => 'workplans.dashboard', 'permission' => 'view-workplan-dashboard', 'active' => $activeRoute === 'workplans.dashboard'],
+                ]
+            ],
+            'assignments' => [
+                'title' => 'Assignments',
+                'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                'active' => in_array($activeRoute, ['assignments.index', 'assignments.dashboard', 'assignments.show']),
+                'items' => [
+                    ['label' => 'Assignment Register', 'route' => 'assignments.index', 'permission' => 'view-assignments', 'active' => $activeRoute === 'assignments.index'],
+                    ['label' => 'Assignment Dashboard', 'route' => 'assignments.dashboard', 'permission' => 'view-assignment-dashboard', 'active' => $activeRoute === 'assignments.dashboard'],
+                ]
+            ],
+            'land_parcels' => [
+                'title' => 'Land Registration',
+                'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 4h1m4 0h1M9 16h1',
+                'active' => in_array($activeRoute, ['land-parcels.index', 'land-parcels.dashboard', 'land-parcels.show']),
+                'items' => [
+                    ['label' => 'Land Register', 'route' => 'land-parcels.index', 'permission' => 'view-land-parcels', 'active' => $activeRoute === 'land-parcels.index'],
+                    ['label' => 'Land Dashboard', 'route' => 'land-parcels.dashboard', 'permission' => 'view-land-dashboard', 'active' => $activeRoute === 'land-parcels.dashboard'],
+                ]
+            ],
+            'audit_reports' => [
+                'title' => 'Audit Reports',
+                'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                'active' => in_array($activeRoute, ['audit-reports.index', 'audit-reports.dashboard', 'audit-reports.show']),
+                'items' => [
+                    ['label' => 'Audit Register', 'route' => 'audit-reports.index', 'permission' => 'view-audit-reports', 'active' => $activeRoute === 'audit-reports.index'],
+                    ['label' => 'Audit Dashboard', 'route' => 'audit-reports.dashboard', 'permission' => 'view-audit-dashboard', 'active' => $activeRoute === 'audit-reports.dashboard'],
+                ]
+            ],
             'person_registry' => [
                 'title' => 'Person Registry',
                 'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
@@ -311,6 +357,52 @@ class Sidebar extends Component
                     ['label' => 'All Projects', 'route' => 'projects.manage', 'permission' => 'view-projects', 'active' => $activeRoute === 'projects.manage'],
                 ]
             ],
+            'policies' => [
+                'title' => 'Policy Repository',
+                'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                'active' => in_array($activeRoute, ['policies.index', 'policies.dashboard', 'policies.adoption', 'policies.show']),
+                'items' => [
+                    ['label' => 'Policy Register', 'route' => 'policies.index', 'permission' => 'view-policies', 'active' => $activeRoute === 'policies.index'],
+                    ['label' => 'Adoption Dashboard', 'route' => 'policies.dashboard', 'permission' => 'view-policy-dashboard', 'active' => $activeRoute === 'policies.dashboard'],
+                    ['label' => 'Our Adoption', 'route' => 'policies.adoption', 'permission' => 'view-policy-adoption', 'active' => $activeRoute === 'policies.adoption'],
+                ]
+            ],
+            'workplans' => [
+                'title' => 'Workplans',
+                'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+                'active' => in_array($activeRoute, ['workplans.index', 'workplans.dashboard', 'workplans.show']),
+                'items' => [
+                    ['label' => 'Workplan Register', 'route' => 'workplans.index', 'permission' => 'view-workplans', 'active' => $activeRoute === 'workplans.index'],
+                    ['label' => 'Workplan Dashboard', 'route' => 'workplans.dashboard', 'permission' => 'view-workplan-dashboard', 'active' => $activeRoute === 'workplans.dashboard'],
+                ]
+            ],
+            'assignments' => [
+                'title' => 'Assignments',
+                'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                'active' => in_array($activeRoute, ['assignments.index', 'assignments.dashboard', 'assignments.show']),
+                'items' => [
+                    ['label' => 'Assignment Register', 'route' => 'assignments.index', 'permission' => 'view-assignments', 'active' => $activeRoute === 'assignments.index'],
+                    ['label' => 'Assignment Dashboard', 'route' => 'assignments.dashboard', 'permission' => 'view-assignment-dashboard', 'active' => $activeRoute === 'assignments.dashboard'],
+                ]
+            ],
+            'land_parcels' => [
+                'title' => 'Land Registration',
+                'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 4h1m4 0h1M9 16h1',
+                'active' => in_array($activeRoute, ['land-parcels.index', 'land-parcels.dashboard', 'land-parcels.show']),
+                'items' => [
+                    ['label' => 'Land Register', 'route' => 'land-parcels.index', 'permission' => 'view-land-parcels', 'active' => $activeRoute === 'land-parcels.index'],
+                    ['label' => 'Land Dashboard', 'route' => 'land-parcels.dashboard', 'permission' => 'view-land-dashboard', 'active' => $activeRoute === 'land-parcels.dashboard'],
+                ]
+            ],
+            'audit_reports' => [
+                'title' => 'Audit Reports',
+                'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                'active' => in_array($activeRoute, ['audit-reports.index', 'audit-reports.dashboard', 'audit-reports.show']),
+                'items' => [
+                    ['label' => 'Audit Register', 'route' => 'audit-reports.index', 'permission' => 'view-audit-reports', 'active' => $activeRoute === 'audit-reports.index'],
+                    ['label' => 'Audit Dashboard', 'route' => 'audit-reports.dashboard', 'permission' => 'view-audit-dashboard', 'active' => $activeRoute === 'audit-reports.dashboard'],
+                ]
+            ],
             'person_registry' => [
                 'title' => 'Person Mgt',
                 'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
@@ -378,6 +470,52 @@ class Sidebar extends Component
                 'active' => $activeRoute === 'projects.manage',
                 'items' => [
                     ['label' => 'All Projects', 'route' => 'projects.manage', 'permission' => 'view-projects', 'active' => $activeRoute === 'projects.manage'],
+                ]
+            ],
+            'policies' => [
+                'title' => 'Policy Repository',
+                'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                'active' => in_array($activeRoute, ['policies.index', 'policies.dashboard', 'policies.adoption', 'policies.show']),
+                'items' => [
+                    ['label' => 'Policy Register', 'route' => 'policies.index', 'permission' => 'view-policies', 'active' => $activeRoute === 'policies.index'],
+                    ['label' => 'Adoption Dashboard', 'route' => 'policies.dashboard', 'permission' => 'view-policy-dashboard', 'active' => $activeRoute === 'policies.dashboard'],
+                    ['label' => 'Our Adoption', 'route' => 'policies.adoption', 'permission' => 'view-policy-adoption', 'active' => $activeRoute === 'policies.adoption'],
+                ]
+            ],
+            'workplans' => [
+                'title' => 'Workplans',
+                'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+                'active' => in_array($activeRoute, ['workplans.index', 'workplans.dashboard', 'workplans.show']),
+                'items' => [
+                    ['label' => 'Workplan Register', 'route' => 'workplans.index', 'permission' => 'view-workplans', 'active' => $activeRoute === 'workplans.index'],
+                    ['label' => 'Workplan Dashboard', 'route' => 'workplans.dashboard', 'permission' => 'view-workplan-dashboard', 'active' => $activeRoute === 'workplans.dashboard'],
+                ]
+            ],
+            'assignments' => [
+                'title' => 'Assignments',
+                'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                'active' => in_array($activeRoute, ['assignments.index', 'assignments.dashboard', 'assignments.show']),
+                'items' => [
+                    ['label' => 'Assignment Register', 'route' => 'assignments.index', 'permission' => 'view-assignments', 'active' => $activeRoute === 'assignments.index'],
+                    ['label' => 'Assignment Dashboard', 'route' => 'assignments.dashboard', 'permission' => 'view-assignment-dashboard', 'active' => $activeRoute === 'assignments.dashboard'],
+                ]
+            ],
+            'land_parcels' => [
+                'title' => 'Land Registration',
+                'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 4h1m4 0h1M9 16h1',
+                'active' => in_array($activeRoute, ['land-parcels.index', 'land-parcels.dashboard', 'land-parcels.show']),
+                'items' => [
+                    ['label' => 'Land Register', 'route' => 'land-parcels.index', 'permission' => 'view-land-parcels', 'active' => $activeRoute === 'land-parcels.index'],
+                    ['label' => 'Land Dashboard', 'route' => 'land-parcels.dashboard', 'permission' => 'view-land-dashboard', 'active' => $activeRoute === 'land-parcels.dashboard'],
+                ]
+            ],
+            'audit_reports' => [
+                'title' => 'Audit Reports',
+                'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                'active' => in_array($activeRoute, ['audit-reports.index', 'audit-reports.dashboard', 'audit-reports.show']),
+                'items' => [
+                    ['label' => 'Audit Register', 'route' => 'audit-reports.index', 'permission' => 'view-audit-reports', 'active' => $activeRoute === 'audit-reports.index'],
+                    ['label' => 'Audit Dashboard', 'route' => 'audit-reports.dashboard', 'permission' => 'view-audit-dashboard', 'active' => $activeRoute === 'audit-reports.dashboard'],
                 ]
             ],
             'communication' => [
@@ -463,6 +601,52 @@ class Sidebar extends Component
                     ['label' => 'Audit Logs', 'route' => 'dashboard', 'permission' => 'view-audit-logs'],
                     ['label' => 'KYC Management', 'route' => 'dashboard', 'permission' => 'manage-kyc'],
                     ['label' => 'Data Subject Rights', 'route' => 'dashboard', 'permission' => 'manage-data-rights']
+                ]
+            ],
+            'policies' => [
+                'title' => 'Policy Repository',
+                'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                'active' => in_array($activeRoute, ['policies.index', 'policies.dashboard', 'policies.adoption', 'policies.show']),
+                'items' => [
+                    ['label' => 'Policy Register', 'route' => 'policies.index', 'permission' => 'view-policies', 'active' => $activeRoute === 'policies.index'],
+                    ['label' => 'Adoption Dashboard', 'route' => 'policies.dashboard', 'permission' => 'view-policy-dashboard', 'active' => $activeRoute === 'policies.dashboard'],
+                    ['label' => 'Our Adoption', 'route' => 'policies.adoption', 'permission' => 'view-policy-adoption', 'active' => $activeRoute === 'policies.adoption'],
+                ]
+            ],
+            'workplans' => [
+                'title' => 'Workplans',
+                'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+                'active' => in_array($activeRoute, ['workplans.index', 'workplans.dashboard', 'workplans.show']),
+                'items' => [
+                    ['label' => 'Workplan Register', 'route' => 'workplans.index', 'permission' => 'view-workplans', 'active' => $activeRoute === 'workplans.index'],
+                    ['label' => 'Workplan Dashboard', 'route' => 'workplans.dashboard', 'permission' => 'view-workplan-dashboard', 'active' => $activeRoute === 'workplans.dashboard'],
+                ]
+            ],
+            'assignments' => [
+                'title' => 'Assignments',
+                'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                'active' => in_array($activeRoute, ['assignments.index', 'assignments.dashboard', 'assignments.show']),
+                'items' => [
+                    ['label' => 'Assignment Register', 'route' => 'assignments.index', 'permission' => 'view-assignments', 'active' => $activeRoute === 'assignments.index'],
+                    ['label' => 'Assignment Dashboard', 'route' => 'assignments.dashboard', 'permission' => 'view-assignment-dashboard', 'active' => $activeRoute === 'assignments.dashboard'],
+                ]
+            ],
+            'land_parcels' => [
+                'title' => 'Land Registration',
+                'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 4h1m4 0h1M9 16h1',
+                'active' => in_array($activeRoute, ['land-parcels.index', 'land-parcels.dashboard', 'land-parcels.show']),
+                'items' => [
+                    ['label' => 'Land Register', 'route' => 'land-parcels.index', 'permission' => 'view-land-parcels', 'active' => $activeRoute === 'land-parcels.index'],
+                    ['label' => 'Land Dashboard', 'route' => 'land-parcels.dashboard', 'permission' => 'view-land-dashboard', 'active' => $activeRoute === 'land-parcels.dashboard'],
+                ]
+            ],
+            'audit_reports' => [
+                'title' => 'Audit Reports',
+                'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                'active' => in_array($activeRoute, ['audit-reports.index', 'audit-reports.dashboard', 'audit-reports.show']),
+                'items' => [
+                    ['label' => 'Audit Register', 'route' => 'audit-reports.index', 'permission' => 'view-audit-reports', 'active' => $activeRoute === 'audit-reports.index'],
+                    ['label' => 'Audit Dashboard', 'route' => 'audit-reports.dashboard', 'permission' => 'view-audit-dashboard', 'active' => $activeRoute === 'audit-reports.dashboard'],
                 ]
             ],
             'reports' => [
