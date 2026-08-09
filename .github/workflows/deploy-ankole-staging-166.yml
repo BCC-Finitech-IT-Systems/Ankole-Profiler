@@ -1,0 +1,85 @@
+name: Deploy Ankole Profiler (staging @ 10.0.1.166)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ankole-profiler-166
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, ankole-profiler-166]
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Sync source to deployment directory
+        run: |
+          rsync -av --delete --no-owner --no-group \
+            --exclude='.env' \
+            --exclude='.git' \
+            --exclude='storage/' \
+            --exclude='bootstrap/cache/' \
+            --exclude='node_modules/' \
+            --exclude='vendor/' \
+            ${{ github.workspace }}/ /var/www/ankole-profiler/
+
+      - name: Ensure runtime directories
+        run: |
+          mkdir -p /var/www/ankole-profiler/bootstrap/cache
+          mkdir -p /var/www/ankole-profiler/storage/logs
+          mkdir -p /var/www/ankole-profiler/storage/framework/{cache,sessions,views}
+
+      - name: Install PHP dependencies
+        working-directory: /var/www/ankole-profiler
+        run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+
+      - name: Install Node dependencies
+        working-directory: /var/www/ankole-profiler
+        run: npm ci --no-audit --no-fund
+
+      - name: Build frontend assets
+        working-directory: /var/www/ankole-profiler
+        run: npm run build
+
+      - name: Hand storage and cache to www-data
+        working-directory: /var/www/ankole-profiler
+        run: |
+          sudo chown -R www-data:www-data storage bootstrap/cache
+          sudo chmod -R 775 storage bootstrap/cache
+
+      - name: Run database migrations
+        working-directory: /var/www/ankole-profiler
+        run: sudo -u www-data php8.3 artisan migrate --force
+
+      # NOTE: route:cache is intentionally NOT run, same reason as the
+      # other Ankole-Profiler deployment — the root route ("/") is a
+      # Closure, which route caching mishandles and yields HTTP 405.
+      - name: Cache config and views
+        working-directory: /var/www/ankole-profiler
+        run: |
+          sudo -u www-data php8.3 artisan route:clear
+          sudo -u www-data php8.3 artisan config:cache
+          sudo -u www-data php8.3 artisan view:cache
+
+      - name: Ensure storage link exists
+        working-directory: /var/www/ankole-profiler
+        run: php8.3 artisan storage:link || true
+
+      - name: Reload Apache
+        run: sudo systemctl reload apache2
+
+      - name: Restart queue worker
+        run: sudo systemctl restart ankole-profiler-worker
+
+      - name: Verify deployment
+        run: |
+          echo "=== Service status ==="
+          sudo systemctl is-active apache2
+          sudo systemctl is-active ankole-profiler-worker
+          echo "=== HTTP check ==="
+          curl -sk -o /dev/null -w "GET /ankole-profiler/ -> HTTP %{http_code}\n" \
+            https://127.0.0.1/ankole-profiler/ -H "Host: staging.bcc.co.ug"
