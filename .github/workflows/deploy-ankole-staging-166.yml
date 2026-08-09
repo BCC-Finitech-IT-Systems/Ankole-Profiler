@@ -48,12 +48,12 @@ jobs:
       - name: Hand storage and cache to www-data
         working-directory: /var/www/ankole-profiler
         run: |
-          sudo chown -R www-data:www-data storage bootstrap/cache
-          sudo chmod -R 775 storage bootstrap/cache
+          sudo chown -R www-data:www-data /var/www/ankole-profiler/storage /var/www/ankole-profiler/bootstrap/cache
+          sudo chmod -R 775 /var/www/ankole-profiler/storage /var/www/ankole-profiler/bootstrap/cache
 
       - name: Run database migrations
         working-directory: /var/www/ankole-profiler
-        run: sudo -u www-data php8.3 artisan migrate --force
+        run: sudo -u www-data php8.3 /var/www/ankole-profiler/artisan migrate --force
 
       # NOTE: route:cache is intentionally NOT run, same reason as the
       # other Ankole-Profiler deployment — the root route ("/") is a
@@ -61,9 +61,9 @@ jobs:
       - name: Cache config and views
         working-directory: /var/www/ankole-profiler
         run: |
-          sudo -u www-data php8.3 artisan route:clear
-          sudo -u www-data php8.3 artisan config:cache
-          sudo -u www-data php8.3 artisan view:cache
+          sudo -u www-data php8.3 /var/www/ankole-profiler/artisan route:clear
+          sudo -u www-data php8.3 /var/www/ankole-profiler/artisan config:cache
+          sudo -u www-data php8.3 /var/www/ankole-profiler/artisan view:cache
 
       - name: Ensure storage link exists
         working-directory: /var/www/ankole-profiler
