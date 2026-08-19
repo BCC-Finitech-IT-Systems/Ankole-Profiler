@@ -371,15 +371,12 @@ class DepartmentsDashboard extends Component
         $isOrgAdmin = (bool) $user && method_exists($user, 'hasRole')
             && $user->hasRole('Organization Admin') && !$user->hasRole('Super Admin');
 
-        // For Org Admin: scope to affiliated departments only
-        $affiliatedDepartmentIds = collect();
-        if ($isOrgAdmin && $user->person) {
-            $affiliatedDepartmentIds = PersonAffiliation::where('person_id', $user->person->id)
-                ->where('status', 'active')
-                ->whereNotNull('department_id')
-                ->pluck('department_id')
-                ->unique();
-        }
+        // For Org Admin: scope to every department they manage — this
+        // includes departments belonging to any organization they
+        // administer (User::managedDepartmentIds()), not just departments
+        // from a direct affiliation row, so a diocese-level admin sees
+        // departments across the whole org tree, not zero.
+        $affiliatedDepartmentIds = $isOrgAdmin ? $user->managedDepartmentIds() : collect();
 
         $departmentsQuery = Department::query()
             ->with(['organization:id,legal_name', 'admin:id,name', 'subCategories:id,department_id,name,is_active'])
