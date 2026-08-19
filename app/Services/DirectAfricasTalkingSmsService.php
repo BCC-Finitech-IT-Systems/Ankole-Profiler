@@ -24,17 +24,20 @@ class DirectAfricasTalkingSmsService
     {
         $this->config = config('africastalking');
 
-        $this->username = $this->config['username'];
-        $this->apiKey = $this->config['api_key'];
+        $this->username = $this->config['username'] ?? '';
+        $this->apiKey = $this->config['api_key'] ?? '';
         $this->environment = $this->config['environment'];
 
-        // Validate required configuration
-        if (empty($this->config['username'])) {
-            throw new \InvalidArgumentException('AT_USERNAME is required in .env file');
-        }
-
-        if (empty($this->config['api_key'])) {
-            throw new \InvalidArgumentException('AT_API_KEY is required in .env file');
+        // Missing credentials are not fatal here — this service is
+        // constructed eagerly by CommunicationServiceProvider on every
+        // request that boots the send-message page, regardless of
+        // whether SMS is actually used. Failing fast at construction
+        // time would break email/WhatsApp sending too whenever AT
+        // credentials aren't configured (e.g. on staging). sendSms()
+        // below checks for missing credentials before attempting to
+        // send, so the failure surfaces at the point of use instead.
+        if (empty($this->username) || empty($this->apiKey)) {
+            Log::warning('Africa\'s Talking SMS service initialized without credentials — SMS sending will be unavailable.');
         }
 
         // Set base URL based on environment
@@ -104,6 +107,16 @@ class DirectAfricasTalkingSmsService
     // Send a single SMS message
     public function sendSms(string $recipient, string $message, array $options = []): CommunicationResult
     {
+        if (empty($this->username) || empty($this->apiKey)) {
+            return CommunicationResult::failure(
+                messageId: Str::uuid()->toString(),
+                recipient: $recipient,
+                channel: 'sms',
+                errorMessage: 'SMS is not configured on this environment (missing AT_USERNAME/AT_API_KEY).',
+                metadata: ['provider' => 'africastalking', 'error_type' => 'not_configured']
+            );
+        }
+
         try {
             // Format the phone number properly
             $formattedRecipient = $this->formatPhoneNumber($recipient);
