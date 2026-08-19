@@ -1,15 +1,17 @@
-name: Deploy Ankole Profiler (staging @ 10.0.1.166)
+name: Deploy Ankole Profiler (staging @ 10.0.1.117)
 
 on:
+  push:
+    branches: [staging]
   workflow_dispatch:
 
 concurrency:
-  group: deploy-ankole-profiler-166
+  group: deploy-ankole-profiler-staging
   cancel-in-progress: false
 
 jobs:
   deploy:
-    runs-on: [self-hosted, ankole-profiler-166]
+    runs-on: [self-hosted, ankole-profiler-117]
     timeout-minutes: 20
 
     steps:
@@ -46,28 +48,24 @@ jobs:
         run: npm run build
 
       - name: Hand storage and cache to www-data
-        working-directory: /var/www/ankole-profiler
         run: |
           sudo chown -R www-data:www-data /var/www/ankole-profiler/storage /var/www/ankole-profiler/bootstrap/cache
           sudo chmod -R 775 /var/www/ankole-profiler/storage /var/www/ankole-profiler/bootstrap/cache
 
       - name: Run database migrations
-        working-directory: /var/www/ankole-profiler
         run: sudo -u www-data php8.3 /var/www/ankole-profiler/artisan migrate --force
 
       # NOTE: route:cache is intentionally NOT run, same reason as the
-      # other Ankole-Profiler deployment — the root route ("/") is a
+      # other Ankole-Profiler deployments — the root route ("/") is a
       # Closure, which route caching mishandles and yields HTTP 405.
       - name: Cache config and views
-        working-directory: /var/www/ankole-profiler
         run: |
           sudo -u www-data php8.3 /var/www/ankole-profiler/artisan route:clear
           sudo -u www-data php8.3 /var/www/ankole-profiler/artisan config:cache
           sudo -u www-data php8.3 /var/www/ankole-profiler/artisan view:cache
 
       - name: Ensure storage link exists
-        working-directory: /var/www/ankole-profiler
-        run: php8.3 artisan storage:link || true
+        run: sudo -u www-data php8.3 /var/www/ankole-profiler/artisan storage:link || true
 
       - name: Reload Apache
         run: sudo systemctl reload apache2
@@ -81,5 +79,5 @@ jobs:
           sudo systemctl is-active apache2
           sudo systemctl is-active ankole-profiler-worker
           echo "=== HTTP check ==="
-          curl -sk -o /dev/null -w "GET /ankole-profiler/ -> HTTP %{http_code}\n" \
-            https://127.0.0.1/ankole-profiler/ -H "Host: staging.bcc.co.ug"
+          curl -sk -o /dev/null -w "GET / -> HTTP %{http_code}\n" \
+            http://127.0.0.1/ -H "Host: ankole-staging.bcc.co.ug"
