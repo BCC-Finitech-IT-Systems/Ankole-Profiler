@@ -19,7 +19,12 @@ class DepartmentSeeder extends Seeder
             [
                 'display_name' => 'Ankole Diocese',
                 'code' => $this->generateUniqueOrganizationCode('ANKDIO'),
-                'category' => 'other',
+                // 'diocese' so this org is found by every "the diocese"
+                // lookup app-wide (self-registration, policy dashboards,
+                // the org-creation parent picker, DioceseManager) — being
+                // is_super=true doesn't imply category=diocese, they're
+                // orthogonal flags.
+                'category' => 'diocese',
                 // 'super' keeps is_super true through the Organization
                 // saving hook, which derives is_super from organization_type.
                 'organization_type' => 'super',

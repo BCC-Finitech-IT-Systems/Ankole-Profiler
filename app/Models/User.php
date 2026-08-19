@@ -127,9 +127,39 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Ids of organizations this user is directly affiliated with (active
+     * affiliations only) — no tree expansion. Tenancy in this app is
+     * hierarchical (diocese -> member organizations/institutions), so most
+     * callers want organizationSubtreeIds() below instead of this.
+     */
+    private function directlyAffiliatedOrganizationIds(): \Illuminate\Support\Collection
+    {
+        return $this->activeAffiliations()
+            ->pluck('person_affiliations.organization_id')
+            ->unique()
+            ->values();
+    }
+
+    /**
+     * Ids of organizations this user is affiliated with, plus every
+     * descendant of each (via Organization::subtreeIds()). A diocese is
+     * itself an Organization row, so affiliating with the diocese must
+     * also grant its whole tree of member organizations/institutions —
+     * tenancy starts at the diocese, not at one row in the org table.
+     */
+    private function organizationSubtreeIds(): \Illuminate\Support\Collection
+    {
+        return $this->directlyAffiliatedOrganizationIds()
+            ->flatMap(fn ($orgId) => Organization::find($orgId)?->subtreeIds() ?? collect())
+            ->unique()
+            ->values();
+    }
+
+    /**
      * Ids of organizations this user administers: organizations where the
-     * user holds an admin-capable role AND has an active affiliation.
-     * Super Admin manages all active organizations.
+     * user holds an admin-capable role AND has an active affiliation,
+     * expanded to include every organization under them. Super Admin
+     * manages all active organizations.
      */
     public function managedOrganizationIds(): \Illuminate\Support\Collection
     {
@@ -144,16 +174,15 @@ class User extends Authenticatable implements MustVerifyEmail
                 return collect();
             }
 
-            return $this->activeAffiliations()
-                ->pluck('person_affiliations.organization_id')
-                ->unique()
-                ->values();
+            return $this->organizationSubtreeIds();
         });
     }
 
     /**
-     * Ids of departments this user administers, via active affiliations
-     * (for Department Managers) and departments they head directly.
+     * Ids of departments this user administers: every department inside an
+     * organization they administer (Organization Admin), departments from
+     * direct affiliations (Department Manager), and departments they head
+     * directly.
      */
     public function managedDepartmentIds(): \Illuminate\Support\Collection
     {
@@ -168,10 +197,15 @@ class User extends Authenticatable implements MustVerifyEmail
                 return $headed->unique()->values();
             }
 
+            $viaOrganizations = $this->hasRole('Organization Admin')
+                ? Department::whereIn('organization_id', $this->managedOrganizationIds())->pluck('id')
+                : collect();
+
             return $this->activeAffiliations()
                 ->whereNotNull('person_affiliations.department_id')
                 ->pluck('person_affiliations.department_id')
                 ->merge($headed)
+                ->merge($viaOrganizations)
                 ->unique()
                 ->values();
         });
@@ -200,22 +234,21 @@ class User extends Authenticatable implements MustVerifyEmail
                                ->get();
         }
 
-        // Regular users: get organizations from their affiliations
-        $personId = $this->personId();
-        if (!$personId) {
+        $ids = $this->organizationSubtreeIds();
+        if ($ids->isEmpty()) {
             return collect();
         }
 
-        return Organization::whereHas('personAffiliations', function($query) use ($personId) {
-                $query->where('person_id', $personId)->active();
-            })
+        return Organization::whereIn('id', $ids)
             ->where('is_active', true)
             ->orderBy('display_name')
             ->get();
     }
 
     /**
-     * Check if the user can access a specific organization.
+     * Check if the user can access a specific organization — either
+     * directly affiliated, or a descendant of an organization they're
+     * affiliated with (tenancy flows down from the diocese).
      *
      * @param int $organizationId
      * @return bool
@@ -227,16 +260,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return true;
         }
 
-        $personId = $this->personId();
-        if (!$personId) {
-            return false;
-        }
-
-        // Check if the user has an active affiliation with the organization
-        return PersonAffiliation::where('person_id', $personId)
-            ->where('organization_id', $organizationId)
-            ->active()
-            ->exists();
+        return $this->organizationSubtreeIds()->contains($organizationId);
     }
 
     /**
