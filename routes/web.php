@@ -253,6 +253,9 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
         Route::get('/dioceses', App\Livewire\Admin\DioceseManager::class)
             ->name('dioceses.index')
             ->middleware('can:manage-dioceses');
+        Route::get('/settings', App\Livewire\Admin\SettingManager::class)
+            ->name('settings.index')
+            ->middleware('can:manage-settings');
     });
 
     Route::prefix('communication')->name('communication.')->middleware('org.access')->group(function () {

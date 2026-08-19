@@ -24,6 +24,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'approve-organization-membership',
             'manage-email-domains',
             'manage-dioceses',
+            'manage-settings',
 
             // Dashboard permissions
             'view-dashboard',

@@ -36,7 +36,8 @@
         },
         "files": [
             "app/Helpers/organization_functions.php",
-            "app/Helpers/FormErrorHelper.php"
+            "app/Helpers/FormErrorHelper.php",
+            "app/Helpers/SettingHelper.php"
         ]
     },
     "autoload-dev": {
