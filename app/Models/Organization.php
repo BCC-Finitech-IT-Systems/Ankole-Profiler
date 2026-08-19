@@ -21,6 +21,7 @@ class Organization extends Model
         'display_name',
         'code',
         'organization_type',
+        'ownership_type',
         'parent_organization_id',
         'registration_number',
         'tax_identification_number',
