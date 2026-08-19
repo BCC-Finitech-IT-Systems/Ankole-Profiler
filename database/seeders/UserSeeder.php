@@ -22,11 +22,6 @@ class UserSeeder extends Seeder
 
         $superAdmins = [
             [
-                'email' => 'ategeka.lordrick@bcc.co.ug',
-                'name' => 'Lordrick Ategeka -BCC -ADMIN',
-                'password' => 'qwertyui', // use a strong password in production
-            ],
-            [
                 'email' => 'nabukajoshua@gmail.com',
                 'name' => 'Joshua Nabuka',
                 'password' => 'Ankole@2026',
