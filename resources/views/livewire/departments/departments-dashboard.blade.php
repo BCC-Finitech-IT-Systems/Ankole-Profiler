@@ -566,7 +566,6 @@
             @endif
         </div>
     </div>
-</div>
 
 {{-- Project Create/Edit Modal --}}
 @if($showProjectModal)
@@ -707,6 +706,7 @@
     </div>
 </div>
 @endif
+</div>
 
 @if(!empty($registrationChartData['datasets']))
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
