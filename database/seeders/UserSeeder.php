@@ -26,11 +26,6 @@ class UserSeeder extends Seeder
                 'name' => 'Joshua Nabuka',
                 'password' => 'Ankole@2026',
             ],
-            [
-                'email' => 'demo.superadmin@ankole.test',
-                'name' => 'Demo Super Admin',
-                'password' => 'Demo@Ankole2026',
-            ],
         ];
 
         foreach ($superAdmins as $account) {

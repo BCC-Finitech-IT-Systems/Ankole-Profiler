@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
                 DepartmentSubCategorySeeder::class,
                 AllowedEmailDomainSeeder::class, // after DepartmentSeeder so domains link to the diocese
                 RoleTypeSeeder::class,
+                DemoTenantAdminSeeder::class, // after DepartmentSeeder so the diocese exists to affiliate to
                 SampleDataSeeder::class,
             ]);
         } finally {
