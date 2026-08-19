@@ -37,6 +37,9 @@
         </svg>
         Use demo tenant admin
     </button>
+    <p style="text-align:center;margin-top:-0.9rem;margin-bottom:1.25rem;font-size:0.78rem;color:#9a8f95;">
+        demo.tenantadmin@ankole.test / Demo@Ankole2026
+    </p>
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
