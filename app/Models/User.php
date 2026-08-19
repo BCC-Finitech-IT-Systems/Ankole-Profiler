@@ -246,6 +246,32 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * The organization a user should land in by default. accessibleOrganizations()
+     * now includes an admin's whole subtree (e.g. a diocese admin can access
+     * all 200+ institutions under it), so picking alphabetically-first from
+     * that list would land people in a random institution instead of the
+     * organization they're actually affiliated with. Prefer a directly
+     * affiliated organization; fall back to the first accessible one only
+     * if the user has no direct affiliation at all.
+     */
+    public function defaultOrganizationId(): ?int
+    {
+        if ($this->hasRole('Super Admin')) {
+            return Organization::where('is_active', true)->orderBy('display_name')->value('id');
+        }
+
+        $directIds = $this->directlyAffiliatedOrganizationIds();
+        if ($directIds->isNotEmpty()) {
+            return Organization::whereIn('id', $directIds)
+                ->where('is_active', true)
+                ->orderBy('display_name')
+                ->value('id');
+        }
+
+        return $this->accessibleOrganizations()->first()?->id;
+    }
+
+    /**
      * Check if the user can access a specific organization — either
      * directly affiliated, or a descendant of an organization they're
      * affiliated with (tenancy flows down from the diocese).

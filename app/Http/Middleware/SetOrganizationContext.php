@@ -54,7 +54,7 @@ class SetOrganizationContext
      */
     private function setDefaultOrganization($user)
     {
-        $defaultOrg = $user->accessibleOrganizations()->first()?->id;
+        $defaultOrg = $user->defaultOrganizationId();
 
         if ($defaultOrg) {
             session(['current_organization_id' => $defaultOrg]);
