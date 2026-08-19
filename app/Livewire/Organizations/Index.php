@@ -86,6 +86,7 @@ class Index extends Component {
     public function getOrganizationsProperty()
     {
         return Organization::query()
+            ->whereIn('id', auth()->user()->accessibleOrganizations()->pluck('id'))
             ->with('parentOrganization')
             ->withCount([
                 'departments',

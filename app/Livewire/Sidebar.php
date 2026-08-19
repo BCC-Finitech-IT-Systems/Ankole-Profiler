@@ -339,9 +339,10 @@ class Sidebar extends Component
             'organization' => [
                 'title' => 'My Organization',
                 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-                'active' => in_array($activeRoute, ['organizations.current-project', 'organization-units.index', 'organization-units.create', 'organization-units.applications', 'departments.index', 'departments.dashboard']),
+                'active' => in_array($activeRoute, ['organizations.current-project', 'organizations.index', 'organization-units.index', 'organization-units.create', 'organization-units.applications', 'departments.index', 'departments.dashboard']),
                 'items' => [
                     ['label' => 'Organization Profile', 'route' => 'organizations.current-project', 'permission' => 'view-own-Organization', 'active' => $activeRoute === 'organizations.current-project'],
+                    ['label' => 'Institutions', 'route' => 'organizations.index', 'permission' => 'view-organizations-hierarchy', 'active' => $activeRoute === 'organizations.index'],
                     // ['label' => 'Project Units', 'route' => 'organization-units.index', 'permission' => 'view-own-units', 'active' => $activeRoute === 'organization-units.index'],
                     // // ['label' => 'Create Unit', 'route' => 'organization-units.create', 'permission' => 'create-units', 'active' => $activeRoute === 'organization-units.create'],
                     // ['label' => 'Unit Applications', 'route' => 'organization-units.applications', 'permission' => 'review-organization-units', 'active' => $activeRoute === 'organization-units.applications'],
