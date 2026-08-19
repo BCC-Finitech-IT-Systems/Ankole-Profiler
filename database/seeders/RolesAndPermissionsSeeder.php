@@ -242,6 +242,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view-organizations-hierarchy',
             'view-own-sites',
             'view-own-units',
+            'create-organizations', // add institutions under the diocese they administer
             'create-units',
             'edit-units',
             'approve-unit-membership',
