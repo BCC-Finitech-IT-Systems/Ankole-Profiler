@@ -5,12 +5,6 @@
                 <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Admin</div>
                 <h1 class="text-base font-semibold text-gray-800 truncate">User Management</h1>
             </div>
-            @if(!empty($selectedUsers))
-                <button wire:click="bulkDelete"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex-shrink-0">
-                    Delete Selected ({{ count($selectedUsers) }})
-                </button>
-            @endif
         </div>
     </x-slot>
 
@@ -72,6 +66,12 @@
                         <option value="{{ $org->id }}">{{ $org->legal_name }}</option>
                     @endforeach
                 </select>
+                @if(!empty($selectedUsers))
+                    <button wire:click="bulkDelete" wire:confirm="Delete {{ count($selectedUsers) }} selected user(s)? This cannot be undone."
+                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex-shrink-0">
+                        Delete Selected ({{ count($selectedUsers) }})
+                    </button>
+                @endif
             </div>
 
             {{-- Users Table --}}
@@ -81,7 +81,7 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-8">
-                                    <input type="checkbox" wire:model="selectAll" class="checkbox checkbox-sm" title="Select All">
+                                    <input type="checkbox" wire:model.live="selectAll" class="checkbox checkbox-sm" title="Select All">
                                 </th>
                                 <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
                                 <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
@@ -96,7 +96,7 @@
                             @forelse($users as $user)
                                 <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox" wire:model="selectedUsers" value="{{ $user->id }}"
+                                        <input type="checkbox" wire:model.live="selectedUsers" value="{{ $user->id }}"
                                             class="checkbox checkbox-sm" title="Select User">
                                     </td>
                                     <td class="px-4 py-3">

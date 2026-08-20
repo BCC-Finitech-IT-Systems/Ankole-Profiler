@@ -5,7 +5,7 @@
                 <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Admin</div>
                 <h1 class="text-base font-semibold text-gray-800 truncate">Role Management</h1>
             </div>
-            <button wire:click="openCreateModal"
+            <button type="button" onclick="Livewire.dispatch('open-create-modal')"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white flex-shrink-0"
                 style="background:#982B55;">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

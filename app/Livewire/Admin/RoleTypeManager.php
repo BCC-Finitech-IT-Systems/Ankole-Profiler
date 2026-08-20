@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\RoleType;
@@ -244,6 +245,7 @@ class RoleTypeManager extends Component
         $this->active        = true;
     }
 
+    #[On('open-create-modal')]
     public function openCreateModal()
     {
         if (!$this->canManageRoleTypes()) {

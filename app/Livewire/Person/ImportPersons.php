@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Person;
 
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Organization;
@@ -240,6 +241,7 @@ class ImportPersons extends Component
         Log::error('ImportPersons: Validation errors - ' . implode(' | ', $errorMessages));
     }
 
+    #[On('download-template')]
     public function downloadTemplate()
     {
         try {

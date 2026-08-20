@@ -6,7 +6,7 @@
                 <h1 class="text-base font-semibold text-gray-800 truncate">Import Persons</h1>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
-                <button wire:click="downloadTemplate"
+                <button type="button" onclick="Livewire.dispatch('download-template')"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

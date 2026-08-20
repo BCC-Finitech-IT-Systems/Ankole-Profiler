@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Permission\Models\Permission;
@@ -67,6 +68,7 @@ class RoleManager extends Component
         $this->description = 'Can create, edit and publish content across the portal.';
     }
 
+    #[On('open-create-modal')]
     public function openCreateModal()
     {
         $this->resetForm();

@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Permission\Models\Permission;
@@ -54,6 +55,7 @@ class PermissionManager extends Component
         $this->resetPage();
     }
 
+    #[On('open-create-modal')]
     public function openCreateModal()
     {
         $this->resetForm();

@@ -6,7 +6,7 @@
                 <h1 class="text-base font-semibold text-gray-800 truncate">Occupation Management</h1>
             </div>
             @if($canManage)
-                <button wire:click="openCreateModal"
+                <button type="button" onclick="Livewire.dispatch('open-create-modal')"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-colors flex-shrink-0"
                     style="background:#982B55;">
                     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
