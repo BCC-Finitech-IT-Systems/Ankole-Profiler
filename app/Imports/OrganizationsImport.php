@@ -14,10 +14,12 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\SkipsFailures;
 
-class OrganizationsImport implements ToCollection, WithHeadingRow, WithValidation, WithStartRow, SkipsEmptyRows
+class OrganizationsImport implements ToCollection, WithHeadingRow, WithValidation, WithStartRow, SkipsEmptyRows, SkipsOnFailure
 {
-    use Importable;
+    use Importable, SkipsFailures;
 
     public array $results = [
         'summary' => [
@@ -38,15 +40,14 @@ class OrganizationsImport implements ToCollection, WithHeadingRow, WithValidatio
         'Date established' => 'date_established',
         'Country' => 'country',
         'City' => 'city',
-        'Address' => 'address',
         'Primary Contact name' => 'primary_contact_name',
         'Primary contact email' => 'primary_contact_email',
         'Primary contact phone' => 'primary_contact_phone',
+        'Address' => 'address_line_1',
     ];
 
     public function collection(Collection $collection)
     {
-        $this->results['summary']['total'] = $collection->count();
         DB::beginTransaction();
         try {
             foreach ($collection as $index => $row) {
@@ -96,6 +97,23 @@ class OrganizationsImport implements ToCollection, WithHeadingRow, WithValidatio
             ]);
             throw $e;
         }
+
+        // Rows that failed the WithValidation rules() never reach $collection above,
+        // so fold them in here to keep the summary/detail counts accurate. A single
+        // row can fail multiple rules (e.g. missing name AND bad email), and those
+        // arrive as separate Failure objects, so group by row before counting.
+        foreach ($this->failures()->groupBy(fn ($failure) => $failure->row()) as $rowNumber => $rowFailures) {
+            $this->results['details'][] = [
+                'row' => $rowNumber,
+                'name' => $rowFailures->first()->values()['legal_name'] ?? '',
+                'status' => 'failed',
+                'message' => $rowFailures->map(fn ($f) => implode(' ', $f->errors()))->implode(' '),
+            ];
+            $this->results['summary']['failed']++;
+        }
+
+        $this->results['summary']['total'] = $this->results['summary']['success'] + $this->results['summary']['failed'];
+        usort($this->results['details'], fn ($a, $b) => $a['row'] <=> $b['row']);
     }
 
     public function startRow(): int
@@ -117,11 +135,12 @@ class OrganizationsImport implements ToCollection, WithHeadingRow, WithValidatio
             'contact_phone' => ['nullable', 'regex:/^[0-9+\-() ]+$/'],
             'date_established' => [
                 'nullable',
-                'integer',
-                'between:1000,' . now()->year,
+                'date',
             ],
 
-            'address' => 'nullable|string', // Updated from address_line_1 to address
+            'address' => 'nullable|string',
+            'address_line_1' => 'nullable|string',
+            'display_name' => 'nullable|string|max:255',
             'city' => 'nullable|string',
             'country' => 'nullable|string',
             'primary_contact_name' => 'nullable|string',
@@ -153,6 +172,7 @@ class OrganizationsImport implements ToCollection, WithHeadingRow, WithValidatio
             'contact_phone',
             'date_established',
             'address',
+            'address_line_1',
             'city',
             'country',
             'primary_contact_name',
@@ -208,15 +228,7 @@ class OrganizationsImport implements ToCollection, WithHeadingRow, WithValidatio
             $orgData['country'] = 'Uganda'; // Default country
         }
 
-        if (isset($row['date_established'])) {
-            $row['date_established'] = is_numeric($row['date_established'])
-                ? (int) $row['date_established']
-                : null;
-        }
-
-        $Organization = Organization::create($orgData);
-
-        $orgData['year_established'] = $row['date_established'];
+        Organization::create($orgData);
 
         return [
             'status' => 'success',

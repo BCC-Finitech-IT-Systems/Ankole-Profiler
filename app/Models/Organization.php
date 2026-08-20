@@ -369,6 +369,33 @@ class Organization extends Model
         });
     }
 
+    /**
+     * Shared filter set for the Institutions list and its export, so both
+     * stay in sync. Accepts the same filter keys used in the list UI.
+     */
+    public function scopeFilterForList($query, array $filters)
+    {
+        return $query
+            ->when($filters['search'] ?? null, fn ($q, $v) => $q->search($v))
+            ->when($filters['status'] ?? null, function ($q, $status) {
+                if ($status === 'active') {
+                    $q->active();
+                } elseif ($status === 'inactive') {
+                    $q->where('is_active', false);
+                } elseif ($status === 'verified') {
+                    $q->verified();
+                } elseif ($status === 'trial') {
+                    $q->where('is_trial', true);
+                }
+            })
+            ->when($filters['category'] ?? null, fn ($q, $v) => $q->byCategory($v))
+            ->when($filters['parent_organization_id'] ?? null, fn ($q, $v) => $q->where('parent_organization_id', $v))
+            ->when($filters['district'] ?? null, fn ($q, $v) => $q->where('district', $v))
+            ->when($filters['organization_type'] ?? null, fn ($q, $v) => $q->where('organization_type', $v))
+            ->when($filters['date_from'] ?? null, fn ($q, $v) => $q->whereDate('created_at', '>=', $v))
+            ->when($filters['date_to'] ?? null, fn ($q, $v) => $q->whereDate('created_at', '<=', $v));
+    }
+
     // Helper Methods
 
     /**

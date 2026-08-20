@@ -1,6 +1,8 @@
 <?php
 
+use App\Exports\OrganizationsExport;
 use App\Exports\OrganizationTemplateExport;
+use App\Models\Organization;
 use App\Http\Controllers\AllPersonsListController;
 use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\DepartmentController;
@@ -69,6 +71,34 @@ Route::prefix('organizations')->name('organizations.')->middleware($authVerified
 
         return Excel::download($export, 'Organization_import_template.xlsx');
     })->name('template');
+
+    Route::get('/export', function (Request $request) {
+        $organizations = Organization::query()
+            ->whereIn('id', $request->user()->accessibleOrganizations()->pluck('id'))
+            ->with('parentOrganization')
+            ->withCount([
+                'departments',
+                'organizationUnits',
+                'sites',
+                'personAffiliations as active_members_count' => fn ($q) => $q->where('status', 'active'),
+            ])
+            ->filterForList($request->only([
+                'search', 'status', 'category', 'parent_organization_id',
+                'district', 'organization_type', 'date_from', 'date_to',
+            ]))
+            ->orderBy(
+                in_array($request->query('sort_field'), ['legal_name', 'category', 'is_active', 'created_at'], true)
+                    ? $request->query('sort_field')
+                    : 'legal_name',
+                $request->query('sort_direction') === 'desc' ? 'desc' : 'asc'
+            )
+            ->get();
+
+        return Excel::download(
+            new OrganizationsExport($organizations),
+            'organizations_export_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
+    })->name('export');
 
     Route::get('/import', ImportOrganizations::class)->name('import');
 });

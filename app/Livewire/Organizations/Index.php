@@ -28,9 +28,13 @@ class Index extends Component {
     public $sortField = 'created_at';
     public $sortDirection = 'desc';
     public $perPage = 10;
-    public $showFilters = false;
     public $statusFilter = '';
     public $categoryFilter = '';
+    public $parentOrganizationFilter = '';
+    public $districtFilter = '';
+    public $organizationTypeFilter = '';
+    public $dateFrom = '';
+    public $dateTo = '';
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -39,6 +43,11 @@ class Index extends Component {
         'perPage' => ['except' => 10],
         'statusFilter' => ['except' => ''],
         'categoryFilter' => ['except' => ''],
+        'parentOrganizationFilter' => ['except' => ''],
+        'districtFilter' => ['except' => ''],
+        'organizationTypeFilter' => ['except' => ''],
+        'dateFrom' => ['except' => ''],
+        'dateTo' => ['except' => ''],
     ];
 
     public function updatingSearch()
@@ -46,7 +55,37 @@ class Index extends Component {
         $this->resetPage();
     }
 
+    public function updatingStatusFilter()
+    {
+        $this->resetPage();
+    }
+
     public function updatingCategoryFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingParentOrganizationFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDistrictFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingOrganizationTypeFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateFrom()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateTo()
     {
         $this->resetPage();
     }
@@ -67,26 +106,45 @@ class Index extends Component {
         $this->resetPage();
     }
 
-    public function toggleFilters()
-    {
-        $this->showFilters = !$this->showFilters;
-    }
-
     public function resetFilters()
     {
         $this->search = '';
         $this->statusFilter = '';
         $this->categoryFilter = '';
+        $this->parentOrganizationFilter = '';
+        $this->districtFilter = '';
+        $this->organizationTypeFilter = '';
+        $this->dateFrom = '';
+        $this->dateTo = '';
         $this->sortField = 'legal_name';
         $this->sortDirection = 'asc';
         $this->perPage = 10;
         $this->resetPage();
     }
 
-    public function getOrganizationsProperty()
+    protected function accessibleOrganizationIds()
+    {
+        return auth()->user()->accessibleOrganizations()->pluck('id');
+    }
+
+    protected function filterParams(): array
+    {
+        return [
+            'search' => $this->search,
+            'status' => $this->statusFilter,
+            'category' => $this->categoryFilter,
+            'parent_organization_id' => $this->parentOrganizationFilter,
+            'district' => $this->districtFilter,
+            'organization_type' => $this->organizationTypeFilter,
+            'date_from' => $this->dateFrom,
+            'date_to' => $this->dateTo,
+        ];
+    }
+
+    protected function buildOrganizationsQuery()
     {
         return Organization::query()
-            ->whereIn('id', auth()->user()->accessibleOrganizations()->pluck('id'))
+            ->whereIn('id', $this->accessibleOrganizationIds())
             ->with('parentOrganization')
             ->withCount([
                 'departments',
@@ -94,25 +152,13 @@ class Index extends Component {
                 'sites',
                 'personAffiliations as active_members_count' => fn ($q) => $q->where('status', 'active'),
             ])
-            ->when($this->search, function ($query) {
-                $query->search($this->search);
-            })
-            ->when($this->statusFilter, function ($query) {
-                if ($this->statusFilter === 'active') {
-                    $query->active();
-                } elseif ($this->statusFilter === 'inactive') {
-                    $query->where('is_active', false);
-                } elseif ($this->statusFilter === 'verified') {
-                    $query->verified();
-                } elseif ($this->statusFilter === 'trial') {
-                    $query->where('is_trial', true);
-                }
-            })
-            ->when($this->categoryFilter, function ($query) {
-                $query->byCategory($this->categoryFilter);
-            })
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->filterForList($this->filterParams())
+            ->orderBy($this->sortField, $this->sortDirection);
+    }
+
+    public function getOrganizationsProperty()
+    {
+        return $this->buildOrganizationsQuery()->paginate($this->perPage);
     }
 
     public function getCategoriesProperty()
@@ -127,6 +173,40 @@ class Index extends Component {
             'ngo' => 'NGO/Non-Profit',
             'other' => 'Other'
         ];
+    }
+
+    public function getParentOrganizationOptionsProperty()
+    {
+        $accessibleIds = $this->accessibleOrganizationIds();
+
+        $parentIds = Organization::whereIn('id', $accessibleIds)
+            ->whereNotNull('parent_organization_id')
+            ->pluck('parent_organization_id')
+            ->unique();
+
+        return Organization::whereIn('id', $parentIds)
+            ->orderBy('legal_name')
+            ->pluck('legal_name', 'id');
+    }
+
+    public function getDistrictOptionsProperty()
+    {
+        return Organization::whereIn('id', $this->accessibleOrganizationIds())
+            ->whereNotNull('district')
+            ->where('district', '!=', '')
+            ->distinct()
+            ->orderBy('district')
+            ->pluck('district');
+    }
+
+    public function getOrganizationTypeOptionsProperty()
+    {
+        return Organization::whereIn('id', $this->accessibleOrganizationIds())
+            ->whereNotNull('organization_type')
+            ->where('organization_type', '!=', '')
+            ->distinct()
+            ->orderBy('organization_type')
+            ->pluck('organization_type');
     }
 
     public $confirmingDeleteId = null;
@@ -159,6 +239,9 @@ class Index extends Component {
         return view('livewire.organizations.index', [
             'organizations' => $this->organizations,
             'categories' => $this->categories,
+            'parentOrganizationOptions' => $this->parentOrganizationOptions,
+            'districtOptions' => $this->districtOptions,
+            'organizationTypeOptions' => $this->organizationTypeOptions,
         ]);
     }
 }

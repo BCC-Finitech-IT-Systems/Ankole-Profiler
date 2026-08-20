@@ -6,14 +6,30 @@
                 <h1 class="text-base font-semibold text-gray-800 truncate">All Organizations</h1>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
-                <button wire:click="toggleFilters" class="btn btn-ghost btn-sm gap-1.5">
+                <button type="button"
+                    onclick="window.dispatchEvent(new CustomEvent('toggle-org-filters'))"
+                    class="btn btn-ghost btn-sm gap-1.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
                     </svg>
                     Filters
                 </button>
+                <button type="button" onclick="exportOrganizationsList()" class="btn btn-ghost btn-sm gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Export
+                </button>
                 @can('create-organizations')
+                    <a href="{{ route('organizations.import') }}" class="btn btn-ghost btn-sm gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 12v9m0-9l-3 3m3-3l3 3" />
+                        </svg>
+                        Import
+                    </a>
                     <a href="{{ route('organizations.create') }}" class="btn btn-sm gap-1.5" style="background:#982B55;color:#fff;border-color:#982B55;">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -30,7 +46,8 @@
             <div class="bg-white overflow-hidden border border-gray-200 sm:rounded-lg">
 
                 {{-- Search and Filters --}}
-                <div class="p-6 border-b border-gray-200">
+                <div class="p-6 border-b border-gray-200" x-data="{ filtersOpen: false }"
+                    @toggle-org-filters.window="filtersOpen = !filtersOpen">
                     <div class="flex flex-col md:flex-row gap-4">
                         {{-- Search Bar --}}
                         <div class="flex-1">
@@ -59,7 +76,7 @@
                     </div>
 
                     {{-- Advanced Filters --}}
-                    @if ($showFilters)
+                    <div x-show="filtersOpen" x-cloak>
                         <div class="mt-4 p-4 bg-base-100 rounded-lg border">
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div>
@@ -71,6 +88,7 @@
                                         <option value="active">Active</option>
                                         <option value="inactive">Inactive</option>
                                         <option value="verified">Verified</option>
+                                        <option value="trial">Trial</option>
                                     </select>
                                 </div>
 
@@ -86,6 +104,56 @@
                                     </select>
                                 </div>
 
+                                <div>
+                                    <label class="label">
+                                        <span class="label-text">Diocese / Parent Organization</span>
+                                    </label>
+                                    <select wire:model.live="parentOrganizationFilter" class="select select-bordered w-full">
+                                        <option value="">All</option>
+                                        @foreach ($parentOrganizationOptions as $id => $name)
+                                            <option value="{{ $id }}">{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="label">
+                                        <span class="label-text">District</span>
+                                    </label>
+                                    <select wire:model.live="districtFilter" class="select select-bordered w-full">
+                                        <option value="">All Districts</option>
+                                        @foreach ($districtOptions as $district)
+                                            <option value="{{ $district }}">{{ $district }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="label">
+                                        <span class="label-text">Organization Type</span>
+                                    </label>
+                                    <select wire:model.live="organizationTypeFilter" class="select select-bordered w-full">
+                                        <option value="">All Types</option>
+                                        @foreach ($organizationTypeOptions as $type)
+                                            <option value="{{ $type }}">{{ ucfirst($type) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="label">
+                                        <span class="label-text">Created From</span>
+                                    </label>
+                                    <input type="date" wire:model.live="dateFrom" class="input input-bordered w-full">
+                                </div>
+
+                                <div>
+                                    <label class="label">
+                                        <span class="label-text">Created To</span>
+                                    </label>
+                                    <input type="date" wire:model.live="dateTo" class="input input-bordered w-full">
+                                </div>
+
                                 <div class="flex items-end">
                                     <button wire:click="resetFilters" class="btn btn-ghost">
                                         Reset Filters
@@ -93,7 +161,7 @@
                                 </div>
                             </div>
                         </div>
-                    @endif
+                    </div>
                 </div>
 
                 {{-- Organizations Table --}}
@@ -410,10 +478,61 @@
                                     Status: {{ ucfirst($statusFilter) }}
                                 </span>
                             @endif
+                            @if ($categoryFilter)
+                                <span class="text-gray-500">
+                                    Category: {{ $categories[$categoryFilter] ?? $categoryFilter }}
+                                </span>
+                            @endif
+                            @if ($parentOrganizationFilter)
+                                <span class="text-gray-500">
+                                    Diocese: {{ $parentOrganizationOptions[$parentOrganizationFilter] ?? '' }}
+                                </span>
+                            @endif
+                            @if ($districtFilter)
+                                <span class="text-gray-500">
+                                    District: {{ $districtFilter }}
+                                </span>
+                            @endif
+                            @if ($organizationTypeFilter)
+                                <span class="text-gray-500">
+                                    Type: {{ ucfirst($organizationTypeFilter) }}
+                                </span>
+                            @endif
+                            @if ($dateFrom || $dateTo)
+                                <span class="text-gray-500">
+                                    Created: {{ $dateFrom ?: '…' }} to {{ $dateTo ?: '…' }}
+                                </span>
+                            @endif
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        function exportOrganizationsList() {
+            const liveParams = new URLSearchParams(window.location.search);
+            const keyMap = {
+                search: 'search',
+                statusFilter: 'status',
+                categoryFilter: 'category',
+                parentOrganizationFilter: 'parent_organization_id',
+                districtFilter: 'district',
+                organizationTypeFilter: 'organization_type',
+                dateFrom: 'date_from',
+                dateTo: 'date_to',
+                sortField: 'sort_field',
+                sortDirection: 'sort_direction',
+            };
+            const exportParams = new URLSearchParams();
+            for (const [liveKey, exportKey] of Object.entries(keyMap)) {
+                const value = liveParams.get(liveKey);
+                if (value) {
+                    exportParams.set(exportKey, value);
+                }
+            }
+            window.location.href = "{{ route('organizations.export') }}?" + exportParams.toString();
+        }
+    </script>
 </div>

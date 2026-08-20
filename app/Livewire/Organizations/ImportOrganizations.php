@@ -6,8 +6,9 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\OrganizationTemplateExport;
+use App\Imports\OrganizationsImport;
 use App\Models\CustomField;
-use App\Models\Organization;
+use Illuminate\Support\Facades\Storage;
 
 class ImportOrganizations extends Component
 {
@@ -15,6 +16,7 @@ class ImportOrganizations extends Component
 
     public $file;
     public $message;
+    public $results = null;
 
     protected $rules = [
         'file' => 'required|file|mimes:xlsx,csv',
@@ -24,34 +26,21 @@ class ImportOrganizations extends Component
     {
         $this->validate();
 
-        // Store uploaded file temporarily
+        $this->message = null;
+        $this->results = null;
+
         $path = $this->file->store('imports');
 
-        // Use Laravel Excel to read the file
-        $importedRows = [];
-        \Maatwebsite\Excel\Facades\Excel::import(new class($importedRows) implements \Maatwebsite\Excel\Concerns\ToArray {
-            public $rows;
-            public function __construct(&$rows) { $this->rows = &$rows; }
-            public function array(array $array) { $this->rows = $array; }
-        }, $path);
+        $import = new OrganizationsImport();
+        Excel::import($import, $path);
 
-        // Get headers from first row
-        $headers = $importedRows[0] ?? [];
-        unset($importedRows[0]);
+        Storage::delete($path);
 
-        foreach ($importedRows as $row) {
-            $data = array_combine($headers, $row);
-            $standardFields = [];
-            foreach ($data as $key => $value) {
-                if (in_array($key, (new Organization)->getFillable())) {
-                    $standardFields[$key] = $value;
-                }
-            }
-            $org = new Organization($standardFields);
-            $org->save();
-        }
+        $this->results = $import->getResults();
+        $this->message = "Imported {$this->results['summary']['success']} of {$this->results['summary']['total']} organizations"
+            . ($this->results['summary']['failed'] > 0 ? ", {$this->results['summary']['failed']} failed." : '.');
 
-        $this->message = 'File imported successfully.';
+        $this->reset('file');
     }
 
     public function exportCustomTemplate($fields)

@@ -6,14 +6,19 @@
                 <div class="text-xs text-gray-400 uppercase tracking-widest font-medium">Organizations Mgt</div>
                 <h1 class="text-base font-semibold text-gray-800 truncate">Import Organizations</h1>
             </div>
-            <a href="{{ route('organizations.template') }}" target="_blank"
-               class="btn btn-sm btn-ghost gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Download Template
-            </a>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <a href="{{ route('organizations.index') }}" class="btn btn-sm btn-ghost gap-1.5">
+                    Back to Institutions
+                </a>
+                <a href="{{ route('organizations.template') }}" target="_blank"
+                   class="btn btn-sm btn-ghost gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download Template
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -33,7 +38,47 @@
                 </button>
             </form>
             @if($message)
-                <div class="alert alert-success mt-4">{{ $message }}</div>
+                <div class="alert {{ ($results['summary']['failed'] ?? 0) > 0 ? 'alert-warning' : 'alert-success' }} mt-4">
+                    {{ $message }}
+                </div>
+            @endif
+
+            @if($results)
+                <div class="mt-4">
+                    <div class="flex gap-4 text-sm mb-3">
+                        <span class="badge badge-neutral">Total: {{ $results['summary']['total'] }}</span>
+                        <span class="badge badge-success">Success: {{ $results['summary']['success'] }}</span>
+                        <span class="badge badge-error">Failed: {{ $results['summary']['failed'] }}</span>
+                    </div>
+                    @if(count($results['details']))
+                        <div class="overflow-x-auto max-h-80 overflow-y-auto border rounded-lg">
+                            <table class="table table-xs">
+                                <thead class="sticky top-0 bg-white">
+                                    <tr>
+                                        <th>Row</th>
+                                        <th>Name</th>
+                                        <th>Status</th>
+                                        <th>Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($results['details'] as $detail)
+                                        <tr>
+                                            <td>{{ $detail['row'] }}</td>
+                                            <td>{{ $detail['name'] }}</td>
+                                            <td>
+                                                <span class="badge badge-xs {{ $detail['status'] === 'success' ? 'badge-success' : 'badge-error' }}">
+                                                    {{ ucfirst($detail['status']) }}
+                                                </span>
+                                            </td>
+                                            <td class="text-gray-500">{{ $detail['message'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
             @endif
         </div>
 
