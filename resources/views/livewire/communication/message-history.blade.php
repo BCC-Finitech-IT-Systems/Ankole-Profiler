@@ -21,6 +21,17 @@
             </div>
         </div>
     @endif
+    @if (session()->has('error'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)"
+            class="fixed top-4 right-4 z-50">
+            <div class="toast toast-top toast-end">
+                <div class="alert alert-error">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>{{ session('error') }}</span>
+                </div>
+            </div>
+        </div>
+    @endif
     {{-- Statistics Cards --}}
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
@@ -241,7 +252,7 @@
             <div class="drawer-side">
                 <label for="drawer-message-{{ $message->id }}" aria-label="close sidebar" class="drawer-overlay"></label>
                 <div class="menu p-6 w-96 min-h-full bg-base-100 text-base-content relative">
-                    <button class="absolute top-4 right-4 btn btn-sm btn-ghost" for="drawer-message-{{ $message->id }}">&times;</button>
+                    <label class="absolute top-4 right-4 btn btn-sm btn-ghost" for="drawer-message-{{ $message->id }}" aria-label="Close message details">&times;</label>
                     <h2 class="text-xl font-bold mb-2">Message Details</h2>
                     <div class="mb-2"><span class="font-semibold">Channel:</span> {{ $message->channel }}</div>
                     <div class="mb-2"><span class="font-semibold">Recipient:</span> {{ $message->recipient_identifier }}</div>

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Communication;
 
+use App\Contracts\Communication\CommunicationMessage as CommunicationMessageDTO;
 use App\Models\CommunicationMessage;
 use App\Services\Communication\CommunicationManager;
 use Livewire\Component;
@@ -34,6 +35,46 @@ class MessageHistory extends Component
     {
         $this->editingMessage = CommunicationMessage::where('organization_id', $this->resolveOrganizationId())
             ->findOrFail($id);
+    }
+
+    /**
+     * Send the same content to the same recipient again. This deliberately
+     * creates a new history entry rather than mutating the original, so the
+     * earlier attempt and its failure reason stay on the record.
+     */
+    public function resendMessage(int $id): void
+    {
+        $message = CommunicationMessage::where('organization_id', $this->resolveOrganizationId())
+            ->findOrFail($id);
+
+        if (blank($message->recipient_identifier) || blank($message->content)) {
+            session()->flash('error', 'This message has no recipient or content to resend.');
+
+            return;
+        }
+
+        $manager = app(CommunicationManager::class);
+
+        if (!$manager->isChannelAvailable($message->channel)) {
+            session()->flash('error', "The {$message->channel} channel is not configured, so this message cannot be resent.");
+
+            return;
+        }
+
+        $result = $manager->send(new CommunicationMessageDTO(
+            recipient: $message->recipient_identifier,
+            content: $message->content,
+            channel: $message->channel,
+            subject: $message->subject,
+        ));
+
+        if ($result->success) {
+            session()->flash('success', 'Message resent to ' . $message->recipient_identifier . '.');
+        } else {
+            session()->flash('error', 'Resend failed: ' . ($result->errorMessage ?? 'unknown error'));
+        }
+
+        $this->resetPage();
     }
 
     protected $queryString = [

@@ -16,6 +16,39 @@ class ReviewUnitApplications extends Component
 {
     public $selectedApplication = null;
     public $selectedIds = [];
+    public $selectAll = false;
+
+    /**
+     * The pending applications this user is allowed to act on. Shared by
+     * render() and the select-all handler so both always agree on the set.
+     */
+    protected function pendingApplicationsQuery()
+    {
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        $query = OrganizationUnitApplication::pending()->with(['person', 'unit']);
+
+        if ($user && !$user->hasRole('Super Admin')) {
+            $query->whereIn('organization_id', $user->managedOrganizationIds());
+        }
+
+        return $query;
+    }
+
+    public function updatedSelectAll($value): void
+    {
+        $this->selectedIds = $value
+            ? $this->pendingApplicationsQuery()->pluck('id')->map(fn ($id) => (string) $id)->all()
+            : [];
+    }
+
+    public function updatedSelectedIds(): void
+    {
+        $total = $this->pendingApplicationsQuery()->count();
+
+        $this->selectAll = $total > 0 && count($this->selectedIds) === $total;
+    }
 
     public function selectApplication($id)
     {
@@ -79,6 +112,7 @@ class ReviewUnitApplications extends Component
         });
 
         $this->selectedIds = [];
+        $this->selectAll   = false;
     }
 
     public function bulkReject()
@@ -97,6 +131,7 @@ class ReviewUnitApplications extends Component
         OrganizationUnitApplication::whereIn('id', $ids)->update(['status' => 'rejected']);
 
         $this->selectedIds = [];
+        $this->selectAll   = false;
     }
 
     /**
@@ -145,17 +180,8 @@ class ReviewUnitApplications extends Component
 
     public function render()
     {
-        /** @var User|null $user */
-        $user = Auth::user();
-
-        $query = OrganizationUnitApplication::pending()->with(['person', 'unit']);
-
-        if ($user && !$user->hasRole('Super Admin')) {
-            $query->whereIn('organization_id', $user->managedOrganizationIds());
-        }
-
         return view('livewire.organizations.review-unit-applications', [
-            'applications' => $query->get(),
+            'applications' => $this->pendingApplicationsQuery()->get(),
         ]);
     }
 }

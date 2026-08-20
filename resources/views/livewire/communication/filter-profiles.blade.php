@@ -223,7 +223,7 @@
                                                                                         @foreach ($availableOrganizations as $org)
                                                                                             <option
                                                                                                 value="{{ $org['id'] }}">
-                                                                                                {{ $org['display_name'] }}
+                                                                                                {{ $org['display_name'] ?? $org['legal_name'] ?? ('Organization #'.$org['id']) }}
                                                                                             </option>
                                                                                         @endforeach
                                                                                     </select>

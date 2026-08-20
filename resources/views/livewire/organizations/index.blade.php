@@ -378,17 +378,11 @@
                                                         <a href="{{ route('organizations.show', $organization->id) }}"
                                                             class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 block">View</a>
                                                     </li>
-                                                    <li>
-                                                        <button
-                                                            class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit</button>
-                                                    </li>
-                                                    @can('manage-sites')
-                                                    <li>
-                                                        <button
-                                                            class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Manage
-                                                            Sites</button>
-                                                    </li>
-                                                    @endcan
+                                                    {{-- "Edit" and "Manage Sites" were removed: no
+                                                         organizations.edit or site-management route
+                                                         exists yet, so both rendered as enabled
+                                                         buttons that silently did nothing. Restore
+                                                         them here once those routes are built. --}}
                                                     <li>
                                                         <button
                                                             class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"

@@ -20,8 +20,12 @@ class ProfileView extends Component
             } else {
                 $personModel = Person::where('user_id', $user->id)->first();
             }
+            // Admin and service accounts legitimately have no Person record.
+            // That is an empty state for this page, not a missing page.
             if (!$personModel) {
-                abort(404, 'Person record not found for current user.');
+                $this->person = null;
+
+                return;
             }
         } else {
             $personModel = Person::find($person);
@@ -39,6 +43,10 @@ class ProfileView extends Component
 
     public function render()
     {
+        if (!$this->person) {
+            return view('livewire.person.profile-unavailable');
+        }
+
         return view('livewire.person.person-profile-view');
     }
 }

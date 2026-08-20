@@ -43,9 +43,9 @@
                             <thead class="bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="w-10">
-                                        <input type="checkbox" wire:model="selectAll"
-                                               wire:click="$set('selectedIds', $selectAll ? [] : $applications->pluck('id')->toArray())"
-                                               class="checkbox checkbox-sm">
+                                        <input type="checkbox" wire:model.live="selectAll"
+                                               class="checkbox checkbox-sm"
+                                               title="Select all pending applications">
                                     </th>
                                     <th class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Applicant</th>
                                     <th class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Unit</th>
@@ -57,7 +57,7 @@
                                 @foreach($applications as $app)
                                     <tr class="hover:bg-gray-50">
                                         <td>
-                                            <input type="checkbox" wire:model="selectedIds"
+                                            <input type="checkbox" wire:model.live="selectedIds"
                                                    value="{{ $app->id }}" class="checkbox checkbox-sm">
                                         </td>
                                         <td class="font-medium text-gray-900">{{ $app->person?->full_name ?? 'N/A' }}</td>

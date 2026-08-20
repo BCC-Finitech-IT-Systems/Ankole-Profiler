@@ -80,7 +80,7 @@ class FilterProfiles extends Component
     {
         $user = Auth::user();
         if ($user && $user->hasRole('Super Admin')) {
-            $this->availableOrganizations = Organization::select('id')
+            $this->availableOrganizations = Organization::select('id', 'display_name', 'legal_name')
                 ->orderBy('id')
                 ->get()
                 ->toArray();
@@ -89,7 +89,7 @@ class FilterProfiles extends Component
         }
 
         if (Auth::user()->hasRole('Super Admin')) {
-            $this->availableOrganizations = Organization::select('id')
+            $this->availableOrganizations = Organization::select('id', 'display_name', 'legal_name')
                 ->where('is_active', 1)->orderBy('id')->get()->toArray();
         }
     }
@@ -100,7 +100,7 @@ class FilterProfiles extends Component
         $this->selectedOrganizationId = OrganizationHelper::getCurrentOrganization()?->id;
 
         if (Auth::user()->hasRole('Super Admin')) {
-            $this->availableOrganizations = Organization::select('id')
+            $this->availableOrganizations = Organization::select('id', 'display_name', 'legal_name')
                 ->where('is_active', 1)->orderBy('id')->get()->toArray();
         }
     }
@@ -348,6 +348,61 @@ class FilterProfiles extends Component
         $this->profileToDelete = null;
     }
 
+
+    /**
+     * Copy an existing profile's criteria into a new profile owned by the
+     * current user. The copy always starts private and with usage reset, so
+     * duplicating someone else's shared profile never re-shares it by accident.
+     */
+    public function duplicateProfile($profileId)
+    {
+        $profile = $this->findProfile($profileId);
+
+        if (!$profile) {
+            $this->showError('That filter profile is no longer available.');
+
+            return;
+        }
+
+        $organization = OrganizationHelper::getCurrentOrganization();
+
+        $copy = CommunicationFilterProfile::create([
+            'organization_id' => $organization?->id ?? $profile->organization_id,
+            'user_id'         => Auth::id(),
+            'name'            => $this->uniqueCopyName($profile->name),
+            'description'     => $profile->description,
+            'filter_criteria' => $profile->filter_criteria,
+            'is_active'       => $profile->is_active,
+            'is_shared'       => false,
+            'usage_count'     => 0,
+            'last_used_at'    => null,
+        ]);
+
+        $this->showSuccess("Filter profile duplicated as \"{$copy->name}\".");
+    }
+
+    /**
+     * "Members" -> "Members (copy)" -> "Members (copy 2)" …
+     */
+    protected function uniqueCopyName(string $original): string
+    {
+        $organization = OrganizationHelper::getCurrentOrganization();
+
+        $taken = CommunicationFilterProfile::where('user_id', Auth::id())
+            ->when($organization, fn ($q) => $q->where('organization_id', $organization->id))
+            ->pluck('name')
+            ->all();
+
+        $candidate = "{$original} (copy)";
+        $suffix = 2;
+
+        while (in_array($candidate, $taken, true)) {
+            $candidate = "{$original} (copy {$suffix})";
+            $suffix++;
+        }
+
+        return $candidate;
+    }
 
     public function toggleProfileStatus($profileId)
     {

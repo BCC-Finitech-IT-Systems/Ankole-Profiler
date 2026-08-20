@@ -54,11 +54,22 @@
             {{-- Role --}}
             <div>
                 <label class="text-xs text-gray-600 font-medium">Role</label>
-                <select wire:model="newRole" class="select select-bordered select-sm w-full mt-1">
-                    @foreach($roleOptions as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
-                    @endforeach
-                </select>
+                @if($availableRoleTypes->isEmpty())
+                    <p class="text-xs text-gray-500 mt-1">
+                        No roles are available for this unit's department yet. Create an occupation
+                        for the department before adding members.
+                    </p>
+                @else
+                    <select wire:model="newRoleTypeId" class="select select-bordered select-sm w-full mt-1">
+                        <option value="">Select a role…</option>
+                        @foreach($availableRoleTypes as $roleType)
+                            <option value="{{ $roleType->id }}">{{ $roleType->name }}</option>
+                        @endforeach
+                    </select>
+                @endif
+                @error('newRoleTypeId')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             {{-- Permissions --}}
