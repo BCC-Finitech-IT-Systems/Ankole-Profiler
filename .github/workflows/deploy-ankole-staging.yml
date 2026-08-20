@@ -9,75 +9,77 @@ concurrency:
   group: deploy-ankole-profiler-staging
   cancel-in-progress: false
 
+env:
+  BASE: /var/www/ankole-profiler
+
 jobs:
   deploy:
     runs-on: [self-hosted, ankole-profiler-117]
     timeout-minutes: 20
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Sync source to deployment directory
+      - name: Create release dir
         run: |
-          rsync -av --delete --no-owner --no-group \
-            --exclude='.env' \
-            --exclude='.git' \
-            --exclude='storage/' \
-            --exclude='bootstrap/cache/' \
-            --exclude='node_modules/' \
-            --exclude='vendor/' \
-            ${{ github.workspace }}/ /var/www/ankole-profiler/
+          echo "RELEASE=$BASE/releases/${GITHUB_SHA}" >> "$GITHUB_ENV"
+          mkdir -p "$BASE/releases/${GITHUB_SHA}"
 
-      - name: Ensure runtime directories
+      - name: Sync source into the NEW release (live app untouched)
         run: |
-          mkdir -p /var/www/ankole-profiler/bootstrap/cache
-          mkdir -p /var/www/ankole-profiler/storage/logs
-          mkdir -p /var/www/ankole-profiler/storage/framework/{cache,sessions,views}
+          rsync -a --delete \
+            --exclude='.env' --exclude='.git' --exclude='vendor' \
+            --exclude='node_modules' \
+            "${{ github.workspace }}/" "$RELEASE/"
 
-      - name: Install PHP dependencies
-        working-directory: /var/www/ankole-profiler
-        run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress
-
-      - name: Install Node dependencies
-        working-directory: /var/www/ankole-profiler
-        run: npm ci --no-audit --no-fund
-
-      - name: Build frontend assets
-        working-directory: /var/www/ankole-profiler
-        run: npm run build
-
-      - name: Hand storage and cache to www-data
+      - name: Link shared .env and storage
         run: |
-          sudo chown -R www-data:www-data /var/www/ankole-profiler/storage /var/www/ankole-profiler/bootstrap/cache
-          sudo chmod -R 775 /var/www/ankole-profiler/storage /var/www/ankole-profiler/bootstrap/cache
+          ln -sfn "$BASE/shared/.env"     "$RELEASE/.env"
+          rm -rf "$RELEASE/storage"
+          ln -sfn "$BASE/shared/storage"  "$RELEASE/storage"
+          mkdir -p "$RELEASE/bootstrap/cache"
 
-      - name: Run database migrations
-        run: sudo -u www-data php8.3 /var/www/ankole-profiler/artisan migrate --force
+      - name: Install deps & build (in the release, not live)
+        working-directory: ${{ env.RELEASE }}
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Permissions
+        run: |
+          sudo chown -R www-data:www-data "$BASE/shared/storage" "$RELEASE/bootstrap/cache"
+          sudo chmod -R 775 "$BASE/shared/storage" "$RELEASE/bootstrap/cache"
 
       # NOTE: route:cache is intentionally NOT run, same reason as the
       # other Ankole-Profiler deployments — the root route ("/") is a
       # Closure, which route caching mishandles and yields HTTP 405.
-      - name: Cache config and views
+      - name: Migrate (backward-compatible) & cache
         run: |
-          sudo -u www-data php8.3 /var/www/ankole-profiler/artisan route:clear
-          sudo -u www-data php8.3 /var/www/ankole-profiler/artisan config:cache
-          sudo -u www-data php8.3 /var/www/ankole-profiler/artisan view:cache
+          sudo -u www-data php8.3 "$RELEASE/artisan" migrate --force
+          sudo -u www-data php8.3 "$RELEASE/artisan" route:clear
+          sudo -u www-data php8.3 "$RELEASE/artisan" config:cache
+          sudo -u www-data php8.3 "$RELEASE/artisan" view:cache
+          sudo -u www-data php8.3 "$RELEASE/artisan" storage:link || true
 
-      - name: Ensure storage link exists
-        run: sudo -u www-data php8.3 /var/www/ankole-profiler/artisan storage:link || true
-
-      - name: Reload Apache
-        run: sudo systemctl reload apache2
-
-      - name: Restart queue worker
-        run: sudo systemctl restart ankole-profiler-worker
-
-      - name: Verify deployment
+      - name: Atomic switch
         run: |
-          echo "=== Service status ==="
-          sudo systemctl is-active apache2
-          sudo systemctl is-active ankole-profiler-worker
-          echo "=== HTTP check ==="
-          curl -sk -o /dev/null -w "GET / -> HTTP %{http_code}\n" \
-            http://127.0.0.1/ -H "Host: ankole-staging.bcc.co.ug"
+          ln -sfn "$RELEASE" "$BASE/current-tmp"
+          mv -Tf "$BASE/current-tmp" "$BASE/current"
+          sudo systemctl reload php8.3-fpm
+          sudo systemctl restart ankole-profiler-worker
+
+      - name: Health check (rollback on 5xx)
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
+                 http://127.0.0.1/ -H 'Host: ankole-staging.bcc.co.ug')
+          echo "HTTP $code"
+          if [ "$code" -ge 500 ]; then
+            echo "Health check failed - rolling back"
+            prev=$(ls -1dt "$BASE"/releases/*/ | sed -n 2p)
+            ln -sfn "${prev%/}" "$BASE/current-tmp" && mv -Tf "$BASE/current-tmp" "$BASE/current"
+            sudo systemctl reload php8.3-fpm
+            exit 1
+          fi
+
+      - name: Prune old releases (keep 5)
+        run: ls -1dt "$BASE"/releases/*/ | tail -n +6 | xargs -r rm -rf
