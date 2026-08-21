@@ -13,23 +13,7 @@
                             <!-- Header -->
                             <div class="bg-white border-b px-8 py-4 flex items-center justify-between">
                                 <div class="flex items-center gap-2 text-[15px] text-[#8b8b8b]">
-                                    <a href="#" class="hover:underline">Back</a>
-                                    <span>/</span>
-                                    <a href="#" class="hover:underline">Members</a>
-                                    <span>/</span>
-                                    <span class="font-semibold text-[#232323]">{{ $person->given_name }}</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button
-                                        class="border px-4 py-2 rounded text-[#232323] hover:bg-gray-100 text-[15px]">Filter</button>
-                                    <input type="text" class="border rounded px-3 py-2 text-[15px] w-56"
-                                        value="12/02/2024 - 12/03/2024" />
-                                    <button
-                                        class="bg-[#ff5c1a] text-white px-6 py-2 rounded hover:bg-[#ff7c3a] text-[15px]">+
-                                        Create</button>
-                                    <button
-                                        class="ml-2 border px-4 py-2 rounded text-[#232323] hover:bg-gray-100 text-[15px]">
-                                        <i class="fas fa-cog"></i></button>
+                                    <span class="font-semibold text-[#232323]">{{ $person->full_name ?? $person->given_name }}</span>
                                 </div>
                             </div>
 
@@ -60,7 +44,7 @@
                                             <div class="flex flex-col gap-2 text-[15px] mb-4">
                                                 <div class="flex items-center gap-2"><span
                                                         class="font-semibold text-[#232323]">About:</span> <span
-                                                        class="text-[#8b8b8b]">{{ $person->classification ?? 'N/A' }}</span>
+                                                        class="text-[#8b8b8b]">{{ filled($person->classification) ? implode(', ', (array) $person->classification) : 'N/A' }}</span>
                                                 </div>
                                                 <div class="flex items-center gap-2"><span
                                                         class="font-semibold text-[#232323]">Organization:</span> <span
@@ -105,14 +89,6 @@
                                                         class="font-semibold text-[#232323]">Socials</span> <span
                                                         class="text-[#8b8b8b]">N/A</span></div>
                                             </div>
-                                        </div>
-                                        <div class="mt-4 flex gap-2 w-full">
-                                            <button
-                                                class="border px-4 py-2 rounded text-[#232323] hover:bg-gray-100 flex-1">Follow</button>
-                                            <button
-                                                class="border px-4 py-2 rounded text-[#232323] hover:bg-gray-100 flex-1">Call</button>
-                                            <button
-                                                class="border px-4 py-2 rounded text-[#232323] hover:bg-gray-100 flex-1">Message</button>
                                         </div>
 
                                         <div class="mt-0">
@@ -180,35 +156,8 @@
                                                     </div>
                                             </div>
                                         </div>
-                                        <div class="flex flex-wrap gap-2 border-b pb-2 mb-4 text-[15px]">
-                                            <button
-                                                class="px-4 py-2 border-b-2 border-[#ff5c1a] font-semibold text-[#232323]">Overview</button>
-                                            <button class="px-4 py-2 text-[#8b8b8b] hover:text-[#232323]">Work
-                                                History</button>
-                                            <button class="px-4 py-2 text-[#8b8b8b] hover:text-[#232323]">Attendance &
-                                                Schedule</button>
-                                            <button class="px-4 py-2 text-[#8b8b8b] hover:text-[#232323]">Tasks &
-                                                Projects</button>
-                                            <button
-                                                class="px-4 py-2 text-[#8b8b8b] hover:text-[#232323]">Payroll</button>
-                                        </div>
                                         <!-- Table -->
                                         <div class="bg-white rounded-xl shadow p-6 overflow-x-auto">
-                                            <div class="flex flex-wrap gap-2 mb-4">
-                                                <input type="text" class="border rounded px-3 py-2 text-[15px]"
-                                                    placeholder="Search for anything" />
-                                                <button
-                                                    class="border px-4 py-2 rounded text-[#232323] hover:bg-gray-100 text-[15px]">Filter</button>
-                                                <button
-                                                    class="border px-4 py-2 rounded text-[#232323] hover:bg-gray-100 text-[15px]">Sort</button>
-                                                <button
-                                                    class="bg-[#ff5c1a] text-white px-6 py-2 rounded hover:bg-[#ff7c3a] text-[15px]">+
-                                                    Register</button>
-                                                <button
-                                                    class="border px-4 py-2 rounded text-[#232323] hover:bg-gray-100 text-[15px]">Export</button>
-                                                <button
-                                                    class="border px-4 py-2 rounded text-[#232323] hover:bg-gray-100 text-[15px]">Layout</button>
-                                            </div>
                                             <table class="min-w-full text-[15px] mt-2">
                                                 <thead>
                                                     <tr class="text-[#8b8b8b] border-b">

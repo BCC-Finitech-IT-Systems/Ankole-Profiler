@@ -141,7 +141,6 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
         Route::get('/create/{edit?}', App\Livewire\Person\CreatePersonsComponent::class)->name('persons.create');
         Route::get('/import', App\Livewire\Person\ImportPersons::class)->name('persons.import');
         Route::get('/export', App\Livewire\Person\ExportPersons::class)->name('persons.export');
-        Route::get('/products', App\Livewire\PersonProducts::class)->name('person-products');
         Route::get('/profile-current', App\Livewire\Person\ProfileView::class)->name('persons.profile-current');
 
         Route::get('/search', [PersonSearchController::class, 'index2'])->name('persons.search');

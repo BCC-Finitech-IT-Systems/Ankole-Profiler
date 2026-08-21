@@ -52,7 +52,6 @@ class PersonSearch extends Component
     public $loadedProfileId = null;
     public $availableProfiles = [];
     public $profileSearch = '';
-    public $showSaveFilterModal = false;
 
     // Data
     public $Organizations = [];
@@ -60,7 +59,6 @@ class PersonSearch extends Component
     public $roleTypes = [];
 
     // UI properties
-    public $showLoadProfileModal = false;
 
     protected $queryString = [
         'search' => ['except' => ''],

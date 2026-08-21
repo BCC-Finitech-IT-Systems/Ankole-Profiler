@@ -7,21 +7,6 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 class Index extends Component {
-    public $editStep = 1;
-
-    public function nextEditStep()
-    {
-        if ($this->editStep < 3) {
-            $this->editStep++;
-        }
-    }
-
-    public function prevEditStep()
-    {
-        if ($this->editStep > 1) {
-            $this->editStep--;
-        }
-    }
     use WithPagination;
 
     public $search = '';
@@ -210,13 +195,6 @@ class Index extends Component {
     }
 
     public $confirmingDeleteId = null;
-    public $editingOrganizationId = null;
-    public $editingOrganizationData = [
-        'legal_name' => '',
-        'category' => '',
-        'is_active' => false,
-        // Add other fields as needed
-    ];
 
 
     public function confirmDelete($id)
