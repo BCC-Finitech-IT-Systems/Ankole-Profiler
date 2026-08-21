@@ -31,11 +31,6 @@ class DepartmentComponent extends Component
         }
         $this->selectedOrganizationPersons = collect($persons)->unique('id')->values()->all();
     }
-    public function clearProjectDeptSearch()
-    {
-        $this->projectDeptSearch = '';
-    }
-
     public $projectDeptSearch = '';
     use WithPagination;
 
@@ -45,6 +40,8 @@ class DepartmentComponent extends Component
     public $showCreateModal = false;
     public $showEditModal = false;
     public $confirmDeleteDepartmentId = null;
+
+    public $matchingOrgsDepartmentId = null;
     public $editingDepartmentId = null;
     public $createForm = [
         'organization_id' => '',
@@ -242,6 +239,54 @@ class DepartmentComponent extends Component
         $this->confirmDeleteDepartmentId = null;
     }
 
+    /**
+     * Institutions whose category matches one of the department's
+     * sub-categories, restricted to the department's own organization tree —
+     * category names alone would match institutions under unrelated dioceses.
+     * Returns null when the department has no sub-categories to match on.
+     */
+    private function matchingInstitutionsQuery(Department $department)
+    {
+        $subCategoryNames = $department->subCategories->pluck('name');
+
+        if ($subCategoryNames->isEmpty() || !$department->organization) {
+            return null;
+        }
+
+        return Organization::query()
+            ->institutions()
+            ->matchingSubCategories($subCategoryNames)
+            ->whereIn('id', $department->organization->subtreeIds())
+            ->orderBy('category')
+            ->orderBy('legal_name');
+    }
+
+    public function showMatchingOrganizations(int $departmentId): void
+    {
+        /** @var User|null $user */
+        $user = Auth::user();
+        $department = Department::query()->findOrFail($departmentId);
+
+        // Reading which institutions a department reaches is a view of that
+        // department, so it needs the same scope check the rest of the page
+        // applies — not just "is signed in".
+        abort_unless(
+            $user->hasRole('Super Admin')
+                || in_array($department->organization_id, $this->allowedOrganizationIds($user), true)
+                || (int) $department->admin_user_id === (int) $user->id,
+            403
+        );
+
+        $this->matchingOrgsDepartmentId = $departmentId;
+        $this->projectDeptSearch = '';
+    }
+
+    public function closeMatchingOrganizations(): void
+    {
+        $this->matchingOrgsDepartmentId = null;
+        $this->projectDeptSearch = '';
+    }
+
     public function deleteDepartment(): void
     {
         /** @var User|null $user */
@@ -313,7 +358,16 @@ class DepartmentComponent extends Component
                 $organizationQuery->whereIn('id', $allowedOrganizationIds);
             })
             ->orderBy('legal_name')
-            ->get(['id', 'legal_name']);
+            ->get(['id', 'legal_name', 'category', 'is_super']);
+
+        // 247 flat options is unusable; split the diocese from the
+        // institutions under it so the list reads as a hierarchy.
+        $organizationGroups = $organizations->groupBy(
+            fn (Organization $organization) => $organization->is_super
+                || strtolower(trim((string) $organization->category)) === 'diocese'
+                    ? 'Diocese'
+                    : 'Institutions'
+        );
 
         $admins = User::query()
             ->orderBy('name')
@@ -324,6 +378,7 @@ class DepartmentComponent extends Component
         $orgAdminProjects = collect();
         $orgAdminDepartments = collect();
         $orgAdminOrganizations = collect(); // organizations grouped by sub-category
+        $matchingOrgsDepartment = null;
 
         if ($isOrgAdmin) {
             $affiliatedDepartmentIds = $user->person
@@ -356,49 +411,43 @@ class DepartmentComponent extends Component
                 $department->can_delete = $this->canDeleteDepartment($user, $department);
             });
 
-            if ($orgAdminDepartments->isNotEmpty()) {
+            // A count per row, so the page says how many institutions each
+            // department reaches without listing hundreds of them inline.
+            // The full list moved into a modal opened from that count.
+            $orgAdminDepartments->each(function (Department $department) {
+                $department->matching_institutions_count = $this
+                    ->matchingInstitutionsQuery($department)
+                    ?->count() ?? 0;
+            });
 
-                // Get sub-category names from affiliated departments
-                $subCategoryNames = $orgAdminDepartments
-                    ->flatMap(fn($dept) => $dept->subCategories->pluck('name'))
-                    ->unique()
-                    ->values();
+            if ($this->matchingOrgsDepartmentId) {
+                $selected = $orgAdminDepartments
+                    ->firstWhere('id', (int) $this->matchingOrgsDepartmentId);
 
-                // Category matching must stay inside the departments' own
-                // organization trees; names alone would match organizations
-                // from unrelated trees.
-                $orgTreeIds = $orgAdminDepartments
-                    ->pluck('organization')
-                    ->filter()
-                    ->flatMap(fn($org) => $org->subtreeIds())
-                    ->unique()
-                    ->values();
+                $query = $selected ? $this->matchingInstitutionsQuery($selected) : null;
 
-                // Find organizations whose category matches any sub-category name (case-insensitive)
-                if ($subCategoryNames->isNotEmpty()) {
-                    $orgQuery = Organization::query()
-                        ->institutions()
-                        ->matchingSubCategories($subCategoryNames)
-                        ->whereIn('id', $orgTreeIds)
-                        ->orderBy('category')
-                        ->orderBy('legal_name');
+                if ($query) {
                     if ($this->projectDeptSearch !== '') {
                         $searchTerm = strtolower(trim($this->projectDeptSearch));
-                        $orgQuery->where(function ($q) use ($searchTerm) {
+                        $query->where(function ($q) use ($searchTerm) {
                             $q->whereRaw('LOWER(legal_name) LIKE ?', ["%{$searchTerm}%"])
                               ->orWhereRaw('LOWER(code) LIKE ?', ["%{$searchTerm}%"])
                               ->orWhereRaw('LOWER(address) LIKE ?', ["%{$searchTerm}%"])
                               ->orWhereRaw('LOWER(contact_email) LIKE ?', ["%{$searchTerm}%"]);
                         });
                     }
-                    $orgAdminOrganizations = $orgQuery->get()->groupBy('category');
+
+                    $orgAdminOrganizations = $query->get()->groupBy('category');
                 }
+
+                $matchingOrgsDepartment = $selected;
             }
         }
 
         return view('livewire.departments.department-component', [
             'departments' => $query->latest()->paginate(20),
             'organizations' => $organizations,
+            'organizationGroups' => $organizationGroups,
             'admins' => $admins,
             'canCreateDepartments' => $this->hasPermissionOrSuperAdmin($user, 'create-departments'),
             'canEditDepartments' => $this->hasPermissionOrSuperAdmin($user, 'edit-departments'),
@@ -408,6 +457,7 @@ class DepartmentComponent extends Component
                 ? Department::withCount('projects')->find((int) $this->confirmDeleteDepartmentId)
                 : null,
             'orgAdminDepartments' => $orgAdminDepartments,
+            'matchingOrgsDepartment' => $matchingOrgsDepartment,
             'orgAdminProjects' => $orgAdminProjects,
             'orgAdminOrganizations' => $orgAdminOrganizations,
         ]);
@@ -533,10 +583,27 @@ class DepartmentComponent extends Component
             return [];
         }
 
-        return $user->person
+        $directIds = $user->person
             ->affiliations()
             ->where('status', 'active')
-            ->pluck('organization_id')
+            ->pluck('organization_id');
+
+        // Tenancy flows down from the diocese (see User::organizationSubtreeIds):
+        // an Organization Admin affiliated with a diocese administers every
+        // institution under it. Returning only the affiliated row left the
+        // organization dropdown showing the diocese alone, with no way to put
+        // a department on an institution. Other roles stay on their direct
+        // affiliations.
+        if (!$user->hasRole('Organization Admin')) {
+            return $directIds->all();
+        }
+
+        return Organization::query()
+            ->whereIn('id', $directIds)
+            ->get()
+            ->flatMap(fn (Organization $organization) => $organization->subtreeIds())
+            ->unique()
+            ->values()
             ->all();
     }
 

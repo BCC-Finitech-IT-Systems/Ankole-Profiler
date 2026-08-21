@@ -52,6 +52,7 @@
                                     <th>Code</th>
                                     <th>Admin</th>
                                     <th>Projects</th>
+                                    <th>Institutions</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -76,6 +77,17 @@
                                         <td>{{ $dept->code ?? '—' }}</td>
                                         <td>{{ $dept->admin?->name ?? 'Unassigned' }}</td>
                                         <td>{{ $dept->projects_count }}</td>
+                                        <td>
+                                            @if($dept->matching_institutions_count > 0)
+                                                <button type="button" class="badge badge-primary badge-sm"
+                                                        wire:click="showMatchingOrganizations({{ $dept->id }})"
+                                                        title="View institutions matching this department's sub-categories">
+                                                    {{ $dept->matching_institutions_count }}
+                                                </button>
+                                            @else
+                                                <span class="text-xs text-base-content/40">—</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             @if($dept->is_active)
                                                 <span class="badge badge-success badge-sm">Active</span>
@@ -117,84 +129,6 @@
                 @endif
             </div>
 
-            {{-- Matching Organizations: grouped by department sub-category --}}
-            <div class="bg-base-100 border border-primary/30 rounded-lg p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-semibold text-base-content mb-3 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                        Matching Organizations
-                    </h3>
-                    <div class="w-64">
-                        <div class="flex gap-2">
-                            <input type="text" class="input input-bordered input-sm w-full" placeholder="Search organizations..." wire:model.live.debounce.300ms="projectDeptSearch">
-                            <button type="button" class="btn btn-sm btn-ghost" wire:click="clearProjectDeptSearch" title="Clear search" @if(empty($projectDeptSearch)) disabled @endif>
-                               clear search <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <p class="text-sm text-base-content/60 mb-4">Organizations matching your department sub-categories.</p>
-
-                @if($orgAdminOrganizations->isNotEmpty())
-                    <div class="space-y-4">
-                        @foreach($orgAdminOrganizations as $category => $orgs)
-                            <div class="border border-base-300 rounded-lg overflow-hidden">
-                                <div class="bg-base-200 px-4 py-2 flex items-center justify-between">
-                                    <span class="font-medium text-sm">{{ $category }}</span>
-                                    <span class="badge badge-primary badge-sm">{{ $orgs->count() }} {{ Str::plural('organization', $orgs->count()) }}</span>
-                                </div>
-                                <div class="overflow-x-auto">
-                                    <table class="table table-sm w-full">
-                                        <thead>
-                                            <tr>
-                                                <th>#</th>
-                                                <th>Code</th>
-                                                <th>Registration number</th>
-                                                <th>Name</th>
-                                                <th>Address</th>
-                                                <th>Contact</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($orgs as $org)
-                                                <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td>{{ $org->code ?? '—' }}</td>
-                                                    <td>{{ $org->registration_number ?? '—' }}</td>
-                                                    <td class="font-medium">
-                                                        <button type="button" class="link link-primary" wire:click="showOrganizationPersons({{ $org->id }})">
-                                                            {{ $org->legal_name }}
-                                                        </button>
-                                                    </td>
-                                                    <td>{{ $org->address ?? '—' }}</td>
-                                                    <td>{{ $org->contact_email ?? '—' }}
-                                                        @if($org->contact_phone)
-                                                            <br>{{ $org->contact_phone ?? '—' }}
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if($org->is_active)
-                                                            <span class="badge badge-success badge-xs">Active</span>
-                                                        @else
-                                                            <span class="badge badge-ghost badge-xs">Inactive</span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="text-center py-6 text-base-content/50">
-                        <p class="text-sm italic">No organizations match your department sub-categories yet.</p>
-                        <p class="text-xs mt-1">Add sub-categories to your department to see matching organizations here.</p>
-                    </div>
-                @endif
-            </div>
         @endif
 
         @if(!$isOrgAdmin)
@@ -311,8 +245,12 @@
                                 <label class="label"><span class="label-text">Organization</span></label>
                                 <select wire:model="createForm.organization_id" class="select select-bordered w-full">
                                     <option value="">Select organization</option>
-                                    @foreach($organizations as $organization)
-                                        <option value="{{ $organization->id }}">{{ $organization->legal_name }}</option>
+                                    @foreach($organizationGroups as $groupLabel => $groupOrganizations)
+                                        <optgroup label="{{ $groupLabel }} ({{ $groupOrganizations->count() }})">
+                                            @foreach($groupOrganizations as $organization)
+                                                <option value="{{ $organization->id }}">{{ $organization->legal_name }}</option>
+                                            @endforeach
+                                        </optgroup>
                                     @endforeach
                                 </select>
                                 @error('createForm.organization_id')
@@ -394,8 +332,12 @@
                                 <label class="label"><span class="label-text">Organization</span></label>
                                 <select wire:model="editForm.organization_id" class="select select-bordered w-full">
                                     <option value="">Select organization</option>
-                                    @foreach($organizations as $organization)
-                                        <option value="{{ $organization->id }}">{{ $organization->legal_name }}</option>
+                                    @foreach($organizationGroups as $groupLabel => $groupOrganizations)
+                                        <optgroup label="{{ $groupLabel }} ({{ $groupOrganizations->count() }})">
+                                            @foreach($groupOrganizations as $organization)
+                                                <option value="{{ $organization->id }}">{{ $organization->legal_name }}</option>
+                                            @endforeach
+                                        </optgroup>
                                     @endforeach
                                 </select>
                                 @error('editForm.organization_id')
@@ -463,6 +405,93 @@
                     </div>
                 </div>
                 <div class="modal-backdrop" wire:click="closeEditModal"></div>
+            </div>
+        @endif
+
+        {{-- Institutions matching a department's sub-categories. This used to
+             be a permanent section listing hundreds of rows inline; it is now
+             opened from the Institutions count on the department row. --}}
+        @if($matchingOrgsDepartment)
+            <div class="modal modal-open">
+                <div class="modal-box max-w-5xl">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h3 class="font-bold text-lg">Matching Institutions</h3>
+                            <p class="text-sm text-base-content/60">
+                                Institutions whose category matches
+                                <span class="font-medium">{{ $matchingOrgsDepartment->name }}</span>:
+                                {{ $matchingOrgsDepartment->subCategories->pluck('name')->join(', ') }}
+                            </p>
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-sm btn-square" wire:click="closeMatchingOrganizations">✕</button>
+                    </div>
+
+                    <div class="mt-4 mb-3">
+                        <input type="text" class="input input-bordered input-sm w-full max-w-sm"
+                               placeholder="Search institutions..."
+                               wire:model.live.debounce.300ms="projectDeptSearch">
+                    </div>
+
+                    <div class="max-h-[60vh] overflow-y-auto space-y-4">
+                        @forelse($orgAdminOrganizations as $category => $orgs)
+                            <div class="border border-base-300 rounded-lg overflow-hidden">
+                                <div class="bg-base-200 px-4 py-2 flex items-center justify-between">
+                                    <span class="font-medium text-sm">{{ $category }}</span>
+                                    <span class="badge badge-primary badge-sm">{{ $orgs->count() }} {{ Str::plural('institution', $orgs->count()) }}</span>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="table table-sm w-full">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Code</th>
+                                                <th>Name</th>
+                                                <th>Address</th>
+                                                <th>Contact</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($orgs as $org)
+                                                <tr>
+                                                    <td>{{ $loop->iteration }}</td>
+                                                    <td>{{ $org->code ?? '—' }}</td>
+                                                    <td class="font-medium">
+                                                        <button type="button" class="link link-primary" wire:click="showOrganizationPersons({{ $org->id }})">
+                                                            {{ $org->legal_name }}
+                                                        </button>
+                                                    </td>
+                                                    <td>{{ $org->address ?? '—' }}</td>
+                                                    <td>{{ $org->contact_email ?? '—' }}
+                                                        @if($org->contact_phone)
+                                                            <br>{{ $org->contact_phone }}
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($org->is_active)
+                                                            <span class="badge badge-success badge-xs">Active</span>
+                                                        @else
+                                                            <span class="badge badge-ghost badge-xs">Inactive</span>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-sm text-base-content/50 italic py-6 text-center">
+                                No institutions match this search.
+                            </p>
+                        @endforelse
+                    </div>
+
+                    <div class="modal-action">
+                        <button type="button" class="btn btn-sm" wire:click="closeMatchingOrganizations">Close</button>
+                    </div>
+                </div>
+                <div class="modal-backdrop" wire:click="closeMatchingOrganizations"></div>
             </div>
         @endif
 
