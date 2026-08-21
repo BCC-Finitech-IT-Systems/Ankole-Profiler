@@ -312,18 +312,29 @@ class DepartmentComponent extends Component
         $orgAdminDepartments = collect();
         $orgAdminOrganizations = collect(); // organizations grouped by sub-category
 
-        if ($isOrgAdmin && $user->person) {
-            $affiliatedDepartmentIds = PersonAffiliation::where('person_id', $user->person->id)
-                ->where('status', 'active')
-                ->whereNotNull('department_id')
-                ->pluck('department_id')
-                ->unique();
+        if ($isOrgAdmin) {
+            $affiliatedDepartmentIds = $user->person
+                ? PersonAffiliation::where('person_id', $user->person->id)
+                    ->where('status', 'active')
+                    ->whereNotNull('department_id')
+                    ->pluck('department_id')
+                    ->unique()
+                : collect();
 
-            if ($affiliatedDepartmentIds->isNotEmpty()) {
-                $orgAdminDepartments = Department::whereIn('id', $affiliatedDepartmentIds)
-                    ->with(['organization', 'admin', 'subCategories'])
-                    ->withCount('projects')
-                    ->get();
+            // An Organization Admin administers an organization; they are not
+            // necessarily a member of one of its departments, and admin
+            // accounts often have no Person record at all. Falling back to the
+            // departments of the organizations they administer keeps the page
+            // useful for them instead of showing an empty state they have no
+            // way to escape.
+            $orgAdminDepartments = ($affiliatedDepartmentIds->isNotEmpty()
+                    ? Department::whereIn('id', $affiliatedDepartmentIds)
+                    : Department::whereIn('organization_id', $this->allowedOrganizationIds($user)))
+                ->with(['organization', 'admin', 'subCategories'])
+                ->withCount('projects')
+                ->get();
+
+            if ($orgAdminDepartments->isNotEmpty()) {
 
                 // Get sub-category names from affiliated departments
                 $subCategoryNames = $orgAdminDepartments

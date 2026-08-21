@@ -190,7 +190,11 @@
                                     @endif
                                 @else
                                     <input type="text" class="input input-bordered w-full"
-                                           value="No organizations found for your department" readonly>
+                                           value="No organizations available for your account" readonly>
+                                    <p class="text-xs text-gray-400 mt-1">
+                                        Your account is not linked to any organization yet. An administrator
+                                        can add an affiliation from Person Management.
+                                    </p>
                                 @endif
                                 @error('form.organization_id')
                                     <span class="text-red-600 text-xs mt-1">{{ $message }}</span>

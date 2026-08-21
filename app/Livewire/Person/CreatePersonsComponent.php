@@ -66,27 +66,28 @@ class CreatePersonsComponent extends Component
         // Both Super Admin and Organization Admin can assign Project Heads
         $this->canAssignProjectHead = $this->isSuperAdmin || $this->isOrgAdmin;
 
-        if ($this->isOrgAdmin && $authUser->person) {
-            // Get the Org Admin's department from their affiliation
-            $affiliation = PersonAffiliation::where('person_id', $authUser->person->id)
-                ->where('status', 'active')
-                ->whereNotNull('department_id')
-                ->first();
+        if ($this->isOrgAdmin) {
+            $affiliation = $authUser->person
+                ? PersonAffiliation::where('person_id', $authUser->person->id)
+                    ->where('status', 'active')
+                    ->whereNotNull('department_id')
+                    ->first()
+                : null;
 
             if ($affiliation && $affiliation->department_id) {
                 $this->userDepartmentId = $affiliation->department_id;
                 $department = \App\Models\Department::with('subCategories')->find($affiliation->department_id);
                 $this->userDepartmentName = $department?->name;
+            }
 
-                $allowedIds = $this->orgAdminAllowedOrganizationIds();
+            $allowedIds = $this->orgAdminAllowedOrganizationIds();
 
-                if ($allowedIds->isNotEmpty()) {
-                    $this->availableOrganizations = Organization::query()
-                        ->whereIn('id', $allowedIds)
-                        ->orderBy('legal_name')
-                        ->get()
-                        ->toArray();
-                }
+            if ($allowedIds->isNotEmpty()) {
+                $this->availableOrganizations = Organization::query()
+                    ->whereIn('id', $allowedIds)
+                    ->orderBy('legal_name')
+                    ->get()
+                    ->toArray();
             }
 
             // Set default organization_id if available
@@ -117,21 +118,27 @@ class CreatePersonsComponent extends Component
     {
         $authUser = Auth::user();
 
-        if (!$authUser || !$authUser->person) {
+        if (!$authUser) {
             return collect();
         }
 
-        $affiliation = PersonAffiliation::where('person_id', $authUser->person->id)
-            ->where('status', 'active')
-            ->whereNotNull('department_id')
-            ->first();
+        $affiliation = $authUser->person
+            ? PersonAffiliation::where('person_id', $authUser->person->id)
+                ->where('status', 'active')
+                ->whereNotNull('department_id')
+                ->first()
+            : null;
 
         $department = $affiliation
             ? \App\Models\Department::with(['subCategories', 'organization'])->find($affiliation->department_id)
             : null;
 
+        // Without a department there are no sub-categories to match on, so fall
+        // back to the organizations this admin can actually reach. Returning an
+        // empty set here left the dropdown unusable for any Organization Admin
+        // who was not personally affiliated with a department.
         if (!$department) {
-            return collect();
+            return $this->accessibleOrganizationIdsForOrgAdmin();
         }
 
         $subCategoryNames = $department->subCategories
@@ -141,13 +148,31 @@ class CreatePersonsComponent extends Component
             ->values();
 
         if ($subCategoryNames->isEmpty()) {
-            return collect();
+            return $this->accessibleOrganizationIdsForOrgAdmin();
         }
 
         return Organization::query()
             ->where('is_super', false)
             ->whereIn('id', $department->organization?->subtreeIds() ?? collect())
             ->whereRaw('LOWER(TRIM(category)) IN (' . $subCategoryNames->map(fn() => '?')->join(',') . ')', $subCategoryNames->all())
+            ->pluck('id');
+    }
+
+    /**
+     * Organizations an Organization Admin can reach through their own active
+     * affiliations. Used as the fallback scope when department sub-category
+     * matching cannot be applied.
+     */
+    private function accessibleOrganizationIdsForOrgAdmin(): \Illuminate\Support\Collection
+    {
+        $authUser = Auth::user();
+
+        if (!$authUser) {
+            return collect();
+        }
+
+        return $authUser->accessibleOrganizations()
+            ->where('is_super', false)
             ->pluck('id');
     }
 

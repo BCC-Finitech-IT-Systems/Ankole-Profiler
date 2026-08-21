@@ -9,7 +9,7 @@
     </x-slot>
 
     <div class="w-full space-y-4">
-        @if($canCreateDepartments && !$isOrgAdmin)
+        @if($canCreateDepartments)
             <div class="flex justify-end">
                 <button type="button"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-colors flex-shrink-0"
@@ -89,7 +89,10 @@
                     </div>
                 @else
                     <div class="p-4">
-                        <p class="text-sm text-base-content/50 italic">You are not affiliated with any department.</p>
+                        <p class="text-sm text-base-content/50 italic">
+                            No departments exist for your organization yet. Use
+                            <span class="font-medium not-italic">Create Department</span> above to add the first one.
+                        </p>
                     </div>
                 @endif
             </div>
