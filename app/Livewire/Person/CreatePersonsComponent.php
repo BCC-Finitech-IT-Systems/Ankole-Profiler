@@ -152,9 +152,9 @@ class CreatePersonsComponent extends Component
         }
 
         return Organization::query()
-            ->where('is_super', false)
+            ->institutions()
+            ->matchingSubCategories($subCategoryNames)
             ->whereIn('id', $department->organization?->subtreeIds() ?? collect())
-            ->whereRaw('LOWER(TRIM(category)) IN (' . $subCategoryNames->map(fn() => '?')->join(',') . ')', $subCategoryNames->all())
             ->pluck('id');
     }
 
@@ -171,8 +171,21 @@ class CreatePersonsComponent extends Component
             return collect();
         }
 
-        return $authUser->accessibleOrganizations()
-            ->where('is_super', false)
+        // People are attached to institutions (schools, hospitals, SACCOs),
+        // not to the dioceses above them, so walk down each accessible
+        // organization's tree and keep only the institutions in it.
+        $treeIds = $authUser->accessibleOrganizations()
+            ->flatMap(fn ($org) => $org->subtreeIds())
+            ->unique()
+            ->values();
+
+        if ($treeIds->isEmpty()) {
+            return collect();
+        }
+
+        return Organization::query()
+            ->institutions()
+            ->whereIn('id', $treeIds)
             ->pluck('id');
     }
 

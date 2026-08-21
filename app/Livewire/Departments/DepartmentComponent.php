@@ -354,12 +354,9 @@ class DepartmentComponent extends Component
 
                 // Find organizations whose category matches any sub-category name (case-insensitive)
                 if ($subCategoryNames->isNotEmpty()) {
-                    $lowerNames = $subCategoryNames->map(fn($n) => strtolower(trim($n)))->all();
-                    $placeholders = implode(',', array_fill(0, count($lowerNames), '?'));
-                    $orgQuery = Organization::whereRaw(
-                            "LOWER(TRIM(category)) IN ($placeholders)", $lowerNames
-                        )
-                        ->where('is_super', false)
+                    $orgQuery = Organization::query()
+                        ->institutions()
+                        ->matchingSubCategories($subCategoryNames)
                         ->whereIn('id', $orgTreeIds)
                         ->orderBy('category')
                         ->orderBy('legal_name');

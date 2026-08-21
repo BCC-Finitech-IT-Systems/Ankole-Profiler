@@ -370,6 +370,54 @@ class Organization extends Model
     }
 
     /**
+     * Institutions: the organizations being profiled, as opposed to the
+     * structure above them. Excludes the super/root organization and anything
+     * categorised as a diocese.
+     */
+    public function scopeInstitutions($query)
+    {
+        return $query
+            ->where('is_super', false)
+            ->where(function ($q) {
+                $q->whereNull('category')
+                  ->orWhereRaw("LOWER(TRIM(category)) <> 'diocese'");
+            });
+    }
+
+    /**
+     * Match organizations against a department's sub-category names.
+     *
+     * Deliberately a containment match rather than equality: departments name
+     * their sub-categories "Primary"/"Tertiary" while imported institutions
+     * carry categories like "Primary School"/"Tertiary Institution", so an
+     * exact comparison matched nothing at all. Kept here as one scope so the
+     * Departments listing, the Add Person dropdown and that dropdown's
+     * submit-side scope check can never drift apart.
+     */
+    public function scopeMatchingSubCategories($query, $subCategoryNames)
+    {
+        $names = collect($subCategoryNames)
+            ->map(fn ($n) => strtolower(trim((string) $n)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($names->isEmpty()) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where(function ($q) use ($names) {
+            foreach ($names as $name) {
+                // Escape LIKE wildcards so a stray % or _ in a sub-category
+                // name cannot widen the match. Backslash is MySQL/MariaDB's
+                // default LIKE escape character, so no ESCAPE clause is needed.
+                $escaped = addcslashes($name, '\\%_');
+                $q->orWhereRaw('LOWER(TRIM(category)) LIKE ?', ['%' . $escaped . '%']);
+            }
+        });
+    }
+
+    /**
      * Shared filter set for the Institutions list and its export, so both
      * stay in sync. Accepts the same filter keys used in the list UI.
      */
