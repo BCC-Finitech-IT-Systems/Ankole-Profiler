@@ -53,6 +53,7 @@
                                     <th>Admin</th>
                                     <th>Projects</th>
                                     <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -81,6 +82,25 @@
                                             @else
                                                 <span class="badge badge-ghost badge-sm">Inactive</span>
                                             @endif
+                                        </td>
+                                        <td>
+                                            <div class="flex items-center gap-2">
+                                                @if($dept->can_edit)
+                                                    <button type="button" class="btn btn-xs" wire:click="openEditModal({{ $dept->id }})">
+                                                        Edit
+                                                    </button>
+                                                @endif
+
+                                                @if($dept->can_delete)
+                                                    <button type="button" class="btn btn-xs btn-error btn-outline" wire:click="confirmDeleteDepartment({{ $dept->id }})">
+                                                        Delete
+                                                    </button>
+                                                @endif
+
+                                                @if(!$dept->can_edit && !$dept->can_delete)
+                                                    <span class="text-xs text-base-content/40">—</span>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -450,10 +470,23 @@
             <div class="modal modal-open">
                 <div class="modal-box">
                     <h3 class="font-bold text-lg">Delete Department</h3>
-                    <p class="py-3">Are you sure you want to delete this department?</p>
+                    <p class="py-3">
+                        Are you sure you want to delete
+                        <span class="font-semibold">{{ $departmentBeingDeleted?->name ?? 'this department' }}</span>?
+                    </p>
+                    @if(($departmentBeingDeleted?->projects_count ?? 0) > 0)
+                        <div class="alert alert-warning text-sm">
+                            This department has {{ $departmentBeingDeleted->projects_count }}
+                            {{ Str::plural('project', $departmentBeingDeleted->projects_count) }} attached.
+                            Move or delete them first.
+                        </div>
+                    @endif
                     <div class="modal-action">
                         <button type="button" class="btn" wire:click="cancelDeleteDepartment">Cancel</button>
-                        <button type="button" class="btn btn-error" wire:click="deleteDepartment">Delete</button>
+                        <button type="button" class="btn btn-error" wire:click="deleteDepartment"
+                                @if(($departmentBeingDeleted?->projects_count ?? 0) > 0) disabled @endif>
+                            Delete
+                        </button>
                     </div>
                 </div>
                 <div class="modal-backdrop" wire:click="cancelDeleteDepartment"></div>

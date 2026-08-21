@@ -250,7 +250,20 @@ class DepartmentComponent extends Component
 
         abort_unless($this->canDeleteDepartment($user, $department), 403);
 
-        $department->forceDelete();
+        // Department soft-deletes, but this used to call forceDelete(), which
+        // skips that and hits the database cascades instead: projects,
+        // workplans and sub-categories are all ON DELETE CASCADE, so a hard
+        // delete silently took them with it and nothing could be recovered.
+        // Refuse while projects are attached, and otherwise soft-delete so
+        // the row can be restored.
+        if ($department->projects()->exists()) {
+            $this->confirmDeleteDepartmentId = null;
+            session()->flash('error', 'This department still has projects attached. Move or delete them first.');
+
+            return;
+        }
+
+        $department->delete();
         $this->confirmDeleteDepartmentId = null;
 
         session()->flash('message', 'Department deleted successfully.');
@@ -334,6 +347,15 @@ class DepartmentComponent extends Component
                 ->withCount('projects')
                 ->get();
 
+            // Per-row rather than the blunt permission flags used by the
+            // Super Admin table: an Organization Admin holds edit/delete
+            // permission generally but only over their own organizations, so
+            // a permission-only check would render buttons that 403 on click.
+            $orgAdminDepartments->each(function (Department $department) use ($user) {
+                $department->can_edit = $this->canManageDepartment($user, $department);
+                $department->can_delete = $this->canDeleteDepartment($user, $department);
+            });
+
             if ($orgAdminDepartments->isNotEmpty()) {
 
                 // Get sub-category names from affiliated departments
@@ -382,6 +404,9 @@ class DepartmentComponent extends Component
             'canEditDepartments' => $this->hasPermissionOrSuperAdmin($user, 'edit-departments'),
             'canDeleteDepartments' => $this->hasPermissionOrSuperAdmin($user, 'delete-departments'),
             'isOrgAdmin' => $isOrgAdmin,
+            'departmentBeingDeleted' => $this->confirmDeleteDepartmentId
+                ? Department::withCount('projects')->find((int) $this->confirmDeleteDepartmentId)
+                : null,
             'orgAdminDepartments' => $orgAdminDepartments,
             'orgAdminProjects' => $orgAdminProjects,
             'orgAdminOrganizations' => $orgAdminOrganizations,
