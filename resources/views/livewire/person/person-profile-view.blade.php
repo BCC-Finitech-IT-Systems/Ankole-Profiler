@@ -50,13 +50,6 @@
                                                         class="font-semibold text-[#232323]">Organization:</span> <span
                                                         class="text-[#8b8b8b]">{{ optional($person->affiliations->first())->Organization->name ?? 'N/A' }}</span>
                                                 </div>
-                                                <div class="flex items-center gap-2"><span
-                                                        class="font-semibold text-[#232323]">Payroll</span> <span
-                                                        class="text-[#8b8b8b]">N/A</span></div>
-                                                <div class="flex items-center gap-2"><span
-                                                        class="font-semibold text-[#232323]">Active projects</span>
-                                                    <span class="text-[#8b8b8b]">N/A</span></div>
-
                                             </div>
                                             <div class="flex flex-col gap-2 text-[15px] mb-4">
                                                 <div class="flex items-center gap-2"><span
@@ -83,11 +76,6 @@
                                                         class="font-semibold text-[#232323]">Joined at</span> <span
                                                         class="text-[#8b8b8b]">{{ $person->created_at ? $person->created_at->format('d/m/Y') : 'N/A' }}</span>
                                                 </div>
-                                            </div>
-                                            <div class="flex flex-col gap-2 text-[15px] mb-4">
-                                                <div class="flex items-center gap-2"><span
-                                                        class="font-semibold text-[#232323]">Socials</span> <span
-                                                        class="text-[#8b8b8b]">N/A</span></div>
                                             </div>
                                         </div>
 
@@ -161,43 +149,32 @@
                                             <table class="min-w-full text-[15px] mt-2">
                                                 <thead>
                                                     <tr class="text-[#8b8b8b] border-b">
-                                                        <th class="py-3 px-2 text-left font-semibold"><input
-                                                                type="checkbox" /></th>
-                                                        <th class="py-3 px-2 text-left font-semibold"># Ticket</th>
-                                                        <th class="py-3 px-2 text-left font-semibold">Assigned To</th>
-                                                        <th class="py-3 px-2 text-left font-semibold">Priority</th>
+                                                        <th class="py-3 px-2 text-left font-semibold">Role Title</th>
+                                                        <th class="py-3 px-2 text-left font-semibold">Role Type</th>
                                                         <th class="py-3 px-2 text-left font-semibold">Status</th>
-                                                        <th class="py-3 px-2 text-left font-semibold">Customer</th>
-                                                        <th class="py-3 px-2 text-left font-semibold">Last invoice</th>
-                                                        <th class="py-3 px-2 text-left font-semibold">Action</th>
+                                                        <th class="py-3 px-2 text-left font-semibold">Organization</th>
+                                                        <th class="py-3 px-2 text-left font-semibold">Started</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     @foreach ($person->affiliations as $affiliation)
                                                         <tr class="border-b hover:bg-[#f6f6f6]">
-                                                            <td class="py-3 px-2"><input type="checkbox" /></td>
-                                                            <td class="py-3 px-2">{{ $affiliation->id }}</td>
                                                             <td class="py-3 px-2">
-                                                                {{ $affiliation->role_title ?? 'N/A' }}</td>
+                                                                {{ $affiliation->role_title ?? '—' }}</td>
                                                             <td class="py-3 px-2">
                                                                 <span
-                                                                    class="bg-[#ffeaea] text-[#ff5c1a] px-3 py-1 rounded-full font-semibold">{{ $affiliation->role_type ?? 'N/A' }}</span>
+                                                                    class="bg-gray-100 text-[#232323] px-3 py-1 rounded-full font-semibold">{{ $affiliation->role_type ?? '—' }}</span>
                                                             </td>
                                                             <td class="py-3 px-2">
                                                                 <span
-                                                                    class="bg-[#eaffea] text-[#1ab34a] px-3 py-1 rounded-full font-semibold">{{ $affiliation->status ?? 'N/A' }}</span>
-                                                            </td>
-                                                            <td class="py-3 px-2 flex items-center gap-2">
-                                                                <span
-                                                                    class="w-7 h-7 rounded-full bg-gray-200 inline-block"></span>
-                                                                {{ optional($affiliation->Organization)->name ?? 'N/A' }}
+                                                                    class="{{ $affiliation->status === 'active' ? 'bg-[#eaffea] text-[#1ab34a]' : 'bg-gray-100 text-[#8b8b8b]' }} px-3 py-1 rounded-full font-semibold">{{ $affiliation->status ?? '—' }}</span>
                                                             </td>
                                                             <td class="py-3 px-2">
-                                                                {{ $affiliation->start_date ? \Carbon\Carbon::parse($affiliation->start_date)->format('d/m/y') : 'N/A' }}
+                                                                {{ optional($affiliation->Organization)->name ?? '—' }}
                                                             </td>
-                                                            <td class="py-3 px-2"><button
-                                                                    class="text-[#8b8b8b] text-xl"><i
-                                                                        class="fas fa-ellipsis-h"></i></button></td>
+                                                            <td class="py-3 px-2">
+                                                                {{ $affiliation->start_date ? \Carbon\Carbon::parse($affiliation->start_date)->format('d/m/Y') : '—' }}
+                                                            </td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
