@@ -143,4 +143,60 @@ class ProjectsManagementTest extends TestCase
 
         $this->assertDatabaseMissing('projects', ['name' => 'Unit Mismatch Project']);
     }
+
+    /**
+     * The Livewire page scopes on managedDepartmentIds(), which expands an
+     * admin's affiliation down the organization subtree. ProjectController
+     * used direct affiliations only, so a diocese admin could manage a child
+     * institution's project in the UI but was refused on the controller
+     * routes. Both must answer the same question.
+     */
+    public function test_diocese_admin_reaches_a_child_institution_project_in_both_the_page_and_the_controller()
+    {
+        $diocese = Organization::factory()->create(['is_super' => true, 'organization_type' => 'super']);
+        $institution = Organization::factory()->create([
+            'is_super' => false,
+            'parent_organization_id' => $diocese->id,
+        ]);
+        $childDepartment = Department::factory()->create(['organization_id' => $institution->id]);
+        $project = Project::create([
+            'name' => 'Child Institution Project',
+            'department_id' => $childDepartment->id,
+        ]);
+
+        // Affiliated at the diocese only — never at the institution below it.
+        $admin = $this->affiliatedUser(
+            'Organization Admin',
+            $diocese,
+            null,
+            ['view-projects', 'create-projects', 'edit-projects', 'delete-projects']
+        );
+
+        Livewire::actingAs($admin)
+            ->test(ProjectsManagement::class)
+            ->assertSee($project->name);
+
+        $this->actingAs($admin)
+            ->get(route('projects.show', $project))
+            ->assertOk();
+    }
+
+    public function test_unaffiliated_organization_admin_is_still_refused_a_foreign_project()
+    {
+        $foreignProject = Project::create([
+            'name' => 'Foreign Project',
+            'department_id' => Department::factory()->create()->id,
+        ]);
+
+        $admin = $this->affiliatedUser(
+            'Organization Admin',
+            Organization::factory()->create(['is_super' => true, 'organization_type' => 'super']),
+            null,
+            ['view-projects', 'edit-projects', 'delete-projects']
+        );
+
+        $this->actingAs($admin)
+            ->get(route('projects.show', $foreignProject))
+            ->assertForbidden();
+    }
 }

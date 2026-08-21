@@ -237,7 +237,17 @@ class ProjectController extends Controller
             ->pluck('id')
             ->all();
 
-        return array_values(array_unique($departmentIds));
+        // The Livewire page (Projects\ProjectsManagement) scopes on
+        // managedDepartmentIds(), which expands an admin's affiliations down
+        // the organization subtree; this method only looked at direct
+        // affiliations. Same question, two answers — a diocese admin could
+        // manage a child institution's project in the UI and be refused on
+        // these routes. Union rather than replace, so department admins
+        // matched by admin_user_id above keep the access they already had.
+        return array_values(array_unique(array_merge(
+            $departmentIds,
+            $user->managedDepartmentIds()->all()
+        )));
     }
 
     private function syncProjectDepartments(Project $project, array $projectDepartments): void
