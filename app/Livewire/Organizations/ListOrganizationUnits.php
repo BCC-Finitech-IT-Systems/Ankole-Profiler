@@ -5,6 +5,7 @@ namespace App\Livewire\Organizations;
 use Livewire\Component;
 use App\Models\OrganizationUnit;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Models\PersonAffiliation;
 use App\Exports\UnitMembersExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -30,21 +31,23 @@ class ListOrganizationUnits extends Component {
         // $this->dispatch('open-edit-unit-modal');
     }
 
-    // Delete unit action (stub)
     public function deleteUnit($unitId)
     {
-        // Implement your delete logic here, e.g. show confirmation and delete
-        $unit = OrganizationUnit::find($unitId);
-        if ($unit) {
-            $unit->delete();
-            $this->updateUnits();
-        }
+        $unit = OrganizationUnit::findOrFail($unitId);
+        Gate::authorize('manage', $unit);
+
+        $unit->delete();
+        $this->updateUnits();
     }
 
 
     public function exportUnitMembers($unitId)
     {
+        // This exports member PII, so it needs the same scope check as viewing
+        // the unit — without it any id could be exported by any signed-in user.
         $unit = OrganizationUnit::findOrFail($unitId);
+        Gate::authorize('view', $unit);
+
         $fileName = 'unit_members_' . $unit->code . '.xlsx';
         return Excel::download(new UnitMembersExport($unitId), $fileName);
     }
@@ -60,6 +63,8 @@ class ListOrganizationUnits extends Component {
         if ($this->movingUnitId !== null) {
             $unit = OrganizationUnit::find($this->movingUnitId);
             if ($unit) {
+                Gate::authorize('manage', $unit);
+
                 $unit->parent_unit_id = $this->newParentId;
                 $unit->save();
                 $this->units = OrganizationUnit::where('is_active', true)->get();
@@ -121,7 +126,10 @@ class ListOrganizationUnits extends Component {
 
     public function selectUnit($unitId)
     {
-        $this->selectedUnit = OrganizationUnit::with(['organization', 'department'])->find($unitId);
+        $unit = OrganizationUnit::with(['organization', 'department'])->findOrFail($unitId);
+        Gate::authorize('view', $unit);
+
+        $this->selectedUnit = $unit;
         $this->checkMembership();
         $this->dispatch('open-unit-details-drawer');
     }

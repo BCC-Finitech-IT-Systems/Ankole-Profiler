@@ -3,6 +3,7 @@
 namespace App\Livewire\Organizations;
 
 use App\Models\Organization;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -199,17 +200,35 @@ class Index extends Component {
 
     public function confirmDelete($id)
     {
-        $this->confirmingDeleteId = $id;
+        // Authorise on open as well as on submit: confirmingDeleteId is a public
+        // property, so a client can set it directly without ever calling this.
+        $organization = $this->findAccessibleOrganization($id);
+        Gate::authorize('delete', $organization);
+
+        $this->confirmingDeleteId = $organization->id;
     }
 
 
     public function deleteOrganization()
     {
-        $organization = Organization::findOrFail($this->confirmingDeleteId);
+        $organization = $this->findAccessibleOrganization($this->confirmingDeleteId);
+        Gate::authorize('delete', $organization);
+
         $organization->delete();
 
         session()->flash('message', 'Organization deleted successfully.');
         $this->confirmingDeleteId = null;
+    }
+
+    /**
+     * Resolve an organization the current user can actually reach. Scoping the
+     * lookup as well as running the policy means an id outside the user's scope
+     * 404s rather than reaching the policy at all.
+     */
+    protected function findAccessibleOrganization($id): Organization
+    {
+        return Organization::whereIn('id', $this->accessibleOrganizationIds())
+            ->findOrFail($id);
     }
 
     public function render()

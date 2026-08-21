@@ -383,13 +383,15 @@
                                                          exists yet, so both rendered as enabled
                                                          buttons that silently did nothing. Restore
                                                          them here once those routes are built. --}}
-                                                    <li>
-                                                        <button
-                                                            class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
-                                                            wire:click="confirmDelete({{ $organization->id }})">
-                                                            Delete
-                                                        </button>
-                                                    </li>
+                                                    @can('delete', $organization)
+                                                        <li>
+                                                            <button
+                                                                class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
+                                                                wire:click="confirmDelete({{ $organization->id }})">
+                                                                Delete
+                                                            </button>
+                                                        </li>
+                                                    @endcan
                                                 </ul>
                                                 @if ($confirmingDeleteId)
                                                     <div

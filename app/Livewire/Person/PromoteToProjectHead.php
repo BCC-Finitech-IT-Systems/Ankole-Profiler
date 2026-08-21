@@ -47,6 +47,21 @@ class PromoteToProjectHead extends Component
         $this->loadAvailableOrganizations();
     }
 
+    /**
+     * Re-derive the caller's permission from the session on every privileged
+     * call. $canPromote is a public Livewire property and therefore settable
+     * by the client, so it drives the view only and is never trusted here.
+     */
+    protected function userCanPromote(): bool
+    {
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user
+            && method_exists($user, 'hasRole')
+            && ($user->hasRole('Super Admin') || $user->hasRole('Organization Admin'));
+    }
+
     public function openModal($personId)
     {
         $this->loadPerson($personId);
@@ -126,7 +141,7 @@ class PromoteToProjectHead extends Component
 
     public function promoteToProjectHead()
     {
-        if (!$this->canPromote) {
+        if (!$this->userCanPromote()) {
             $this->dispatch('swal', [
                 'position' => 'top-end',
                 'icon' => 'error',
@@ -263,7 +278,7 @@ class PromoteToProjectHead extends Component
 
     public function revokeProjectHead()
     {
-        if (!$this->canPromote) {
+        if (!$this->userCanPromote()) {
             $this->dispatch('swal', [
                 'position' => 'top-end',
                 'icon' => 'error',

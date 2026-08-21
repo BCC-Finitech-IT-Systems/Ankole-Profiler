@@ -24,6 +24,8 @@ use App\Policies\AuditReportPolicy;
 use App\Policies\LandDocumentPolicy;
 use App\Policies\LandParcelPolicy;
 use App\Policies\OrganizationUnitApplicationPolicy;
+use App\Models\Organization;
+use App\Policies\OrganizationPolicy;
 use App\Policies\OrganizationUnitPolicy;
 use App\Policies\PersonAffiliationPolicy;
 use App\Policies\PolicyPolicy;
@@ -77,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
             Route::post('/livewire/update', $handler)->middleware('web');
         }
 
+        Gate::policy(Organization::class, OrganizationPolicy::class);
         Gate::policy(OrganizationUnit::class, OrganizationUnitPolicy::class);
         Gate::policy(OrganizationUnitApplication::class, OrganizationUnitApplicationPolicy::class);
         Gate::policy(RoleType::class, RoleTypePolicy::class);
