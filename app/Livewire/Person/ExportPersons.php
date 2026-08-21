@@ -50,6 +50,18 @@ class ExportPersons extends Component
 
     public function mount()
     {
+        // This page had no permission check at all, so anyone who could reach
+        // the route could export person records. export-persons is the
+        // all-organizations capability, export-org-persons the own-organization
+        // one; the export is scoped below for anyone who is not a Super Admin.
+        $user = Auth::user();
+
+        abort_unless(
+            $user && ($user->can('export-persons') || $user->can('export-org-persons')),
+            403,
+            'Unauthorized action.'
+        );
+
         $this->initializeOrganizationContext();
         $this->setDefaultFields();
         $this->loadExportOptions();
@@ -80,7 +92,24 @@ class ExportPersons extends Component
 
             $service = new PersonExportService();
 
-            $organizationId = $this->isSuperAdmin ? $this->selectedOrganizationId : $this->currentOrganization?->id;
+            // $isSuperAdmin and $selectedOrganizationId are public properties and
+            // therefore client-settable; re-derive the role from the session and
+            // confirm the chosen organization is within reach before exporting.
+            $user = Auth::user();
+            $isSuperAdmin = $user && $user->hasRole('Super Admin');
+
+            $organizationId = $isSuperAdmin
+                ? $this->selectedOrganizationId
+                : $this->currentOrganization?->id;
+
+            if (!$isSuperAdmin) {
+                abort_unless(
+                    $user && $organizationId
+                        && $user->accessibleOrganizations()->pluck('id')->contains((int) $organizationId),
+                    403,
+                    'You cannot export people from this organization.'
+                );
+            }
 
             if ($this->exportFormat === 'xlsx') {
                 $filePath = $service->exportToExcel($organizationId, $this->filters, $this->includeFields);

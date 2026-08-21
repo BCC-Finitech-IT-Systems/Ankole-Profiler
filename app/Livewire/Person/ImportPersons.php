@@ -62,9 +62,19 @@ class ImportPersons extends Component
 
     public function mount()
     {
-        if (!Auth::user()->can('import-persons')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // Two permissions cover this feature: import-persons is the
+        // all-organizations capability, import-org-persons the own-organization
+        // one. Checking only the former locked out Organization Admins, who
+        // hold the latter — while the sidebar still offered them the link.
+        // The import itself is scoped to the current organization for anyone
+        // who is not a Super Admin, so the org-scoped permission is sufficient.
+        $user = Auth::user();
+
+        abort_unless(
+            $user && ($user->can('import-persons') || $user->can('import-org-persons')),
+            403,
+            'Unauthorized action.'
+        );
 
         $this->initializeOrganizationContext();
     }
@@ -169,6 +179,22 @@ class ImportPersons extends Component
         if (empty($this->previewData)) {
             $this->addError('importFile', 'Please upload and preview a file first.');
             return;
+        }
+
+        // selectedOrganizationId is a public property, so the client can set it
+        // to any id that exists — the validation rule only checks existence.
+        // Confirm the target is actually within the caller's reach before
+        // writing people into it.
+        $user = Auth::user();
+
+        if (!$user?->hasRole('Super Admin')) {
+            abort_unless(
+                $user && $user->accessibleOrganizations()
+                    ->pluck('id')
+                    ->contains((int) $this->selectedOrganizationId),
+                403,
+                'You cannot import people into this organization.'
+            );
         }
 
         try {
