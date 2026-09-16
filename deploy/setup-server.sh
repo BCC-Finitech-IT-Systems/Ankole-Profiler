@@ -90,7 +90,7 @@ die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 [[ -f "${SOURCE_DIR}/artisan" ]] || die "Run this from a checked-out copy of the repo (artisan not found at ${SOURCE_DIR})."
 
 if [[ "${DB_PASSWORD}" == "" ]]; then
-  DB_PASSWORD="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
+  DB_PASSWORD="$(openssl rand -hex 24)"
 fi
 
 log "Ankole Profiler server setup"
