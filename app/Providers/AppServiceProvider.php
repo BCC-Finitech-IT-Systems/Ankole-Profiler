@@ -35,6 +35,7 @@ use App\Policies\WorkplanPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -54,6 +55,14 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        // Behind the TLS-terminating proxy the app sees plain HTTP, so without
+        // this every generated URL (form actions, assets) is http:// and the
+        // browser flags the login form as insecure. The proxy doesn't reliably
+        // send X-Forwarded-Proto, so key off APP_URL instead.
+        if (str_starts_with(config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
 
         // Sub-path deployment fix (staging lives at /ankole-profiler).
         //

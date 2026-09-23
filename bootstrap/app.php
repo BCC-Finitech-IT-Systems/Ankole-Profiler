@@ -12,6 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Staging sits behind an Apache reverse proxy that terminates TLS and
+        // forwards plain HTTP; trust its X-Forwarded-* headers so Laravel
+        // knows the original request was HTTPS.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             \App\Http\Middleware\SetOrganizationContext::class,
         ]);
