@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'org.access' => \App\Http\Middleware\EnsureOrganizationAccess::class,
+            'staff' => \App\Http\Middleware\EnsureStaffMember::class,
             'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class,
         ]);
 

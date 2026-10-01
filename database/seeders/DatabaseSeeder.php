@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
                 RoleTypeSeeder::class,
                 DemoTenantAdminSeeder::class, // after DepartmentSeeder so the diocese exists to affiliate to
                 SampleDataSeeder::class,
+                DemoAccountsSeeder::class,
             ]);
         } finally {
             // Re-enable foreign key checks after seeding

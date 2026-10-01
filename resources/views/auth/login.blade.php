@@ -30,16 +30,28 @@
         </div>
     @endif
 
-    <button type="button" onclick="fillDemoTenantAdmin()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:1.25rem;padding:0.7rem 0.875rem;border:1px solid #f0d6e1;border-radius:8px;background:#fff7fb;color:#982B55;font-size:0.9rem;font-weight:600;cursor:pointer;">
-        <svg style="width:16px;height:16px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.879 6.196M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20.662V19a5 5 0 0110 0v1.662"/>
-        </svg>
-        Use demo tenant admin
-    </button>
-    <p style="text-align:center;margin-top:-0.9rem;margin-bottom:1.25rem;font-size:0.78rem;color:#9a8f95;">
-        demo.tenantadmin@ankole.test / Demo@Ankole2026
-    </p>
+    @if (config('app.demo_logins'))
+        <p style="margin:0 0 0.5rem;font-size:0.75rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b7280;">Demo sign-in</p>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem;">
+            <button type="button" onclick="fillDemo('dioceseAdmin')" style="flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:0.4rem;padding:0.6rem 0.5rem;border:1px solid #f0d6e1;border-radius:8px;background:#fff7fb;color:#982B55;font-size:0.8rem;font-weight:600;cursor:pointer;">
+                <svg style="width:14px;height:14px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.879 6.196M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20.662V19a5 5 0 0110 0v1.662"/>
+                </svg>
+                Diocese admin
+            </button>
+            <button type="button" onclick="fillDemo('headOfDepartment')" style="flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:0.4rem;padding:0.6rem 0.5rem;border:1px solid #f0d6e1;border-radius:8px;background:#fff7fb;color:#982B55;font-size:0.8rem;font-weight:600;cursor:pointer;">
+                <svg style="width:14px;height:14px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.879 6.196M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20.662V19a5 5 0 0110 0v1.662"/>
+                </svg>
+                Head of Department
+            </button>
+        </div>
+        <p style="text-align:center;margin-top:-0.9rem;margin-bottom:1.25rem;font-size:0.78rem;color:#9a8f95;">
+            Demo password: Demo@Ankole2026
+        </p>
+    @endif
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
@@ -122,18 +134,21 @@
 </div>
 
 <script>
-    const demoTenantAdmin = {
-        email: @js('demo.tenantadmin@ankole.test'),
-        password: @js('Demo@Ankole2026'),
+    @if (config('app.demo_logins'))
+    const demoAccounts = {
+        dioceseAdmin: { email: @js(\Database\Seeders\DemoAccountsSeeder::DIOCESE_ADMIN_EMAIL), password: @js(\Database\Seeders\DemoAccountsSeeder::PASSWORD) },
+        headOfDepartment: { email: @js(\Database\Seeders\DemoAccountsSeeder::HEAD_OF_DEPARTMENT_EMAIL), password: @js(\Database\Seeders\DemoAccountsSeeder::PASSWORD) },
     };
 
-    function fillDemoTenantAdmin() {
-        document.getElementById('email').value = demoTenantAdmin.email;
-        document.getElementById('password').value = demoTenantAdmin.password;
+    function fillDemo(key) {
+        const account = demoAccounts[key];
+        document.getElementById('email').value = account.email;
+        document.getElementById('password').value = account.password;
         document.getElementById('remember_me').checked = false;
         document.getElementById('email').dispatchEvent(new Event('input', { bubbles: true }));
         document.getElementById('password').dispatchEvent(new Event('input', { bubbles: true }));
     }
+    @endif
 
     function togglePassword() {
         const input = document.getElementById('password');

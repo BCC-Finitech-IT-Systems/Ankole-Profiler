@@ -137,16 +137,20 @@ class SearchFilterService
     {
         // Persons are affiliated via 'affiliations' relationship
         $this->query->whereHas('affiliations', function($q) use ($organizationId) {
-            $q->where('organization_id', $organizationId)
-              ->where('status', 'active');
+            is_array($organizationId)
+                ? $q->whereIn('organization_id', $organizationId)
+                : $q->where('organization_id', $organizationId);
+            $q->where('status', 'active');
         });
     }
 
     protected function applyDepartmentFilter($departmentId)
     {
         $this->query->whereHas('affiliations', function($q) use ($departmentId) {
-            $q->where('department_id', $departmentId)
-              ->where('status', 'active');
+            is_array($departmentId)
+                ? $q->whereIn('department_id', $departmentId)
+                : $q->where('department_id', $departmentId);
+            $q->where('status', 'active');
         });
     }
 
