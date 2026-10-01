@@ -16,6 +16,12 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
+    | One-click demo sign-in buttons on the login page. Set DEMO_LOGINS=false
+    | to hide them on any server that holds real member data.
+    */
+    'demo_logins' => (bool) env('DEMO_LOGINS', true),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
