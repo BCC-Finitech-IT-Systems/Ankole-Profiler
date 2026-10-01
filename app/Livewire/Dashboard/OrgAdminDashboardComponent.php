@@ -370,7 +370,7 @@ class OrgAdminDashboardComponent extends Component
                 ->withCount([
                     'persons as total_persons',
                     'persons as new_persons' => function ($q) {
-                        $q->whereBetween('created_at', [$this->startDate, $this->endDate]);
+                        $q->whereBetween('persons.created_at', [$this->startDate, $this->endDate]);
                     },
                     'persons as active_persons' => function ($q) {
                         $q->whereHas('affiliations', fn($a) => $a->where('status', 'active'));
@@ -442,7 +442,7 @@ class OrgAdminDashboardComponent extends Component
         $this->selectedOrganization = Organization::withCount([
             'persons as total_persons',
             'persons as new_persons' => function ($q) {
-                $q->whereBetween('created_at', [$this->startDate, $this->endDate]);
+                $q->whereBetween('persons.created_at', [$this->startDate, $this->endDate]);
             },
             'persons as active_persons' => function ($q) {
                 $q->whereHas('affiliations', fn($a) => $a->where('status', 'active'));
@@ -626,7 +626,7 @@ class OrgAdminDashboardComponent extends Component
             ->withCount([
                 'persons as total_persons',
                 'persons as new_persons' => function ($q) {
-                    $q->whereBetween('created_at', [$this->startDate, $this->endDate]);
+                    $q->whereBetween('persons.created_at', [$this->startDate, $this->endDate]);
                 },
             ])
             ->having('total_persons', '>', 0)

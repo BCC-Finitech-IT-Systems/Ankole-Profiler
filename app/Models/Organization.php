@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Carbon\Carbon;
 
 class Organization extends Model
@@ -157,6 +158,14 @@ class Organization extends Model
     public function affiliations(): HasMany
     {
         return $this->personAffiliations();
+    }
+
+    /**
+     * People affiliated with this organization (inverse of Person::Organizations()).
+     */
+    public function persons(): BelongsToMany
+    {
+        return $this->belongsToMany(Person::class, 'person_affiliations');
     }
 
     /**
