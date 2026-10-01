@@ -4,8 +4,11 @@ namespace App\Livewire\Person;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\DepartmentSubCategory;
+use App\Models\Organization;
 use App\Models\Person;
 use App\Models\PersonAffiliation;
+use App\Models\User;
 use App\Models\FilterConfiguration;
 use App\Services\PersonFilterService;
 use Illuminate\Support\Facades\Auth;
@@ -41,6 +44,12 @@ class PersonList extends Component
     public $editPersonId = null;
     public $editPersonData = [];
     public $showEditModal = false;
+
+    // Add affiliation properties
+    public const AFFILIATION_ROLE_TYPES = ['STAFF', 'MEMBER', 'VOLUNTEER', 'CONSULTANT', 'CONTRACTOR', 'INTERN'];
+    public $affiliationPersonId = null;
+    public $affiliationData = [];
+    public $showAffiliationModal = false;
     // View person properties
     public $viewPersonId = null;
     public $viewPersonData = null;
@@ -291,25 +300,9 @@ class PersonList extends Component
 
             $person = Person::with(['phones', 'emailAddresses', 'affiliations'])->findOrFail($id);
 
-            // Permission check
-            $canViewAllPersons = ($user instanceof \App\Models\User) && $user->hasRole('Super Admin');
-            if (!$canViewAllPersons) {
-                $orgAdminDeptId = null;
-                if ($user->person) {
-                    $orgAdminDeptId = PersonAffiliation::where('person_id', $user->person->id)
-                        ->where('status', 'active')
-                        ->whereNotNull('department_id')
-                        ->value('department_id');
-                }
-                $hasAffiliation = $orgAdminDeptId && $person->affiliations()
-                    ->where('department_id', $orgAdminDeptId)
-                    ->where('status', 'active')
-                    ->exists();
-
-                if (!$hasAffiliation) {
-                    $this->dispatch('alert', ['type' => 'error', 'message' => 'You do not have permission to edit this person.']);
-                    return;
-                }
+            if (!$this->canManagePerson($person)) {
+                $this->dispatch('alert', ['type' => 'error', 'message' => 'You do not have permission to edit this person.']);
+                return;
             }
 
             $this->editPersonId = $person->id;
@@ -384,6 +377,10 @@ class PersonList extends Component
         }
 
         $person = Person::findOrFail($this->editPersonId);
+        if (!$this->canManagePerson($person)) {
+            $this->dispatch('alert', ['type' => 'error', 'message' => 'You do not have permission to edit this person.']);
+            return;
+        }
         $primaryPhone = $person->phones()->first();
 
         $this->validate([
@@ -465,6 +462,149 @@ class PersonList extends Component
                 'message' => 'Failed to update person: ' . $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Whether the current user may edit this person or add affiliations to
+     * them: the same scope render() lists people under.
+     */
+    private function canManagePerson(Person $person): bool
+    {
+        $user = Auth::user();
+        if (!$user instanceof User) {
+            return false;
+        }
+        if ($user->hasRole('Super Admin')) {
+            return true;
+        }
+
+        $activeAffiliations = fn () => $person->affiliations()->where('status', 'active');
+
+        if ($user->hasRole('Organization Admin')) {
+            $departmentIds = $user->person
+                ? PersonAffiliation::where('person_id', $user->person->id)
+                    ->where('status', 'active')
+                    ->whereNotNull('department_id')
+                    ->pluck('department_id')
+                : collect();
+
+            return $departmentIds->isNotEmpty()
+                ? $activeAffiliations()->whereIn('department_id', $departmentIds)->exists()
+                : $activeAffiliations()->whereIn('organization_id', $user->managedOrganizationIds())->exists();
+        }
+
+        if ($user->hasRole('Project Head') && $user->can('view-org-persons')) {
+            $organization = user_current_organization();
+
+            return $organization && $activeAffiliations()->where('organization_id', $organization->id)->exists();
+        }
+
+        return false;
+    }
+
+    /**
+     * Organizations the current user may affiliate people to.
+     */
+    #[\Livewire\Attributes\Computed]
+    public function affiliationOrganizations()
+    {
+        $user = Auth::user();
+        $query = Organization::where('is_active', true)->orderBy('legal_name');
+
+        if ($user instanceof User && $user->hasRole('Super Admin')) {
+            return $query->get();
+        }
+        if ($user instanceof User && $user->hasRole('Organization Admin')) {
+            return $query->whereIn('id', $user->managedOrganizationIds())->get();
+        }
+
+        $organization = user_current_organization();
+
+        return $organization ? $query->whereKey($organization->id)->get() : collect();
+    }
+
+    public function openAffiliationModal($id)
+    {
+        $person = Person::find($id);
+        if (!$person || !$this->canManagePerson($person)) {
+            $this->dispatch('alert', ['type' => 'error', 'message' => 'You do not have permission to add affiliations for this person.']);
+            return;
+        }
+
+        $this->resetValidation();
+        $this->affiliationPersonId = $person->id;
+        $this->affiliationData = [
+            'organization_id' => '',
+            'role_type' => 'STAFF',
+            'role_title' => '',
+            'start_date' => now()->toDateString(),
+        ];
+        $this->showAffiliationModal = true;
+    }
+
+    public function cancelAffiliation()
+    {
+        $this->showAffiliationModal = false;
+        $this->affiliationPersonId = null;
+        $this->affiliationData = [];
+        $this->resetValidation();
+    }
+
+    public function saveAffiliation()
+    {
+        $person = $this->affiliationPersonId ? Person::find($this->affiliationPersonId) : null;
+        if (!$person || !$this->canManagePerson($person)) {
+            $this->dispatch('alert', ['type' => 'error', 'message' => 'You do not have permission to add affiliations for this person.']);
+            return;
+        }
+
+        $this->validate([
+            'affiliationData.organization_id' => ['required', \Illuminate\Validation\Rule::in($this->affiliationOrganizations()->pluck('id')->all())],
+            'affiliationData.role_type' => ['required', \Illuminate\Validation\Rule::in(self::AFFILIATION_ROLE_TYPES)],
+            'affiliationData.role_title' => 'required|string|max:255',
+            'affiliationData.start_date' => 'required|date',
+        ], [], [
+            'affiliationData.organization_id' => 'organization',
+            'affiliationData.role_type' => 'role type',
+            'affiliationData.role_title' => 'role title',
+            'affiliationData.start_date' => 'start date',
+        ]);
+
+        $organizationId = (int) $this->affiliationData['organization_id'];
+        $roleType = $this->affiliationData['role_type'];
+
+        $duplicate = PersonAffiliation::where('person_id', $person->id)
+            ->where('organization_id', $organizationId)
+            ->where('role_type', $roleType)
+            ->whereNull('organization_unit_id')
+            ->exists();
+        if ($duplicate) {
+            $this->addError('affiliationData.organization_id', 'This person already has this role type at that organization.');
+            return;
+        }
+
+        // Same department derivation as creating a person: match the
+        // organization's category to a department sub-category.
+        $organization = Organization::find($organizationId);
+        $departmentId = $organization?->category
+            ? DepartmentSubCategory::whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($organization->category))])->value('department_id')
+            : null;
+
+        PersonAffiliation::create([
+            'person_id' => $person->id,
+            'organization_id' => $organizationId,
+            'department_id' => $departmentId,
+            'role_type' => $roleType,
+            'role_title' => $this->affiliationData['role_title'],
+            'start_date' => $this->affiliationData['start_date'],
+            'status' => 'active',
+            'user_id' => $person->user_id,
+            'created_by' => Auth::id(),
+        ]);
+
+        $this->cancelAffiliation();
+        $this->clearPersonListCache();
+        $this->dispatch('alert', ['type' => 'success', 'message' => 'Affiliation added.']);
     }
 
     protected function loadDynamicFilters()

@@ -260,7 +260,7 @@
                                                     </svg>
                                                     Edit
                                                 </button>
-                                                <button type="button" @click="open = false"
+                                                <button wire:click="openAffiliationModal({{ $person->id }})" @click="open = false" type="button"
                                                     class="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors">
                                                     <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -506,6 +506,84 @@
                                     </svg>
                                     Saving...
                                 </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Add Affiliation Modal --}}
+    @if ($showAffiliationModal && $affiliationPersonId)
+        <div class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" wire:click="cancelAffiliation"></div>
+                <div class="relative bg-white rounded-2xl shadow-xl max-w-lg w-full z-10">
+                    <form wire:submit.prevent="saveAffiliation">
+                        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                            <h3 class="text-base font-semibold text-gray-900">Add Affiliation</h3>
+                            <button type="button" wire:click="cancelAffiliation" class="text-gray-400 hover:text-gray-600 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="px-6 py-5 space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Organization <span class="text-red-500">*</span></label>
+                                <select wire:model="affiliationData.organization_id"
+                                    class="w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                                    style="--tw-ring-color: #982B55;">
+                                    <option value="">Select organization</option>
+                                    @foreach ($this->affiliationOrganizations as $organization)
+                                        <option value="{{ $organization->id }}">{{ $organization->display_name ?: $organization->legal_name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('affiliationData.organization_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Role Type <span class="text-red-500">*</span></label>
+                                    <select wire:model="affiliationData.role_type"
+                                        class="w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                                        style="--tw-ring-color: #982B55;">
+                                        @foreach (\App\Livewire\Person\PersonList::AFFILIATION_ROLE_TYPES as $roleType)
+                                            <option value="{{ $roleType }}">{{ ucfirst(strtolower($roleType)) }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('affiliationData.role_type') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Start Date <span class="text-red-500">*</span></label>
+                                    <input type="date" wire:model="affiliationData.start_date"
+                                        class="w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                                        style="--tw-ring-color: #982B55;">
+                                    @error('affiliationData.start_date') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Role Title <span class="text-red-500">*</span></label>
+                                <input type="text" wire:model="affiliationData.role_title" placeholder="e.g. Teacher, Treasurer"
+                                    class="w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                                    style="--tw-ring-color: #982B55;">
+                                @error('affiliationData.role_title') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex items-center justify-end gap-3">
+                            <button type="button" wire:click="cancelAffiliation" wire:loading.attr="disabled" wire:target="saveAffiliation"
+                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50">
+                                Cancel
+                            </button>
+                            <button type="submit" wire:loading.attr="disabled" wire:target="saveAffiliation"
+                                class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
+                                style="background:#982B55;">
+                                <span wire:loading.remove wire:target="saveAffiliation">Add Affiliation</span>
+                                <span wire:loading wire:target="saveAffiliation">Saving...</span>
                             </button>
                         </div>
                     </form>
