@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use App\Models\AllowedEmailDomain;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -37,15 +36,10 @@ class PersonSelfRegistrationComponent extends Component
         'country' => 'Uganda',
         'district' => '',
         'city' => '',
-        'organization_id' => '',
     ];
-
-    // Documents step removed
-    public $availableOrganizations = null;
 
     public function fillSampleData(): void
     {
-        $diocese = Organization::where('is_active', true)->where('category', 'diocese')->first();
         $this->form = [
             'given_name'    => 'Grace',
             'middle_name'   => 'Atuheire',
@@ -58,23 +52,18 @@ class PersonSelfRegistrationComponent extends Component
             'country'       => 'Uganda',
             'district'      => 'Mbarara',
             'city'          => 'Mbarara',
-            'organization_id' => $diocese?->id ?? '',
         ];
     }
 
-    public function mount()
+    /**
+     * Registration is open: applicants don't pick a diocese, they apply to
+     * the diocese running this portal. Falls back to the super organization
+     * for installs whose diocese row predates the 'diocese' category.
+     */
+    private function diocese(): ?Organization
     {
-        // Applicants choose the diocese they belong to. Filtering by
-        // category keeps schools/parishes/SACCOs (and the super org)
-        // out of the registration dropdown.
-        $this->availableOrganizations = Organization::where('is_active', true)
-            ->where('category', 'diocese')
-            ->orderBy('display_name')
-            ->get();
-
-        if ($this->availableOrganizations->isEmpty()) {
-            session()->flash('error', 'No dioceses are available for registration.');
-        }
+        return Organization::where('is_active', true)->where('category', 'diocese')->orderBy('id')->first()
+            ?? Organization::where('is_super', true)->orderBy('id')->first();
     }
 
 
@@ -106,13 +95,14 @@ class PersonSelfRegistrationComponent extends Component
                 'form.country' => 'required|string',
                 'form.district' => 'required|string',
                 'form.city' => 'required|string',
-                'form.organization_id' => [
-                    'required',
-                    Rule::exists('organizations', 'id')
-                        ->where('is_active', true)
-                        ->where('category', 'diocese'),
-                ],
             ]);
+
+        $diocese = $this->diocese();
+        if (!$diocese) {
+            session()->flash('error', 'Registration is not available yet. Please contact the diocese.');
+            Log::error('Self-registration attempted but no diocese organization exists');
+            return;
+        }
 
         // Check if email exists and is not verified
         $existingUser = User::where('email', $this->form['email'])->first();
@@ -167,7 +157,7 @@ class PersonSelfRegistrationComponent extends Component
             // 'Person' role is assigned.
             PersonAffiliation::create([
                 'person_id' => $person->id,
-                'organization_id' => $this->form['organization_id'],
+                'organization_id' => $diocese->id,
                 'role_type' => 'MEMBER',
                 'status' => 'pending',
                 'created_by' => $user->id,
@@ -179,7 +169,7 @@ class PersonSelfRegistrationComponent extends Component
             Log::info('DB commit successful', ['user_id' => $user->id, 'person_id' => $person->id]);
 
             // Notifications sent after commit so they never fire for a rolled-back registration.
-            $this->notifyOrganizationAdmins($person);
+            $this->notifyOrganizationAdmins($person, $diocese);
             $user->sendEmailVerificationNotification($temporaryPassword);
             Log::info('Custom verification notification sent with temporary password', ['user_id' => $user->id]);
 
@@ -193,24 +183,19 @@ class PersonSelfRegistrationComponent extends Component
             DB::rollBack();
 
             // Map technical error to user-friendly message
-            $errorMessage = 'Registration failed. Please try again later.';
-            if (str_contains($e->getMessage(), "Column 'organization_id' cannot be null")) {
-                $errorMessage = 'The selected organization is invalid. Please select a valid organization.';
-            }
-
-            session()->flash('error', $errorMessage);
+            session()->flash('error', 'Registration failed. Please try again later.');
             session()->flash('error_reason', $e->getMessage()); // Keep technical error for debugging
             Log::error('Registration DB error: ' . $e->getMessage(), ['exception' => $e]);
             return;
         }
     }
 
-    private function notifyOrganizationAdmins(Person $person): void
+    private function notifyOrganizationAdmins(Person $person, Organization $diocese): void
     {
         try {
             $admins = User::role('Organization Admin')
-                ->whereHas('person.affiliations', function ($q) {
-                    $q->where('organization_id', $this->form['organization_id'])->active();
+                ->whereHas('person.affiliations', function ($q) use ($diocese) {
+                    $q->where('organization_id', $diocese->id)->active();
                 })
                 ->get();
 
@@ -237,23 +222,8 @@ class PersonSelfRegistrationComponent extends Component
             ]);
         }
 
-        // Email
+        // Email (registration is open to any address)
         if (!empty($this->form['email'])) {
-            $email = $this->form['email'];
-            $domain = strtolower(substr(strrchr($email, "@"), 1));
-
-            $allowed = AllowedEmailDomain::where('domain', $domain)
-                ->where('is_active', true)
-                ->exists();
-
-            if (! $allowed) {
-                session()->flash('error', 'Registration failed.');
-                session()->flash('error_reason', 'Your organization is not authorized to register.');
-                throw ValidationException::withMessages([
-                    'email' => 'Your organization is not authorized to register.',
-                ]);
-            }
-
             EmailAddress::create([
                 'person_id' => $person->id,
                 'email_id' => \App\Helpers\IdGenerator::generateEmailId(),

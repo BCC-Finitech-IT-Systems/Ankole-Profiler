@@ -29,7 +29,6 @@ class PersonSelfRegistrationTest extends TestCase
         Notification::fake();
         Role::findOrCreate('Person', 'web');
         $this->diocese = Organization::factory()->create(['is_super' => false, 'category' => 'diocese']);
-        AllowedEmailDomain::create(['domain' => 'example.com', 'is_active' => true]);
     }
 
     private function register(array $overrides = [])
@@ -47,7 +46,6 @@ class PersonSelfRegistrationTest extends TestCase
                 'country' => 'Uganda',
                 'district' => 'Mbarara',
                 'city' => 'Mbarara',
-                'organization_id' => $this->diocese->id,
             ], $overrides))
             ->call('submit');
     }
@@ -67,14 +65,40 @@ class PersonSelfRegistrationTest extends TestCase
         $this->assertCount(0, $user->roles);
     }
 
-    public function test_registration_rejects_super_organization_as_target()
+    public function test_registration_prefers_the_diocese_over_the_super_organization()
     {
+        Organization::factory()->create(['is_super' => true, 'organization_type' => 'super']);
+
+        $this->register()->assertHasNoErrors();
+
+        $user = User::where('email', 'grace@example.com')->firstOrFail();
+        $this->assertSame(
+            $this->diocese->id,
+            PersonAffiliation::where('person_id', $user->person->id)->value('organization_id')
+        );
+    }
+
+    public function test_registration_falls_back_to_the_super_organization()
+    {
+        $this->diocese->update(['category' => 'other']);
         $super = Organization::factory()->create(['is_super' => true, 'organization_type' => 'super']);
 
-        $this->register(['organization_id' => $super->id])
-            ->assertHasErrors(['form.organization_id']);
+        $this->register()->assertHasNoErrors();
 
-        $this->assertNull(User::where('email', 'grace@example.com')->first());
+        $user = User::where('email', 'grace@example.com')->firstOrFail();
+        $this->assertSame(
+            $super->id,
+            PersonAffiliation::where('person_id', $user->person->id)->value('organization_id')
+        );
+    }
+
+    public function test_registration_is_open_to_any_email_domain()
+    {
+        AllowedEmailDomain::create(['domain' => 'bcc.co.ug', 'is_active' => true]);
+
+        $this->register(['email' => 'grace@unlisted-domain.org'])->assertHasNoErrors();
+
+        $this->assertNotNull(User::where('email', 'grace@unlisted-domain.org')->first());
     }
 
     public function test_approval_activates_membership_and_assigns_person_role()

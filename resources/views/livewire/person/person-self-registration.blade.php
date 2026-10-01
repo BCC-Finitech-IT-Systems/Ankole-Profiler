@@ -3,7 +3,7 @@
         <a href="{{ route('login') }}" class="btn btn-outline btn-primary">Back to Login</a>
     </div>
     <div class="mb-6 text-center">
-        <h1 class="text-3xl font-bold text-gray-800">Welcome to Ankoler Profiler</h1>
+        <h1 class="text-3xl font-bold text-gray-800">Welcome to Ankole Profiler</h1>
         <p class="text-gray-600 mt-2">Please fill in the details below to create your account and get started.</p>
     </div>
     <div class="bg-gradient-to-r from-gray-50 to-blue-50  flex justify-center items-center">
@@ -117,27 +117,8 @@
                         <span class="text-error text-xs">{{ $message }}</span>
                     @enderror
                 </div>
-                <div>
-                    <label class="block text-gray-600 font-medium mb-1 text-sm">Diocese*</label>
-                    <select wire:model="form.organization_id" class="select select-bordered select-sm w-full" required
-                        oninvalid="this.setCustomValidity('Diocese is required')"
-                        oninput="this.setCustomValidity('')">
-                        @if ($availableOrganizations->isEmpty())
-                            <option value="">No dioceses available</option>
-                        @else
-                            <option value="">Select Diocese</option>
-                            @foreach ($availableOrganizations as $diocese)
-                                <option value="{{ $diocese->id }}" @if (old('form.organization_id') == $diocese->id) selected @endif>
-                                    {{ $diocese->display_name }}</option>
-                            @endforeach
-                        @endif
-                    </select>
-                    @error('form.organization_id')
-                        <span class="text-error text-xs">{{ $message }}</span>
-                    @enderror
-                    <p class="text-gray-500 text-xs mt-1">Your membership becomes active after the diocese approves
-                        your application.</p>
-                </div>
+                <p class="md:col-span-2 text-gray-500 text-xs">Your membership becomes active after the diocese
+                    approves your application.</p>
                 <div class="md:col-span-2 flex justify-center gap-4 mt-6">
                     <button type="submit" class="btn btn-success w-full">Submit Registration</button>
                 </div>
