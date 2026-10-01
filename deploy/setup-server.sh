@@ -28,8 +28,9 @@ APP_DIR="${APP_DIR:-/var/www/ankole-profiler}"
 PHP_VERSION="${PHP_VERSION:-8.3}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
 
-# nginx+php-fpm+supervisor matches .github/workflows/deploy.yml (production).
-# apache+systemd matches .github/workflows/deploy-ankole-staging-166.yml.
+# nginx+php-fpm+supervisor is the stack the staging box runs (see
+# deploy-ankole-staging.yml and setup-staging-runner.sh); apache+systemd is
+# kept as an alternative.
 WEB_SERVER="${WEB_SERVER:-nginx}"          # nginx | apache
 QUEUE_MANAGER="${QUEUE_MANAGER:-}"         # supervisor | systemd (defaults per WEB_SERVER below)
 
@@ -43,7 +44,7 @@ DB_USERNAME="${DB_USERNAME:-ankole_profiler}"
 DB_PASSWORD="${DB_PASSWORD:-}"             # random one is generated below if left blank
 
 DEPLOY_USER="${DEPLOY_USER:-}"             # OS user the CI/CD pipeline (self-hosted runner) runs as;
-                                            # set this to wire up passwordless sudo for deploy.yml's commands
+                                            # set this to wire up passwordless sudo for a flat deploy's commands
 
 ENABLE_TLS="${ENABLE_TLS:-false}"          # true to request a Let's Encrypt cert for $DOMAIN via certbot
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-}"
@@ -59,7 +60,7 @@ if [[ "${QUEUE_MANAGER}" == "" ]]; then
   if [[ "${WEB_SERVER}" == "apache" ]]; then QUEUE_MANAGER="systemd"; else QUEUE_MANAGER="supervisor"; fi
 fi
 if [[ "${GH_RUNNER_LABELS}" == "" ]]; then
-  if [[ "${WEB_SERVER}" == "apache" ]]; then GH_RUNNER_LABELS="ankole-profiler-166"; else GH_RUNNER_LABELS="ankole-profiler"; fi
+  GH_RUNNER_LABELS="ankole-profiler"
 fi
 if [[ "${APP_URL}" == "" ]]; then
   if [[ "${DOMAIN}" == "_" ]]; then APP_URL="http://localhost"; else APP_URL="https://${DOMAIN}"; fi

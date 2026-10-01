@@ -59,14 +59,18 @@ jobs:
           sudo -u www-data php8.3 "$RELEASE/artisan" route:clear
           sudo -u www-data php8.3 "$RELEASE/artisan" config:cache
           sudo -u www-data php8.3 "$RELEASE/artisan" view:cache
-          sudo -u www-data php8.3 "$RELEASE/artisan" storage:link || true
+
+      # storage:link would run as www-data, which can't write into the
+      # runner-owned release; link to the shared public disk directly.
+      - name: Link public storage
+        run: ln -sfn "$BASE/shared/storage/app/public" "$RELEASE/public/storage"
 
       - name: Atomic switch
         run: |
           ln -sfn "$RELEASE" "$BASE/current-tmp"
           mv -Tf "$BASE/current-tmp" "$BASE/current"
           sudo systemctl reload php8.3-fpm
-          sudo systemctl restart ankole-profiler-worker
+          sudo supervisorctl restart 'ankole-profiler-worker:*'
 
       - name: Health check (rollback on 5xx)
         run: |
