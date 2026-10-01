@@ -60,7 +60,7 @@
                                             <div class="flex flex-col gap-2 text-[15px] mb-4">
                                                 <div class="flex items-center gap-2"><span
                                                         class="font-semibold text-[#232323]">About:</span> <span
-                                                        class="text-[#8b8b8b]">{{ implode(', ', (array) ($person->classification ?: [])) ?: 'N/A' }}</span>
+                                                        class="text-[#8b8b8b]">{{ $person->classification ?? 'N/A' }}</span>
                                                 </div>
                                                 <div class="flex items-center gap-2"><span
                                                         class="font-semibold text-[#232323]">Organization:</span> <span

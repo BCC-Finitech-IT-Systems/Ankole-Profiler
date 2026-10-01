@@ -44,7 +44,6 @@ class DatabaseSeeder extends Seeder
                 AllowedEmailDomainSeeder::class, // after DepartmentSeeder so domains link to the diocese
                 RoleTypeSeeder::class,
                 SampleDataSeeder::class,
-                DemoAccountsSeeder::class,
             ]);
         } finally {
             // Re-enable foreign key checks after seeding

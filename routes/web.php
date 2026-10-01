@@ -106,17 +106,13 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
         Route::get('/{id}', App\Livewire\Organizations\Show::class)->name('show');
     });
 
-    // A member's own profile; everything else under /persons is staff-only.
-    Route::get('/persons/profile-current', App\Livewire\Person\ProfileView::class)
-        ->middleware('org.access')
-        ->name('persons.profile-current');
-
-    Route::prefix('persons')->middleware(['org.access', 'staff'])->group(function () {
+    Route::prefix('persons')->middleware('org.access')->group(function () {
         Route::get('/all', [AllPersonsListController::class, 'index'])->name('persons.all');
         Route::get('/create/{edit?}', App\Livewire\Person\CreatePersonsComponent::class)->name('persons.create');
         Route::get('/import', App\Livewire\Person\ImportPersons::class)->name('persons.import');
         Route::get('/export', App\Livewire\Person\ExportPersons::class)->name('persons.export');
         Route::get('/products', App\Livewire\PersonProducts::class)->name('person-products');
+        Route::get('/profile-current', App\Livewire\Person\ProfileView::class)->name('persons.profile-current');
 
         Route::get('/search', [PersonSearchController::class, 'index2'])->name('persons.search');
         Route::get('/search/api', [PersonSearchController::class, 'search'])->name('persons.search.api');
@@ -213,11 +209,9 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
     });
 
     Route::prefix('departments')->name('departments.')->group(function () {
-        // The component scopes Department Managers and Organization Admins
-        // to the departments they administer.
         Route::get('/dashboard', DepartmentsDashboard::class)
             ->name('dashboard')
-            ->middleware('can:view-departments-dashboard');
+            ->middleware('can:view-departments');
 
         Route::post('/', [DepartmentController::class, 'store'])
             ->name('store')
@@ -261,7 +255,7 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
             ->middleware('can:manage-dioceses');
     });
 
-    Route::prefix('communication')->name('communication.')->middleware(['org.access', 'staff'])->group(function () {
+    Route::prefix('communication')->name('communication.')->middleware('org.access')->group(function () {
         Route::get('/', [CommunicationController::class, 'index'])->name('index');
 
         Route::get('/send', [CommunicationController::class, 'sendMessage'])
@@ -278,7 +272,7 @@ Route::middleware($authVerifiedMiddleware)->group(function () {
     });
 });
 
-Route::middleware(['auth', 'verified', 'staff'])->prefix('relationships')->name('relationships.')->group(function () {
+Route::middleware(['auth', 'verified'])->prefix('relationships')->name('relationships.')->group(function () {
     Route::get('/', [RelationshipController::class, 'index'])->name('index');
     Route::get('/network-analysis', [RelationshipController::class, 'getNetworkAnalysis'])->name('network-analysis');
 
@@ -296,7 +290,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('relationships')->name(
     Route::get('/export', [RelationshipController::class, 'exportRelationships'])->name('export');
 });
 
-Route::middleware(['auth:sanctum', 'verified', 'staff'])->prefix('api/relationships')->name('api.relationships.')->group(function () {
+Route::middleware(['auth:sanctum', 'verified'])->prefix('api/relationships')->name('api.relationships.')->group(function () {
     Route::get('/stats', [RelationshipController::class, 'stats'])->name('stats');
     Route::get('/pending', [RelationshipController::class, 'pending'])->name('pending');
     Route::get('/network-data/{person}', [RelationshipController::class, 'personNetworkData'])->name('network-data');
