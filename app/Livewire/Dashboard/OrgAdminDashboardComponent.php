@@ -171,7 +171,81 @@ class OrgAdminDashboardComponent extends Component
 
     public function render()
     {
-        return view('livewire.dashboard.org-admin-dashboard-component');
+        return view('livewire.dashboard.org-admin-dashboard-component', [
+            'userDepartment' => $this->userDepartment(),
+            'organizationsInScope' => $this->organizationsInScope(),
+            'projectHeads' => $this->projectHeadsList(),
+            'recentPersons' => $this->recentPersonsList(),
+        ]);
+    }
+
+    private function userDepartment(): ?Department
+    {
+        if (!$this->currentUser) {
+            return null;
+        }
+
+        $departmentId = Department::where('admin_user_id', $this->currentUser->id)->value('id')
+            ?? PersonAffiliation::where('user_id', $this->currentUser->id)
+                ->where('status', 'active')
+                ->whereNotNull('department_id')
+                ->value('department_id');
+
+        return $departmentId ? Department::find($departmentId) : null;
+    }
+
+    private function organizationsInScope(): array
+    {
+        return Organization::where('is_super', false)
+            ->withCount('persons as total_persons')
+            ->orderByDesc('total_persons')
+            ->limit(50)
+            ->get()
+            ->map(fn ($org) => [
+                'id' => $org->id,
+                'legal_name' => $org->legal_name,
+                'display_name' => $org->display_name,
+                'category' => $org->category,
+                'total_persons' => $org->total_persons,
+            ])
+            ->toArray();
+    }
+
+    private function projectHeadsList(): array
+    {
+        return User::role('Project Head')
+            ->with('person.affiliations.organization')
+            ->orderBy('name')
+            ->limit(20)
+            ->get()
+            ->map(function ($user) {
+                $org = $user->person?->affiliations->first()?->organization;
+
+                return [
+                    'name' => $user->name,
+                    'organization' => $org ? ($org->display_name ?? $org->legal_name) : null,
+                ];
+            })
+            ->toArray();
+    }
+
+    private function recentPersonsList(): array
+    {
+        return Person::with(['user', 'affiliations.organization'])
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(function ($person) {
+                $org = $person->affiliations->first()?->organization;
+
+                return [
+                    'name' => trim($person->given_name . ' ' . $person->family_name),
+                    'email' => $person->user?->email,
+                    'organization' => $org ? ($org->display_name ?? $org->legal_name) : null,
+                    'created_at' => $person->created_at?->diffForHumans(),
+                ];
+            })
+            ->toArray();
     }
 
     private function checkUserRoles()
@@ -451,7 +525,7 @@ class OrgAdminDashboardComponent extends Component
 
         // Organizations
         $totalOrganizations = Organization::where('is_super', false)->count();
-        $activeOrganizations = Organization::where('is_super', false)->where('status', 'active')->count();
+        $activeOrganizations = Organization::where('is_super', false)->where('is_active', true)->count();
         $newOrganizations = Organization::where('is_super', false)
             ->whereBetween('created_at', [$this->startDate, $this->endDate])
             ->count();
