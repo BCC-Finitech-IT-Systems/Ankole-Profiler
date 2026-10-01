@@ -44,7 +44,11 @@ class DemoAccountsTest extends TestCase
 
     public function test_demo_seeder_is_idempotent(): void
     {
-        $counts = fn () => [Project::count(), ProjectAffiliation::count(), Person::count(), User::count()];
+        $counts = fn () => [
+            Project::count(), ProjectAffiliation::count(), Person::count(), User::count(),
+            \App\Models\Policy::count(), \App\Models\Workplan::count(), \App\Models\WorkplanActivity::count(),
+            \App\Models\Assignment::count(), \App\Models\LandParcel::count(), \App\Models\AuditReport::count(),
+        ];
         $before = $counts();
 
         $this->seed(DemoAccountsSeeder::class);
@@ -122,6 +126,32 @@ class DemoAccountsTest extends TestCase
 
         foreach (['/persons/all', '/persons/search', '/persons/export', '/communication/send', '/relationships'] as $path) {
             $this->inOrganization($member)->get($path)->assertForbidden();
+        }
+    }
+
+    public function test_head_of_department_dashboard_is_the_department_dashboard(): void
+    {
+        $this->inOrganization($this->user(DemoAccountsSeeder::HEAD_OF_DEPARTMENT_EMAIL))
+            ->get('/dashboard')
+            ->assertRedirect(route('departments.dashboard'));
+    }
+
+    public function test_demo_modules_have_records_for_the_diocese_admin(): void
+    {
+        $this->assertModulesShowDemoRecords(DemoAccountsSeeder::DIOCESE_ADMIN_EMAIL);
+    }
+
+    public function test_demo_modules_have_records_for_the_head_of_department(): void
+    {
+        $this->assertModulesShowDemoRecords(DemoAccountsSeeder::HEAD_OF_DEPARTMENT_EMAIL);
+    }
+
+    private function assertModulesShowDemoRecords(string $email): void
+    {
+        $user = $this->user($email);
+
+        foreach (['/policies', '/workplans', '/assignments', '/land-parcels', '/audit-reports'] as $path) {
+            $this->inOrganization($user)->get($path)->assertOk()->assertSee('(Demo)');
         }
     }
 }

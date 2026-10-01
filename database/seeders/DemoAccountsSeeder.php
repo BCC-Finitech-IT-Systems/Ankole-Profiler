@@ -121,6 +121,10 @@ class DemoAccountsSeeder extends Seeder
             ]
         );
 
+        // Policies, workplans, assignments, land and audit reports for the
+        // demo department, so those pages aren't empty.
+        (new DemoModuleDataSeeder())->setCommand($this->command)->run();
+
         $this->command?->info('Demo accounts seeded (password ' . self::PASSWORD . '): '
             . self::DIOCESE_ADMIN_EMAIL . ', ' . self::HEAD_OF_DEPARTMENT_EMAIL);
     }
