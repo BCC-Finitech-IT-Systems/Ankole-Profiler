@@ -371,14 +371,18 @@ class DepartmentsDashboard extends Component
         $isOrgAdmin = (bool) $user && method_exists($user, 'hasRole')
             && $user->hasRole('Organization Admin') && !$user->hasRole('Super Admin');
 
-        // For Org Admin: scope to affiliated departments only
+        // Everyone below Super Admin is scoped: an Organization Admin to the
+        // departments of the organizations they administer (or, when they
+        // hold department affiliations, those departments); a Department
+        // Manager to the departments they manage.
         $affiliatedDepartmentIds = collect();
-        if ($isOrgAdmin && $user->person) {
-            $affiliatedDepartmentIds = PersonAffiliation::where('person_id', $user->person->id)
-                ->where('status', 'active')
-                ->whereNotNull('department_id')
-                ->pluck('department_id')
-                ->unique();
+        if (!$isSuperAdmin && $user) {
+            $affiliatedDepartmentIds = $user->managedDepartmentIds();
+
+            if ($isOrgAdmin && $affiliatedDepartmentIds->isEmpty()) {
+                $affiliatedDepartmentIds = Department::whereIn('organization_id', $user->managedOrganizationIds())
+                    ->pluck('id');
+            }
         }
 
         $departmentsQuery = Department::query()
@@ -386,8 +390,7 @@ class DepartmentsDashboard extends Component
             ->withCount(['projects', 'subCategories'])
             ->orderBy('name');
 
-        // Org Admin only sees their affiliated departments
-        if ($isOrgAdmin) {
+        if (!$isSuperAdmin) {
             $departmentsQuery->whereIn('id', $affiliatedDepartmentIds);
         }
 

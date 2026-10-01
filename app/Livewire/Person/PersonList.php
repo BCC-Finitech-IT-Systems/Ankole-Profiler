@@ -499,16 +499,29 @@ class PersonList extends Component
         if ($canViewOrgPersons && !$canViewAllPersons && $user->person) {
             $orgAdminDepartmentIds = PersonAffiliation::where('person_id', $user->person->id)
                 ->where('status', 'active')
-                ->pluck('department_id');
+                ->whereNotNull('department_id')
+                ->pluck('department_id')
+                ->unique()
+                ->values();
         }
+
+        // A diocese-level Organization Admin has no department affiliation;
+        // scope them to the organizations they administer instead.
+        $orgAdminOrganizationIds = ($canViewOrgPersons && !$canViewAllPersons && ($orgAdminDepartmentIds === null || $orgAdminDepartmentIds->isEmpty()))
+            ? $user->managedOrganizationIds()
+            : collect();
 
         try {
             if ($canViewProjectHeadPersons && !$canViewAllPersons) {
                 $this->filters['organization_id'] = $currentOrganization->id ?? null;
             }
 
-            if ($canViewOrgPersons && !$canViewAllPersons && $orgAdminDepartmentIds) {
-                $this->filters['department_id'] = $orgAdminDepartmentIds;
+            if ($canViewOrgPersons && !$canViewAllPersons) {
+                if ($orgAdminDepartmentIds && $orgAdminDepartmentIds->isNotEmpty()) {
+                    $this->filters['department_id'] = $orgAdminDepartmentIds->all();
+                } else {
+                    $this->filters['organization_id'] = $orgAdminOrganizationIds->all();
+                }
             }
 
             if ($canViewAllPersons && isset($this->filters['organization_id']) && $this->filters['organization_id'] === '') {
@@ -545,10 +558,12 @@ class PersonList extends Component
             ]);
 
             $query = Person::query();
-            if ($canViewOrgPersons && !$canViewAllPersons && $orgAdminDepartmentIds) {
-                $query->whereHas('affiliations', function ($q) use ($orgAdminDepartmentIds) {
-                    $q->whereIn('department_id', $orgAdminDepartmentIds)
-                      ->where('status', 'active');
+            if ($canViewOrgPersons && !$canViewAllPersons) {
+                $query->whereHas('affiliations', function ($q) use ($orgAdminDepartmentIds, $orgAdminOrganizationIds) {
+                    $orgAdminDepartmentIds && $orgAdminDepartmentIds->isNotEmpty()
+                        ? $q->whereIn('department_id', $orgAdminDepartmentIds)
+                        : $q->whereIn('organization_id', $orgAdminOrganizationIds);
+                    $q->where('status', 'active');
                 });
             }
 
@@ -601,7 +616,7 @@ class PersonList extends Component
     private function renderEmptyState()
     {
         return view('livewire.person.person-list', [
-            'persons' => collect(),
+            'persons' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 6),
             'availableRoles' => [],
             'genderOptions' => [],
             'statusOptions' => [],
