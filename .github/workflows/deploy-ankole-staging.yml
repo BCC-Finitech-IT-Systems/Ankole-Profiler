@@ -56,6 +56,9 @@ jobs:
       - name: Migrate (backward-compatible) & cache
         run: |
           sudo -u www-data php8.3 "$RELEASE/artisan" migrate --force
+          # Keep the login page's demo accounts (and their sample data) present
+          # and on the published password; the seeder is idempotent.
+          sudo -u www-data php8.3 "$RELEASE/artisan" db:seed --class=DemoAccountsSeeder --force
           sudo -u www-data php8.3 "$RELEASE/artisan" route:clear
           sudo -u www-data php8.3 "$RELEASE/artisan" config:cache
           sudo -u www-data php8.3 "$RELEASE/artisan" view:cache
