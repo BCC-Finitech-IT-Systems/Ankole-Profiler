@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         Swal.fire(config);
     }
+    window.showSweetAlert = showSweetAlert;
 
     // Check for Laravel session flash messages
     @if(session('success'))
@@ -174,6 +175,22 @@ document.addEventListener('DOMContentLoaded', function() {
         return Swal.fire(config);
     };
 });
+</script>
+<script>
+// Livewire 3 components report outcomes with $this->dispatch('alert', [...])
+// or $this->dispatch('swal', [...]); positional params arrive as [payload].
+(function () {
+    const payload = (params) => Array.isArray(params) ? params[0] : params;
+    const register = () => {
+        Livewire.on('alert', (params) => window.showSweetAlert(payload(params) || {}));
+        Livewire.on('swal', (params) => Swal.fire(payload(params) || {}));
+    };
+    if (window.Livewire) {
+        register();
+    } else {
+        document.addEventListener('livewire:init', register);
+    }
+})();
 </script>
 
 <style>

@@ -132,9 +132,6 @@
         const savedTheme = localStorage.getItem('theme') || 'profiler';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
-        document.addEventListener('livewire:load', () => {
-            Livewire.on('swal', (data) => { Swal.fire(data); });
-        });
     </script>
 
     <x-sweet-alerts />
