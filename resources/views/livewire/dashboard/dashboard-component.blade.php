@@ -12,7 +12,8 @@
             </div>
         </div>
     @endif
-    @role(['Person', 'Organization Admin'])
+    {{-- Every role without a dashboard of its own gets the personal quick actions. --}}
+    @unlessrole('Super Admin')
     {{-- Person Dashboard: Quick Actions --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 w-full">
         <!-- Profile Card -->
@@ -122,7 +123,7 @@
             </div>
         </div>
     </div>
-    @endrole
+    @endunlessrole
 
     @hasanyrole('Super Admin')
     {{-- Quick Actions Grid --}}

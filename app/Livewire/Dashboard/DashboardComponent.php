@@ -24,6 +24,17 @@ class DashboardComponent extends Component
 
     public function mount()
     {
+        // The general dashboard has nothing for Department Managers; their
+        // dashboard is the department one, scoped to what they manage.
+        $user = Auth::user();
+        if ($user && $user->hasRole('Department Manager')
+            && !$user->hasAnyRole(['Super Admin', 'Organization Admin', 'Person'])
+            && $user->can('view-departments-dashboard')) {
+            $this->redirectRoute('departments.dashboard');
+
+            return;
+        }
+
         $this->initializeUserContext();
         Log::info('Current Organization:', ['organization' => $this->currentOrganization]);
         $this->loadDashboardData();
